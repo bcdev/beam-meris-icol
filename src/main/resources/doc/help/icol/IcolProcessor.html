@@ -1,0 +1,170 @@
+<html>
+<head>
+    <title>BEAM Data Processors - ICOL Processor</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+<table class="header">
+    <tr class="header">
+        <td class="header">&nbsp;ICOL Processor</td>
+        <td class="header" align="right"><a href="../general/BeamOverview.html"><img src="../images/BeamHeader.jpg"
+                                                                                     border=0></a></td>
+    </tr>
+</table>
+
+<h3>Introduction</h3>
+
+<p>In MERIS images an increase in the radiances, especially in the near infrared bands, can often be
+observed over water and in the vicinity of vegetated coasts. The affected area can extend over
+10km or even more. This increase is not (always) related to an increase in the aerosol optical
+depth but is caused by the so-called adjacency effect. This effect results when photons are reflected
+and scattered towards the sensor and where a substantial contrast exits between the target
+and its surrounding. During processing of such measurements the correction schemes need to take
+this effect into account, otherwise the increased radiance is erroneously associated with other
+physical processes, and the derived geophysical quantities have an increased error.
+</p>
+
+<p>Observations over waters near to land surfaces, both for coastal and inland waters, are affected
+because of the large contrast in the red and infrared part of the spectrum, where water is almost
+black and vegetated areas are very bright. The effect is easier to illustrate in coastal waters because
+it decreases from coastline to off-shore. This effect can best be studied in MERIS Full Resolution
+images, but even in reduced resolution the adjacency effect can also clearly be seen.
+</p>
+
+<p class="inote">The ATBD can be found in the BEAM wiki. (http://www.brockmann-consult.de/beam-wiki/display/BEAM)</p>
+
+<p>The ICOL Processor starts from MERIS L1b products and corrects for the adjacency effect.
+The format and content of the output product depends on the format of the input product:
+
+If the input product is in Envisat-N1 format. The processor can write either 
+a new Envisat-N1 file with corrected radiances or a product with corrected TOA reflectances in any available 
+BEAM output format, currently these are BEAM-DIMAP, GeoTIFF and HDF5.
+If the source product is <b>not</b> in Envisat-N1 format only corrected reflectances in BEAM supported 
+output files are possible.</p>
+
+<p>If as the selected output product is in Envisat-N1 format, it is accompanied by a product
+in BEAM-DIMAP format with the identical content.</p>
+
+<h4>Commandline User Interfaces</h4>
+
+<p>The ICOL Processor can be invoked from VISAT's tool menu by selecting the <b>ICOL Processor</b> command
+    or in batch mode by using the command line tool <i><code>gpt</code></i> (Graph Processing Tool) found
+    in BEAM's <code>bin</code> directory:</p>
+<p>Type <code>gpt IcolRhoToa -h</code> to get more information about
+    the usage of the <b>IcolRhoToa</b> operator or <code>gpt IcolN1 -h</code> to get more information about
+    the usage of the <b>IcolN1</b> operator.
+</p>
+<p>The IcolN1 operator is only applicable on input products in Envisat-N1 format 
+and computes corrected radiances,  
+whereas the IcolRhoRoa operator can work on any MERIS L1b product.</p>
+
+<h4>Graphical User Interfaces</h4>
+
+<p class="inote">Please note: Because the ICOL Processor requires a lot of memory, you should 
+set in the Preferences on the "Image Layer" page the property for "Tile cache capacity" to at least 750MB.</p>
+
+
+<p>The graphical user interface provided in VISAT appears as follows:
+</p>
+
+<p align="center">
+    <img src="../images/io_ui.png" />
+</p>
+
+<h5>Source Product Group</h5>
+
+<p class="i1">
+    <b>Input-Product: </b>
+    Used to select the source product. The source product shall
+    be a MERIS L1b product. Use the <b>...</b> button to
+    open a data product currently not opened in VISAT.
+</p>
+
+<h5>Product Type Selection Group</h5>
+
+<p class="i1">
+    <b>Product Type Selection: </b>
+    Used to select the type for the output product. If applicable this can be either RhoToa
+    for corrected reflectances or N1 for corrected radiances.
+</p>
+
+<h5>Target Product Group</h5>
+
+<p class="i1">
+    <b>Name:</b>
+    Used to specify the name of the target product.
+</p>
+
+<p class="i1">
+    <b>Save to:</b>
+    Used to specify whether the target product should be saved to the file system. The
+    combo box presents a list of file formats, currently
+    BEAM-DIMAP, GeoTIFF and HDF5, if the input product is not in Envisat-N1 format and only N1 otherwise.
+</p>
+
+<p class="i1">
+    <b>Open in VISAT:</b>
+    Used to specify whether the target product should be opened in VISAT. When the
+    target product is not saved, it is opened in VISAT automatically.
+</p>
+
+<p align="center">
+    <img src="../images/param_ui.png" />
+</p>
+
+<h5>Aerosol Group</h5>
+
+<p class="i1">
+    <b>Computed by AE algorithm:</b>
+    If this option is selected the angstroem factor and the aerosol optical thickness will be calculated by the
+    the adjacency algorithm.
+</p>
+
+<p class="i1">
+    <b>User supplied:</b>
+    Used to specify the angstroem factor and the aerosol optical thickness at 865 nm.
+</p>
+
+<h5>RhoToa Product Group</h5>
+
+<p>For the RhoToa product the bands included in the output product can be specified in this group.
+The available options are:</p>
+
+<p class="i1">
+    <b>TOA reflectances:</b>
+    The radiances from the MERIS L1b converted into reflectances,
+    without any correction applied.
+</p>
+<p class="i1">
+    <b>TOA reflectances corrected for AE rayleigh:</b>
+    The radiances from the MERIS L1b converted into reflectance,
+    corrected for the rayleigh contribution to the adjacency effect.
+</p>
+<p class="i1">
+    <b>TOA reflectances corrected for AE rayleigh and AE aerosol:</b>
+    The radiances from the MERIS L1b converted into reflectance,
+    corrected for the rayleigh and the aerosol contribution to the adjacency effect.
+</p>
+<p class="i1">
+    <b>AE rayleigh correction term:</b>
+    The contribution of the rayleigh to the adjacency effect.
+</p>
+<p class="i1">
+    <b>AE aerosol correction term:</b>
+    The contribution of the aerosol to the adjacency effect.
+</p>
+<p class="i1">
+    <b>alpha + aot:</b>
+    The angstroem coefficient and alpha.
+</p>
+
+<h5>N1 Product Group</h5>
+
+<p>For the N1 product it can be configured if the radiances are correct only for the contribution of the
+    rayleigh to the adjacency effect or for the contribution of both, the rayleigh and the aerosol.</p>
+
+<hr/>
+
+</body>
+</html>

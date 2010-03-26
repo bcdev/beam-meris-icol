@@ -1,0 +1,72 @@
+<module>
+    <manifestVersion>1.0.0</manifestVersion>
+    <symbolicName>beam-meris-icol</symbolicName>
+    <version>2.0</version>
+    <name>MERIS ICOL Processor</name>
+
+    <description>
+     The ICOL processor is used to correct for the adjacency effect 
+     (increased radiance due to scattering and reflection of photons) in MERIS L1B data.
+    </description>
+
+    <vendor>Brockmann Consult GmbH</vendor>
+    <contactAddress>Max Planck Str.2, 21502 Geesthacht (Germany)</contactAddress>
+    <copyright>(C) 2008 by Brockmann Consult GmbH</copyright>
+    <url>http://envisat.esa.int/beam</url>
+    <licenseUrl>http://www.gnu.org/licenses/gpl.html</licenseUrl>
+    
+    <changelog>
+        <![CDATA[
+            <p>Changes in 1.1<br/>
+            [ICOL-?] Use JAI-based image convolution<br/>
+            <p>Changes in 1.0.4<br/>
+            [ICOL-7] Writing a patched N1 fails from the GUI<br/>
+            Changes in 1.0.3<br/>
+            [ICOL-5] The selection of the AE correction for the N1 product is not used<br/>
+            [ICOL-6] The product type of ICOL products is not usable by following processors<br/>
+            Changes in 1.0.2<br/>
+            [ICOL-4] ICOL processor requires a huge amount of cache memory to finish<br/>
+        </p>]]>
+    </changelog>
+    
+    <dependency>
+        <module>beam-gpf</module>
+    </dependency>
+    <dependency>
+        <module>beam-meris-brr</module>
+    </dependency>
+    <dependency>
+        <module>beam-meris-sdr</module>
+    </dependency>
+    <dependency>
+        <module>beam-meris-l2auxdata</module>
+    </dependency>
+    <dependency>
+        <module>beam-envisat-reader</module>
+    </dependency>
+    <dependency>
+        <module>beam-visat</module>
+        <optional>true</optional>
+    </dependency>
+
+    <categories>Application,Processing</categories>
+
+    <extension point="beam-ui:actions">
+        <action>
+            <id>icolAction</id>
+            <class>org.esa.beam.meris.icol.ui.IcolAction</class>
+            <text>ICOL Processor...</text>
+            <shortDescr>Executes the ICOL processor</shortDescr>
+            <mnemonic/>
+            <parent>tools</parent>
+            <placeAfter/>
+        </action>
+    </extension>
+    
+    <extension point="beam-ui:helpSets">
+        <helpSet>
+            <parent>beam-help</parent>
+            <path>doc/help/icol.hs</path>
+        </helpSet>
+    </extension>
+</module>
