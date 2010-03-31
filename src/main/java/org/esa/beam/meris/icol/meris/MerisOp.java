@@ -43,6 +43,7 @@ import javax.media.jai.TileCache;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.awt.Dimension;
 
 
 /**
@@ -128,9 +129,10 @@ public class MerisOp extends Operator {
         System.out.println("Apply AE over land: "+ correctOverLand);
         System.out.println("Correct in coastal areas: "+ correctInCoastalAreas);
 
-        if (tileSize > 0) {
-            sourceProduct.setPreferredTileSize(tileSize, tileSize);
-        }
+//        if (tileSize > 0) {
+//            sourceProduct.setPreferredTileSize(tileSize, tileSize);
+//        }
+        sourceProduct.setPreferredTileSize(new Dimension(128, 128));
 
 //        JAI.getDefaultInstance().setTileCache(new FileTileCache(new File("C:\\temp\\gpf")));
         TileCache tc = JAI.getDefaultInstance().getTileCache();
@@ -247,7 +249,7 @@ public class MerisOp extends Operator {
         Map<String, Product> constInput = new HashMap<String, Product>(1);
         constInput.put("source", sourceProduct);
 //        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ConstantValueOp.class), emptyParams, rayleighProduct);
-        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, rayleighProduct);
+//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, rayleighProduct);
 
         Map<String, Product> brrCloudInput = new HashMap<String, Product>(4);
         brrCloudInput.put("l1b", sourceProduct);
@@ -335,7 +337,7 @@ public class MerisOp extends Operator {
         reverseRhoToaParams.put("exportRhoToa", exportRhoToa);
         reverseRhoToaParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
         reverseRhoToaParams.put("exportRhoToaAerosol", exportRhoToaAerosol);
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
             // they already exist in this case
             exportAeRayleigh = false;
             exportAeAerosol = false;

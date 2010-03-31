@@ -356,6 +356,11 @@ public class AerosolScatteringFuntions {
         double paerFB = paerF/paerB;
         return paerFB;
 	}
+    
+    public double aerosolPhaseB(double thetaf, double thetab, int iaer) throws IOException {
+        double paerB = aerosolPhase(thetab,iaer);
+        return paerB;
+	}
 	
 	public double aerosolPhase(double theta, int iaer) throws IOException {
 //		iaer = checkIndex(iaer, NUM_IAER);

@@ -51,78 +51,6 @@ public class CoeffW {
     //    1: reshaped aerosol
     private int correctionMode;
 
-
-    // same weights as for old ICOL for default aerosol, but for 3x3 grid
-    // retrieved by:
-    //  - default iaer = 11, w[10] to use in convolvePixel, so take every
-    // third value of w[10]
-//    private static double[] wReshapedRay = new double[]{
-//            0.34302385807646946,
-//            0.07449569665103065,
-//            0.03295036489525674,
-//            0.018067869517597375,
-//            0.011215492753402534,
-//            0.007568301433339525,
-//            0.005422995900859036,
-//            0.004064333546088196,
-//            0.003153634799311228
-//    };
-
-    // 'reshaped' coefficients for 3x3 grid according to TN for default aerosol (RS, 23/11/2009)
-    private static double[] wReshapedRay = new double[]{
-            0.14899998,
-            0.157,
-            0.10989,
-            0.0827,
-            0.06171958,
-            0.0465,
-            0.03469517,
-            0.0261,
-            0.01950363
-    };
-
-
-
-
-    // new weights until 10km according to TN for default aerosol (RS, 23/11/2009)
-//    private static double[] wRRReshapedAer = new double[]{
-//            0.517959,
-//            0.203099,
-//            0.079532,
-//            0.055265,
-//            0.039895,
-//            0.028851,
-//            0.020867,
-//            0.015092,
-//            0.039441
-//    };
-
-    // until 10km, same weights as old ICOL for default aerosol
-    // only w[8] changed for normalization
-    private static double[] wRRReshapedAer = new double[]{
-            0.34302385807646946,
-            0.17035300878926402,
-            0.10706891239679804,
-            0.07449569665103065,
-            0.054820165357674644,
-            0.041902464455316334,
-            0.03295036489525674,
-            0.026500081803170386,
-            0.1489
-    };
-
-    private static double[] wFRReshapedAer = new double[]{
-            0.208720, 0.240058, 0.119255, 0.066282, 0.042431,
-            0.031132, 0.025288, 0.021856, 0.019529,
-            0.017742, 0.016247, 0.014934, 0.013751,
-            0.012672, 0.011682, 0.010771, 0.009933,
-            0.009159, 0.008447, 0.007789, 0.007183,
-            0.006624, 0.006109, 0.005634, 0.005195,
-            0.004791, 0.004418, 0.004075, 0.003758,
-            0.003465, 0.003196, 0.002947, 0.034928
-    };
-
-
     public CoeffW(File auxdataTargetDir,
                   boolean reshapedConvolution, int correctionMode) throws IOException {
         this.correctionMode = correctionMode;
@@ -185,11 +113,10 @@ public class CoeffW {
     private double[][] getReshapedRayleighCoeffForRR() {
         double[][] wRR = new double[26][9];
         double[][] wRROrig = getCoeffForRR();
-        double[] randoms = createRandomDoubleData(9, 0.01);
         for (int iaer = 0; iaer < 26; iaer++) {
             for (int i=0; i<9; i++) {
+                // reduce resolution to 3.6km: take every third value
                 wRR[iaer][i] = wRROrig[iaer][3*i];
-//                wRR[iaer][i] = Math.abs(wRROrig[iaer][3*i] + randoms[i]); // test!!
             }
         }
 
@@ -217,11 +144,12 @@ public class CoeffW {
     }
 
     private double[][] getReshapedRayleighCoeffForFR() {
-        double[][] wFR = new double[26][13];
+        double[][] wFR = new double[26][8];
         double[][] wFROrig = getCoeffForFR();
         for (int iaer = 0; iaer < 26; iaer++) {
-            for (int i=0; i<13; i++) {
-                wFR[iaer][i] = wFROrig[iaer][8*i];
+            for (int i=0; i<8; i++) {
+                // reduce resolution to 3.6km: take every twelveth value
+                wFR[iaer][i] = wFROrig[iaer][12*i];
             }
         }
 
@@ -271,10 +199,8 @@ public class CoeffW {
         KernelJAI kernel = null;
         if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
            kernel = createKernelByRotation(getReshapedRayleighCoeffForRR(iaer));
-//           kernel = createKernelByRotation(wReshapedRay);
         }  else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
            kernel = createKernelByRotation(getReshapedAerosolCoeffForRR(iaer));
-//           kernel = createKernelByRotation(wRRReshapedAer);
         }
         return kernel;
     }

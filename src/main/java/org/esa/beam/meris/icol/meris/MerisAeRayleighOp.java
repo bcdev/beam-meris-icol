@@ -222,7 +222,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
 
             bands[j] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
 //            ProductUtils.copySpectralAttributes(inBand, bands[j]);
-            ProductUtils.copySpectralBandProperties(inBand, bands[i]);
+            ProductUtils.copySpectralBandProperties(inBand, bands[j]);
             bands[j].setNoDataValueUsed(true);
             bands[j].setNoDataValue(noDataValue);
             j++;

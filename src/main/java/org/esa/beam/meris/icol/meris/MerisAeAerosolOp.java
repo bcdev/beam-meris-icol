@@ -364,7 +364,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         }
                     }
 
-                    if (x == 230 && y == 180)
+                    if (x == 270 && y == 260)
                         System.out.println("");
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         double alpha;
@@ -432,14 +432,12 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         // RS, 14.09.09:
                         // over water, apply ICOL AE if option is set
                         // otherwise apply user input (as always over land)
-                        // begin 'old' case 1 water --> todo: remove this later
+                        // begin 'old' case 1 water
                         // first, compute <RO_AER> at 865 and 705nm
                         final double rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
                         final double rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
 
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
-//                            searchIAOT = getIAOT(iaer, thetab, thetaf, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y),
-//                                                 phi, r1v, r1s, zmaxPart, zmaxCloudPart, muv, rhoBrrBracket865, rho_13);
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                 taua = tauaConst * iiaot;
                                 RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
@@ -450,7 +448,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                 // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0)
                                 rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                                 // test:
-                                double rhoW13Test = 0.025;
+                                double rhoW13Test = 0.0;
                                 rhoBrr865[iiaot] += rhoW13Test * Math.exp(-taua / muv) * Math.exp(-taua / mus);
 
                                 if (rhoBrr865[iiaot] > rho_13) {
