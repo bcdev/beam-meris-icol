@@ -172,6 +172,7 @@ public class MerisOp extends Operator {
 
         Map<String, Product> landInput = new HashMap<String, Product>(2);
         landInput.put("l1b", sourceProduct);
+        landInput.put("rhotoa", rad2reflProduct);
         landInput.put("gascor", gasProduct);
         Product landProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(LandClassificationOp.class), emptyParams, landInput);
 
@@ -195,7 +196,7 @@ public class MerisOp extends Operator {
         aemaskRayleighInput.put("l1b", sourceProduct);
         aemaskRayleighInput.put("land", landProduct);
         Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
-        aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
+        aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         aemaskRayleighParameters.put("correctOverLand", correctOverLand);
         aemaskRayleighParameters.put("correctInCoastalAreas", correctInCoastalAreas);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
@@ -206,7 +207,7 @@ public class MerisOp extends Operator {
         aemaskAerosolInput.put("l1b", sourceProduct);
         aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
-        aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
+        aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         aemaskAerosolParameters.put("correctOverLand", correctOverLand);
         aemaskAerosolParameters.put("correctInCoastalAreas", correctInCoastalAreas);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
@@ -215,7 +216,7 @@ public class MerisOp extends Operator {
 
 
         Map<String, Object> distanceParameters = new HashMap<String, Object>(3);
-        distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
+        distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
         distanceParameters.put("correctOverLand", correctOverLand);
         Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCoastDistanceOp.class), distanceParameters, aemaskAerosolInput);
@@ -225,7 +226,7 @@ public class MerisOp extends Operator {
         cloudDistanceInput.put("land", landProduct);
         cloudDistanceInput.put("cloud", cloudProduct);
         Map<String, Object> cloudDistanceParameters = new HashMap<String, Object>(1);
-        cloudDistanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
+        cloudDistanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCloudDistanceOp.class), cloudDistanceParameters, cloudDistanceInput);
 
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
@@ -234,7 +235,7 @@ public class MerisOp extends Operator {
         zmaxInput.put("coastDistance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
-        zmaxParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
+        zmaxParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         zmaxParameters.put("correctOverLand", correctOverLand);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 
@@ -271,7 +272,7 @@ public class MerisOp extends Operator {
         aeRayInput.put("cloud", cloudProduct);
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(1);
-        aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS");
+        aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
             exportSeparateDebugBands = true;
         }
@@ -314,7 +315,7 @@ public class MerisOp extends Operator {
             aeAerosolParams.put("userAot", userAot);
             aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
             aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
-            aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
+            aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
             if (icolAerosolCase2) {
                 aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeAerosolCase2Op.class), aeAerosolParams, aeAerInput);
             } else {
@@ -384,7 +385,7 @@ public class MerisOp extends Operator {
 
                  // land classif flags
                 FlagCoding flagCodingLand = LandClassificationOp.createFlagCoding();
-                reverseRhoToaProduct.getFlagCodingGroup().add(flagCodingLand);
+                reverseRadianceProduct.getFlagCodingGroup().add(flagCodingLand);
                 DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, landProduct, flagCodingLand, LandClassificationOp.LAND_FLAGS);
 
                 // Rayleigh correction
