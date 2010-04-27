@@ -15,12 +15,12 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.icol.utils.NavigationUtils;
 import org.esa.beam.util.RectangleExtender;
 import org.esa.beam.util.ShapeRasterizer;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
 
 import java.awt.Rectangle;
 
@@ -95,15 +95,14 @@ public class TmCloudDistanceOp extends TmBasisOp {
         try {
 
         	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), sourceRectangle, pm);
-        	Tile isLand = getSourceTile(isLandBand, sourceRectangle, pm);
-            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRectangle, pm);
+            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle, pm);
 
             PixelPos startPix = new PixelPos();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 startPix.y = y;
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
-                    if (!isLand.getSampleBoolean(x, y) && !isCloud) {
+                    if (!isCloud) {
                         startPix.x = x;
 
                         int trialLineLength = MAX_LINE_LENGTH;
@@ -123,7 +122,7 @@ public class TmCloudDistanceOp extends TmBasisOp {
                         if (lineEndPix.x == -1 || lineEndPix.y == -1) {
                             cloudDistance.setSample(x, y, NO_DATA_VALUE);
                         } else {
-                            final PixelPos cloudPix = findFirstCloudPix(startPix, lineEndPix, cloudFlags, isLand);
+                            final PixelPos cloudPix = findFirstCloudPix(startPix, lineEndPix, cloudFlags);
                             if (cloudPix != null) {
                                 float distance = NavigationUtils.distanceInMeters(geocoding, startPix, cloudPix);
                                 distance *= (resolution*1.0/ TmConstants.LANDSAT5_FR_ORIG);
@@ -146,7 +145,7 @@ public class TmCloudDistanceOp extends TmBasisOp {
     }
 
     private PixelPos findFirstCloudPix(final PixelPos startPixel, final PixelPos endPixel,
-                                       final Tile cloudFlags, final Tile isLand) {
+                                       final Tile cloudFlags) {
         ShapeRasterizer.LineRasterizer lineRasterizer = new ShapeRasterizer.BresenhamLineRasterizer();
         final PixelPos[] cloudPixs = new PixelPos[1];
         cloudPixs[0] = null;
@@ -156,8 +155,7 @@ public class TmCloudDistanceOp extends TmBasisOp {
             public void visit(int x, int y) {
                 if (cloudPixs[0] == null &&
                         isCloudRect.contains(x, y) &&
-                        cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD) &&
-                        !isLand.getSampleBoolean(x, y)) {
+                        cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD)) {
                     cloudPixs[0] = new PixelPos(x, y);
                 }
             }

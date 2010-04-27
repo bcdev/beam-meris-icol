@@ -17,6 +17,7 @@
 package org.esa.beam.meris.icol.meris;
 
 import com.bc.ceres.core.ProgressMonitor;
+import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
@@ -167,6 +168,7 @@ public class MerisAeMaskOp extends MerisBasisOp {
         try {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
             Tile isCoastline = getSourceTile(isCoastlineBand, sourceRect, pm);
+            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, pm);
 
             Rectangle box = new Rectangle();
             Area costalArea = new Area();
@@ -187,19 +189,25 @@ public class MerisAeMaskOp extends MerisBasisOp {
                     // if 'correctOverLand',  compute for both ocean and land ...
                     if (x == 270 && y == 280)
                         System.out.println("");
-                    if (correctOverLand) {
-                        // if 'correctInCoastalAreas',  check if pixel is in coastal area...
-                        if (correctInCoastalAreas && !costalArea.contains(x, y)) {
-                            aeMask.setSample(x, y, 0);
-                        } else {
-                            aeMask.setSample(x, y, 1);
-                        }
+                    if (Math.abs(sza.getSampleFloat(x, y)) <= 80.0) {
+                        // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
+                        // functions (PM4, 2010/03/04)
+                        aeMask.setSample(x, y, 0);
                     } else {
-                         if (isLand.getSampleBoolean(x, y) ||
-                            (correctInCoastalAreas && !costalArea.contains(x, y))) {
-                            aeMask.setSample(x, y, 0);
+                        if (correctOverLand) {
+                            // if 'correctInCoastalAreas',  check if pixel is in coastal area...
+                            if (correctInCoastalAreas && !costalArea.contains(x, y)) {
+                                aeMask.setSample(x, y, 0);
+                            } else {
+                                aeMask.setSample(x, y, 1);
+                            }
                         } else {
-                            aeMask.setSample(x, y, 1);
+                             if (isLand.getSampleBoolean(x, y) ||
+                                (correctInCoastalAreas && !costalArea.contains(x, y))) {
+                                aeMask.setSample(x, y, 0);
+                            } else {
+                                aeMask.setSample(x, y, 1);
+                            }
                         }
                     }
                 }

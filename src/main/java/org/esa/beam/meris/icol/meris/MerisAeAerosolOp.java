@@ -199,17 +199,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         }
 
         String productType = l1bProduct.getProductType();
-//        if (convolveAlgo == 1) {
-//            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, nestedConvolution);
-//        } else if (convolveAlgo == 2) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, coeffW, "rho_ray_aerc_",
-//                    iaerConv, false, nestedConvolution);
-//        } else if (convolveAlgo == 3) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, coeffW, "rho_ray_aerc_",
-//                    iaerConv, true, nestedConvolution);
-//        } else {
-//            throw new OperatorException("Illegal convolution algorithm.");
-//        }
 
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
@@ -238,7 +227,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
             }
             Band inBand = l1bProduct.getBandAt(i);
             bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[i]);
             ProductUtils.copySpectralBandProperties(inBand, bands[i]);
             bands[i].setNoDataValueUsed(true);
             bands[i].setNoDataValue(noDataValue);
@@ -311,14 +299,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
 
-        Tile rhoW9Tile = targetTiles.get(rhoW9Band);
-        Tile rhoBrr9Tile = targetTiles.get(rhoBrr9Band);
-        Tile rhoW12Tile = targetTiles.get(rhoW12Band);
-        Tile rhoW13Tile = targetTiles.get(rhoW13Band);
-        Tile rhoA9Tile = targetTiles.get(rhoA9Band);
-        Tile rhoA12Tile = targetTiles.get(rhoA12Band);
-        Tile rhoA13Tile = targetTiles.get(rhoA13Band);
-
         Tile[] rhoAeAcRaster = getTargetTileGroup(targetTiles, rhoAeAcBands);
         Tile[] aeAerRaster = getTargetTileGroup(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
@@ -364,8 +344,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         }
                     }
 
-                    if (x == 270 && y == 260)
-                        System.out.println("");
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         double alpha;
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
@@ -492,9 +470,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                 continue;
                             }
 
-                            if (iwvl == 4 && x == 347 && y == 234)
-                                System.out.println("");
-
                             if (exportSeparateDebugBands) {
                                 aerosolDebug[iwvl].setSample(x, y, -1);
                                 fresnelDebug[iwvl].setSample(x, y, -1);
@@ -502,7 +477,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                             if (searchIAOT != -1) {
                                 // todo: extract methods also in this part!
                                 double roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
-//                                    roAerMean = convolveRhoRaec(convolver, rhoRaec, cloudFlags, x, y, targetRect, iaer, iwvl);
 
                                 float rhoRaecIwvl = rhoRaec[iwvl].getSampleFloat(x, y);
                                 Band band = (Band) rhoRaec[iwvl].getRasterDataNode();
@@ -578,85 +552,6 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         } catch (IOException e) {
             throw new OperatorException(e);
         }
-    }
-
-    private double convolveRhoRaec(RhoBracketAlgo.Convolver convolver, Tile[] rhoRaec, Tile cloudFlags, int x, int y, Rectangle targetRect, int iaer, int iwvl) {
-        double mean;
-
-        int sourceExtend;
-
-        final String productType = l1bProduct.getProductType();
-        if (productType.indexOf("_RR") > -1) {
-            sourceExtend = CoeffW.RR_KERNEL_SIZE;
-        } else {
-            sourceExtend = CoeffW.FR_KERNEL_SIZE;
-        }
-
-//        int xMin = Math.max(targetRect.x, x - sourceExtend);
-//        int xMax = Math.min(targetRect.x + targetRect.width, x + sourceExtend);
-//        int yMin = Math.max(targetRect.y, y - sourceExtend);
-//        int yMax = Math.min(targetRect.y + targetRect.height, y + sourceExtend);
-//
-//        boolean convolve = true;
-//        for (int i = xMin + 1; i < xMax; i++) {
-//            for (int j = yMin + 1; j < yMax; j++) {
-//                if (cloudFlags.getSampleBit(i, j, CloudClassificationOp.F_CLOUD)) {
-//                    convolve = false;
-//                    break;
-//                }
-//            }
-//            if (!convolve) {
-//                break;
-//            }
-//        }
-
-        int xMin = Math.max(targetRect.x,  x-9);
-        int xMax = Math.min(targetRect.x + targetRect.width-1,  x+9);
-        int yMin = Math.max(targetRect.y,  y-9);
-        int yMax = Math.min(targetRect.y + targetRect.height-1,  y+9);
-
-
-        boolean convolve = true;
-        for (int i = xMin; i <= xMax; i++) {
-            for (int j = yMin; j <= yMax; j++) {
-                if (cloudFlags.getSampleBit(i, j, CloudClassificationOp.F_CLOUD)) {
-                    convolve = false;
-                    break;
-                }
-            }
-            if (!convolve) {
-                break;
-            }
-        }
-
-//        if (!cloudFlags.getSampleBit(xMin, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMax, CloudClassificationOp.F_CLOUD)) {
-//            convolve = true;
-//        }
-
-        if (convolve) {
-            mean = convolver.convolveSample(x, y, iaer, iwvl);
-        } else {
-            mean = rhoRaec[iwvl].getSampleDouble(x, y);
-        }
-
-        return mean;
-    }
-
-    private int getAerosolModelIndex(double alpha) {
-        int iaer = (int) (Math.round(-(alpha * 10.0)) + 1);
-        if (iaer < 1) {
-            iaer = 1;
-        } else if (iaer > 26) {
-            iaer = 26;
-        }
-        return iaer;
     }
 
     public static class Spi extends OperatorSpi {

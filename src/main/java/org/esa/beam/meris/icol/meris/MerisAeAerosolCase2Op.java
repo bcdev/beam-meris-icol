@@ -233,7 +233,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
             }
             Band inBand = l1bProduct.getBandAt(i);
             bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[i]);
             ProductUtils.copySpectralBandProperties(inBand, bands[i]);
             bands[i].setNoDataValueUsed(true);
             bands[i].setNoDataValue(noDataValue);
@@ -309,12 +308,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
         Tile rhoW9Tile = targetTiles.get(rhoW9Band);
         Tile rhoBrr9Tile = targetTiles.get(rhoBrr9Band);
-        Tile aerosolPhaseFunctionTile = targetTiles.get(aerosolPhaseFunctionBand);
         Tile rhoW12Tile = targetTiles.get(rhoW12Band);
         Tile rhoW13Tile = targetTiles.get(rhoW13Band);
-        Tile rhoA9Tile = targetTiles.get(rhoA9Band);
-        Tile rhoA12Tile = targetTiles.get(rhoA12Band);
-        Tile rhoA13Tile = targetTiles.get(rhoA13Band);
 
         Tile[] rhoAeAcRaster = getTargetTileGroup(targetTiles, rhoAeAcBands);
         Tile[] aeAerRaster = getTargetTileGroup(targetTiles, aeAerBands);
@@ -452,7 +447,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         int ib9tabIndex = 0;
                         double rhoW_B9_Experimental = 0.0;
                         double delta705 = 0.0;
-//                        System.out.println("x,y:" + x + "," + y);
                         int searchIAOT = -1;
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             double rhoa = 0.0;
@@ -468,8 +462,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             double rhoBrr865Best = 0.0;
                             double rhoBrr775BestPrev = 0.0;
                             double rhoBrr865BestPrev = 0.0;
-                            if (x == 270 && y == 260)
-                                System.out.println("");
 
                             for (int irhow = 0; irhow < 20; irhow++) {    // begin loop B9 table
 //                            int irhow = 0;
@@ -505,8 +497,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                             searchIAOT = iiaot - 1;
                                         }
                                     } // end iaot loop
-                                    if (x == 270 && y == 260)
-                                         System.out.println("");
                                     if (searchIAOT != -1) {
                                         aot_B13[iaerC2 - 1] = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
                                                                                                        rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * 0.1;
@@ -535,8 +525,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                             aot865Best = aot_B13[iaerC2 - 1];
                                         }
                                     }
-                                    if (x == 270 && y == 260)
-                                        System.out.println("");
                                 }  // end iaer loop
                                 if (searchIAOT != -1) {
                                     double tauaConst705 = 0.1 * Math.pow((550.0 / 705.0), ((iaer - 1) / 10.0));
@@ -559,12 +547,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 }
                             } // end irhow loop
 
-                            if (x == 270 && y == 260)
-                                System.out.println("");
-
                             // retrieve experimental value of AOT (eq. 10):
-                             if (x == 270 && y == 260)
-                                System.out.println("");
                             delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
                             if (Math.abs(delta705) > 1.0) {
                                 delta705 = 0.0;
@@ -575,9 +558,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             // retrieve experimental value of rhoW in B9 (eq. 11):
                             if (jrhow > 0) {
                                 rhoW_B9_Experimental = rhoB9Table[jrhow] + delta705 * (rhoB9Table[jrhow - 1] - rhoB9Table[jrhow]);
-//                                rhoW_B9_Experimental = 0.0;
-//                                double rhoW_B12_Experimental = 0.0;
-//                                double rhoW_B13_Experimental = 0.0;
 
                                 double rhoW_B12_Experimental = rhoB12Table[jrhow] + delta705 * (rhoB12Table[jrhow - 1] - rhoB12Table[jrhow]);
                                 double rhoW_B13_Experimental = rhoB13Table[jrhow] + delta705 * (rhoB13Table[jrhow - 1] - rhoB13Table[jrhow]);
@@ -677,7 +657,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             rhoW13Tile.setSample(x, y, rhoW13);
 
                             rhoBrr9Tile.setSample(x, y, rhoW_B9_Experimental);
-//                            rhoBrr9Tile.setSample(x, y, delta705);
                         }
 
                         alphaIndexTile.setSample(x, y, iaer);
@@ -694,9 +673,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 continue;
                             }
 
-                            if (iwvl == 4 && x == 347 && y == 234)
-                                System.out.println("");
-
                             if (exportSeparateDebugBands) {
                                 aerosolDebug[iwvl].setSample(x, y, -1);
                                 fresnelDebug[iwvl].setSample(x, y, -1);
@@ -712,10 +688,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                     roAerMean = rhoBrr865Bracket06 + (iaer - 5) * deltaRhoBrr865Bracket06;
                                 } else {
                                     roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
-//                                    roAerMean = convolveRhoRaec(convolver, rhoRaec, cloudFlags, x, y, targetRect, iaer, iwvl);
                                 }
-
-//                                roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
 
                                 float rhoRaecIwvl = rhoRaec[iwvl].getSampleFloat(x, y);
                                 Band band = (Band) rhoRaec[iwvl].getRasterDataNode();
@@ -723,7 +696,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
-//                                System.out.println("x,y: " + x + "," + y + "//" + taua1 + "," + iaer);
                                 RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1 = 0.0;
@@ -792,75 +764,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         } catch (IOException e) {
             throw new OperatorException(e);
         }
-    }
-
-    private double convolveRhoRaec(RhoBracketAlgo.Convolver convolver, Tile[] rhoRaec, Tile cloudFlags, int x, int y, Rectangle targetRect, int iaer, int iwvl) {
-        double mean;
-
-        int sourceExtend;
-
-        final String productType = l1bProduct.getProductType();
-        if (productType.indexOf("_RR") > -1) {
-            sourceExtend = CoeffW.RR_KERNEL_SIZE;
-        } else {
-            sourceExtend = CoeffW.FR_KERNEL_SIZE;
-        }
-
-//        int xMin = Math.max(targetRect.x, x - sourceExtend);
-//        int xMax = Math.min(targetRect.x + targetRect.width, x + sourceExtend);
-//        int yMin = Math.max(targetRect.y, y - sourceExtend);
-//        int yMax = Math.min(targetRect.y + targetRect.height, y + sourceExtend);
-//
-//        boolean convolve = true;
-//        for (int i = xMin + 1; i < xMax; i++) {
-//            for (int j = yMin + 1; j < yMax; j++) {
-//                if (cloudFlags.getSampleBit(i, j, CloudClassificationOp.F_CLOUD)) {
-//                    convolve = false;
-//                    break;
-//                }
-//            }
-//            if (!convolve) {
-//                break;
-//            }
-//        }
-
-        int xMin = Math.max(targetRect.x,  x-9);
-        int xMax = Math.min(targetRect.x + targetRect.width-1,  x+9);
-        int yMin = Math.max(targetRect.y,  y-9);
-        int yMax = Math.min(targetRect.y + targetRect.height-1,  y+9);
-
-
-        boolean convolve = true;
-        for (int i = xMin; i <= xMax; i++) {
-            for (int j = yMin; j <= yMax; j++) {
-                if (cloudFlags.getSampleBit(i, j, CloudClassificationOp.F_CLOUD)) {
-                    convolve = false;
-                    break;
-                }
-            }
-            if (!convolve) {
-                break;
-            }
-        }
-
-//        if (!cloudFlags.getSampleBit(xMin, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMax, CloudClassificationOp.F_CLOUD)) {
-//            convolve = true;
-//        }
-
-        if (convolve) {
-            mean = convolver.convolveSample(x, y, iaer, iwvl);
-        } else {
-            mean = rhoRaec[iwvl].getSampleDouble(x, y);
-        }
-
-        return mean;
     }
 
     private int getAerosolModelIndex(double alpha) {

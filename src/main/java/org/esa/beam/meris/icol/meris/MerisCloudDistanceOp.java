@@ -97,14 +97,17 @@ public class MerisCloudDistanceOp extends MerisBasisOp {
 
         	Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), sourceRectangle, pm);
         	Tile isLand = getSourceTile(isLandBand, sourceRectangle, pm);
-            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRectangle, pm);
+            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle, pm);
 
             PixelPos startPix = new PixelPos();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 startPix.y = y;
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                    if (x == 127 && y == 85)
+                        System.out.println("");
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
-                    if (!isLand.getSampleBoolean(x, y) && !isCloud) {
+//                    if (!isLand.getSampleBoolean(x, y) && !isCloud) {
+                    if (!isCloud) {
                         startPix.x = x;
 
                         int trialLineLength = MAX_LINE_LENGTH;
@@ -124,7 +127,7 @@ public class MerisCloudDistanceOp extends MerisBasisOp {
                         if (lineEndPix.x == -1 || lineEndPix.y == -1) {
                             cloudDistance.setSample(x, y, NO_DATA_VALUE);
                         } else {
-                            final PixelPos cloudPix = findFirstCloudPix(startPix, lineEndPix, cloudFlags, isLand);
+                            final PixelPos cloudPix = findFirstCloudPix(startPix, lineEndPix, cloudFlags);
                             if (cloudPix != null) {
                             	cloudDistance.setSample(x, y, (int) NavigationUtils.distanceInMeters(geocoding, startPix, cloudPix));
                             } else {
@@ -145,7 +148,7 @@ public class MerisCloudDistanceOp extends MerisBasisOp {
     }
 
     private PixelPos findFirstCloudPix(final PixelPos startPixel, final PixelPos endPixel,
-                                       final Tile cloudFlags, final Tile isLand) {
+                                       final Tile cloudFlags) {
         ShapeRasterizer.LineRasterizer lineRasterizer = new ShapeRasterizer.BresenhamLineRasterizer();
         final PixelPos[] cloudPixs = new PixelPos[1];
         cloudPixs[0] = null;
@@ -155,8 +158,7 @@ public class MerisCloudDistanceOp extends MerisBasisOp {
             public void visit(int x, int y) {
                 if (cloudPixs[0] == null &&
                         isCloudRect.contains(x, y) &&
-                        cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD) &&
-                        !isLand.getSampleBoolean(x, y)) {
+                        cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD)) {
                     cloudPixs[0] = new PixelPos(x, y);
                 }
             }

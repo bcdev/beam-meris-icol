@@ -321,11 +321,9 @@ public class TmOp extends TmBasisOp {
         // --> same operator as for MERIS, provide necessary TPGs
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
         zmaxInput.put("l1b", conversionProduct);
-        zmaxInput.put("land", landProduct);
         zmaxInput.put("coastDistance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
-        zmaxParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
         zmaxParameters.put("correctOverLand", correctOverLand);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 

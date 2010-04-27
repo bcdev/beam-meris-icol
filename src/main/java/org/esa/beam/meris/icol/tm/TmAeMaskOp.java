@@ -1,6 +1,7 @@
 package org.esa.beam.meris.icol.tm;
 
 import com.bc.ceres.core.ProgressMonitor;
+import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
@@ -11,10 +12,10 @@ import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.RectangleExtender;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
 
 import java.awt.Rectangle;
 import java.awt.geom.Area;
@@ -135,6 +136,7 @@ public class TmAeMaskOp extends TmBasisOp {
         pm.beginTask("Processing frame...", sourceRect.height + relevantTragetRect.height);
         try {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, pm);
 
             Rectangle box = new Rectangle();
             Area costalArea = new Area();
@@ -152,20 +154,26 @@ public class TmAeMaskOp extends TmBasisOp {
             // even if land pixel is far away from water
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
                 for (int x = relevantTragetRect.x; x < relevantTragetRect.x + relevantTragetRect.width; x++) {
-                    // if 'correctOverLand',  compute for both ocean and land ...
-                    if (correctOverLand) {
-                        // if 'correctInCoastalAreas',  check if pixel is in coastal area...
-                        if (correctInCoastalAreas && !costalArea.contains(x, y)) {
-                            aeMask.setSample(x, y, 0);
-                        } else {
-                            aeMask.setSample(x, y, 1);
-                        }
+                    if (Math.abs(sza.getSampleFloat(x, y)) <= 80.0) {
+                        // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
+                        // functions (PM4, 2010/03/04)
+                        aeMask.setSample(x, y, 0);
                     } else {
-                         if (isLand.getSampleBoolean(x, y) ||
-                            (correctInCoastalAreas && !costalArea.contains(x, y))) {
-                            aeMask.setSample(x, y, 0);
+                        // if 'correctOverLand',  compute for both ocean and land ...
+                        if (correctOverLand) {
+                            // if 'correctInCoastalAreas',  check if pixel is in coastal area...
+                            if (correctInCoastalAreas && !costalArea.contains(x, y)) {
+                                aeMask.setSample(x, y, 0);
+                            } else {
+                                aeMask.setSample(x, y, 1);
+                            }
                         } else {
-                            aeMask.setSample(x, y, 1);
+                             if (isLand.getSampleBoolean(x, y) ||
+                                (correctInCoastalAreas && !costalArea.contains(x, y))) {
+                                aeMask.setSample(x, y, 0);
+                            } else {
+                                aeMask.setSample(x, y, 1);
+                            }
                         }
                     }
                 }

@@ -15,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.framework.gpf.internal.TileImpl;
+import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
@@ -28,7 +29,6 @@ import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
 
 import java.awt.Rectangle;
 import java.awt.image.Raster;
@@ -362,7 +362,7 @@ public class TmAeRayleighOp extends TmBasisOp {
                                 }
 
                                 if (exportSeparateDebugBands) {
-                                    fresnelDebug[b].setSample(x, y, aeRayFresnelLand);
+                                    fresnelDebug[b].setSample(x, y, aeRayFresnelLand+aeRayFresnelCloud);
                                     rayleighDebug[b].setSample(x, y, aeRayRay);
                                 }
 

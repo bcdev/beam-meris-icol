@@ -111,6 +111,8 @@ public class MerisCoastDistanceOp extends MerisBasisOp {
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
                 startPix.y = y;
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+                     if (x == 127 && y == 85)
+                        System.out.println("");
                     if (isWater.getSampleBoolean(x, y)) {
                         startPix.x = x;
 

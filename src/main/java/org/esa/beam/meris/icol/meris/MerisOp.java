@@ -26,6 +26,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -33,17 +34,15 @@ import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.TestImageOp;
 import org.esa.beam.meris.icol.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
-import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 
 import javax.media.jai.JAI;
 import javax.media.jai.TileCache;
+import java.awt.Dimension;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.awt.Dimension;
 
 
 /**
@@ -231,11 +230,9 @@ public class MerisOp extends Operator {
 
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
         zmaxInput.put("l1b", sourceProduct);
-        zmaxInput.put("land", landProduct);
         zmaxInput.put("coastDistance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
-        zmaxParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         zmaxParameters.put("correctOverLand", correctOverLand);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 

@@ -332,7 +332,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                             if (zmax.getSampleFloat(x, y) >= 0) {
                                 zmaxPart = Math.exp(-zmax.getSampleFloat(x, y) / HR);
                             }
-
+                            if (x == 40 && y == 190)
+                                System.out.println("");
                             double zmaxCloudPart = 0.0;
                             if (zmaxCloud.getSampleFloat(x, y) >= 0) {
                                 zmaxCloudPart = Math.exp(-zmaxCloud.getSampleFloat(x, y) / HR);
@@ -353,7 +354,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                             }
 
                             if (exportSeparateDebugBands) {
-                                fresnelDebug[b].setSample(x, y, aeRayFresnelLand);
+                                fresnelDebug[b].setSample(x, y, aeRayFresnelLand+aeRayFresnelCloud);
                                 rayleighDebug[b].setSample(x, y, aeRayRay);
                             }
 
