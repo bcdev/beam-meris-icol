@@ -32,7 +32,7 @@ import java.awt.Rectangle;
 @OperatorMetadata(alias = "Meris.Zmaxcloud",
         version = "1.0",
         internal = true,
-        authors = "Marco Zühlke",
+        authors = "Marco ZÃ¼hlke",
         copyright = "(c) 2007 by Brockmann Consult",
         description = "Zmax computation for cloud.")
 public class MerisZmaxCloudOp extends MerisBasisOp {
