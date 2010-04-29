@@ -123,49 +123,6 @@ public class MerisZmaxCloudOp extends MerisBasisOp {
                     double lz = 0.0;
                     int p0x = -1;
                     int p0y = -1;
-//                    do {
-//                        z = (z0 + z1) / 2;
-//                        final double pp0Length = z * Math.tan(vza.getSampleFloat(x, y) * MathUtils.DTOR);
-//                        final GeoPos pGeo = geoCoding.getGeoPos(pPix, null);
-//                        final GeoPos p0Geo = NavigationUtils.lineWithAngle(pGeo, pp0Length, azDiffRad);
-//                        final PixelPos p0Pix = geoCoding.getPixelPos(p0Geo, null);
-//
-//                        if (sourceRectangle.contains(p0Pix)) {
-//                            int p0x = MathUtils.floorInt(p0Pix.x);
-//                            int p0y = MathUtils.floorInt(p0Pix.y);
-//
-//                            final double ctp = cloudTopPressure.getSampleDouble(x, y);
-//                            double zCloud = 0.0;
-//                            if (ctp > 0.0) {
-//                                final double pressureCorrectionCloud = ctp / surfacePressure.getSampleDouble(x, y);
-//                                // cloud height
-//                                zCloud = 8.0 * Math.log(1.0 / pressureCorrectionCloud);
-//                            } else {
-//                                // RS, 2009/11/09:
-//                                zCloud = 12000.0;
-//                            }
-//
-//                            if (cloudDistance.getSampleInt(p0x, p0y) == -1) {
-//                                z1 = z;
-//                            } else {
-//                                final double l = cloudDistance.getSampleInt(p0x, p0y) -
-//                                    zCloud/Math.tan(sza.getSampleFloat(p0x, p0y) * MathUtils.DTOR);
-//                                final double lz = Math.tan(sza.getSampleFloat(p0x, p0y) * MathUtils.DTOR) * z;
-//                                if (lz > l) {
-//                                    z1 = z;
-//                                } else {
-//                                    z0 = z;
-//                                    found = true;
-//                                }
-//                            }
-//                        } else {
-//                            z1 = z;
-//                        }
-//                    } while ((z1 - z0) > 200);
-
-//                    if (found) {
-//                        zmax.setSample(x, y, (float)z);
-//                    }
 
                     double zMax = 30000.0;
 
