@@ -34,8 +34,6 @@ import java.util.Random;
  */
 public class CoeffW {
 
-//    public static final String FILENAME = "WHA3_FR_norayleigh";
-//    public static final String FILENAME = "WHA3_FR_norayleigh";
     public static final String FILENAME = "WHA3_FR_rayleigh_5s";
 
     public static final int FR_KERNEL_SIZE = 100;
