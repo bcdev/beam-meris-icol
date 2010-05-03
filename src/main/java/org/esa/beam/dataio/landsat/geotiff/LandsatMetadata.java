@@ -4,16 +4,17 @@ import org.esa.beam.framework.datamodel.MetadataAttribute;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.ProductData;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
 
-class Metadata {
+class LandsatMetadata {
 
     private final MetadataElement root;
 
-    Metadata(Reader mtlReader) throws IOException {
+    LandsatMetadata(Reader mtlReader) throws IOException {
          root = parseMTL(mtlReader);
     }
 
@@ -36,11 +37,11 @@ class Metadata {
                     currentElement.addElement(element);
                     currentElement = element;
                 }
-            } else if (line.startsWith("END_GROUP")) {
+            } else if (line.startsWith("END_GROUP") && currentElement != null) {
                 currentElement = currentElement.getParentElement();
             } else if (line.equals("END")) {
                 return base;
-            } else {
+            } else if (currentElement != null) {
                 MetadataAttribute attribute = createAttribute(line);
                 currentElement.addAttribute(attribute);
             }
@@ -78,15 +79,64 @@ class Metadata {
         return root;
     }
 
-    int getProductWidth() {
-        return root.getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF").getData().getElemInt();
+    Dimension getReflectanceDim() {
+        return getDimension("PRODUCT_SAMPLES_REF", "PRODUCT_LINES_REF");
     }
 
-    int getProductHeight() {
-        return root.getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF").getData().getElemInt();
+    Dimension getThermalDim() {
+        return getDimension("PRODUCT_SAMPLES_THM", "PRODUCT_LINES_THM");
+    }
+
+    Dimension getPanchromaticDim() {
+        return getDimension("PRODUCT_SAMPLES_PAN", "PRODUCT_LINES_PAN");
+    }
+
+    private Dimension getDimension(String widthAttributeName, String heightAttributeName) {
+        MetadataElement metadata = root.getElement("PRODUCT_METADATA");
+        MetadataAttribute widthAttribute = metadata.getAttribute(widthAttributeName);
+        MetadataAttribute heightAttribute = metadata.getAttribute(heightAttributeName);
+        if (widthAttribute != null && heightAttribute != null) {
+            int width = widthAttribute.getData().getElemInt();
+            int height = heightAttribute.getData().getElemInt();
+            return new Dimension(width, height);
+        } else {
+            return null;
+        }
     }
 
     String getProductType() {
         return root.getElement("PRODUCT_METADATA").getAttribute("PRODUCT_TYPE").getData().getElemString();
+    }
+
+    double getScalingFactor(String bandId) {
+        try {
+            MetadataElement minMaxRadiance = root.getElement("MIN_MAX_RADIANCE");
+            double lMax = minMaxRadiance.getAttributeDouble("LMAX_BAND" + bandId);
+            double lMin = minMaxRadiance.getAttributeDouble("LMIN_BAND" + bandId);
+
+            MetadataElement minMaxPixels = root.getElement("MIN_MAX_PIXEL_VALUE");
+            double qMax = minMaxPixels.getAttributeDouble("QCALMAX_BAND" + bandId);
+            double qMin = minMaxPixels.getAttributeDouble("QCALMIN_BAND" + bandId);
+
+            return (lMax - lMin) / (qMax - qMin);
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+     double getScalingOffset(String bandId) {
+        try {
+            MetadataElement minMaxRadiance = root.getElement("MIN_MAX_RADIANCE");
+            double lMax = minMaxRadiance.getAttributeDouble("LMAX_BAND" + bandId);
+            double lMin = minMaxRadiance.getAttributeDouble("LMIN_BAND" + bandId);
+
+            MetadataElement minMaxPixels = root.getElement("MIN_MAX_PIXEL_VALUE");
+            double qMax = minMaxPixels.getAttributeDouble("QCALMAX_BAND" + bandId);
+            double qMin = minMaxPixels.getAttributeDouble("QCALMIN_BAND" + bandId);
+
+            return lMin - ((lMax - lMin) / (qMax - qMin)) * qMin;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

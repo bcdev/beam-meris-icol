@@ -11,13 +11,13 @@ import java.io.InputStreamReader;
 import static org.junit.Assert.*;
 
 
-public class MetadataTest {
+public class LandsatMetadataTest {
 
     @Test
     public void testfoo() throws IOException {
-        InputStream stream = MetadataTest.class.getResourceAsStream("test_MTL.txt");
+        InputStream stream = LandsatMetadataTest.class.getResourceAsStream("test_MTL.txt");
         InputStreamReader reader = new InputStreamReader(stream);
-        MetadataElement element = new Metadata(reader).getMetaDataElementRoot();
+        MetadataElement element = new LandsatMetadata(reader).getMetaDataElementRoot();
         assertNotNull(element);
         assertEquals("L1_METADATA_FILE", element.getName());
         MetadataElement[] childElements = element.getElements();

@@ -61,6 +61,17 @@
             <parent>tools</parent>
             <placeAfter/>
         </action>
+        <action>
+            <class>org.esa.beam.visat.actions.ProductImportAction</class>
+            <id>importLandsatGeoTIFFProduct</id>
+            <helpId>importLandsatGeoTIFFProduct</helpId>
+            <formatName>LandsatGeoTIFF</formatName>
+            <useAllFileFilter>true</useAllFileFilter>
+            <text>Import Landsat (GeoTIFF) Product...</text>
+            <mnemonic>L</mnemonic>
+            <shortDescr>Import a Landsat (GeoTIFF) data product or product subset.</shortDescr>
+            <description>Import a Landsat (in GeoTIFF format) data product or product subset.</description>
+        </action>
     </extension>
     
     <extension point="beam-ui:helpSets">

@@ -22,7 +22,14 @@ public class LandsatGeotiffReaderPlugin implements ProductReaderPlugIn {
 
     @Override
     public DecodeQualification getDecodeQualification(Object input) {
-        return DecodeQualification.INTENDED;  //TODO
+        File dir = getFileInput(input);
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            if (isMetadataFile(file)) {
+                return DecodeQualification.INTENDED;
+            }
+        }
+        return DecodeQualification.UNABLE;
     }
 
     @Override
@@ -41,7 +48,7 @@ public class LandsatGeotiffReaderPlugin implements ProductReaderPlugIn {
     }
 
     @Override
-   public String[] getDefaultFileExtensions() {
+    public String[] getDefaultFileExtensions() {
         return DEFAULT_FILE_EXTENSIONS;
     }
 
@@ -53,6 +60,29 @@ public class LandsatGeotiffReaderPlugin implements ProductReaderPlugIn {
     @Override
     public BeamFileFilter getProductFileFilter() {
         return FILE_FILTER;
+    }
+
+
+    static File getFileInput(Object input) {
+        if (input instanceof String) {
+            return getFileInput(new File((String) input));
+        } else if (input instanceof File) {
+            return getFileInput((File) input);
+        }
+        return null;
+    }
+
+    static File getFileInput(File file) {
+        if (file.isDirectory()) {
+            return file;
+        } else {
+            return file.getParentFile();
+        }
+    }
+
+    static boolean isMetadataFile(File file) {
+        String filename = file.getName().toLowerCase();
+        return filename.endsWith("_mtl.txt");
     }
 
     private static class LandsatGeoTiffFileFilter extends BeamFileFilter {
@@ -68,11 +98,7 @@ public class LandsatGeotiffReaderPlugin implements ProductReaderPlugIn {
             if (file.isDirectory()) {
                 return true;
             }
-            String filename = file.getName().toLowerCase();
-            if (filename.endsWith("_mtl.txt")) {
-                return true;
-            }
-            return false;
+            return isMetadataFile(file);
         }
 
     }
