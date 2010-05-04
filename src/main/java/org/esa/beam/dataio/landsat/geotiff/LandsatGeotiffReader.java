@@ -29,6 +29,20 @@ public class LandsatGeotiffReader extends AbstractProductReader {
 
     private static final float[] wavelengths = {490, 560, 660, 830, 1670, 11500, 2240, 710};
     private static final float[] bandwidths = {66, 82, 67, 128, 217, 1000, 252, 380};
+    private static final Map<String, String> bandDescriptions = new HashMap<String,  String>();
+
+    static {
+        bandDescriptions.put("1", "Visible (30m)");
+        bandDescriptions.put("2", "Visible (30m)");
+        bandDescriptions.put("3", "Visible (30m)");
+        bandDescriptions.put("4", "Near-Infrared (30m)");
+        bandDescriptions.put("5", "Near-Infrared (30m)");
+        bandDescriptions.put("6", "Thermal (120m)");
+        bandDescriptions.put("61", "Thermal - Low Gain (60m)");
+        bandDescriptions.put("62", "Thermal - High Gain (60m)");
+        bandDescriptions.put("7", "Mid-Infrared (30m)");
+        bandDescriptions.put("8", "Panchromatic (15m)");
+    }
     
     private List<Product> bandProducts;
 
@@ -101,16 +115,15 @@ public class LandsatGeotiffReader extends AbstractProductReader {
                     Band band = product.addBand(bandName, srcBand.getDataType());
                     band.setNoDataValue(0.0);
                     band.setNoDataValueUsed(true);
-                    System.out.println("bandName = " + bandName);
-
-                    String bandIndex = bandNumber.substring(0, 1);
-                    System.out.println("bandIndex = " + bandIndex);
-                    int index = Integer.parseInt(bandIndex) - 1;
+                    String bandIndexNumber = bandNumber.substring(0, 1);
+                    int index = Integer.parseInt(bandIndexNumber) - 1;
                     band.setSpectralWavelength(wavelengths[index]);
                     band.setSpectralBandwidth(bandwidths[index]);
 
                     band.setScalingFactor(landsatMetadata.getScalingFactor(bandNumber));
                     band.setScalingOffset(landsatMetadata.getScalingOffset(bandNumber));
+
+                    band.setDescription(bandDescriptions.get(bandNumber));
                 }
             }
         }
@@ -139,7 +152,6 @@ public class LandsatGeotiffReader extends AbstractProductReader {
                 band.setSourceImage(image);
             }
         }
-
     }
 
     @Override
