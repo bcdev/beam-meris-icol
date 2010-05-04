@@ -30,6 +30,7 @@ public class LandsatGeotiffReader extends AbstractProductReader {
     private static final float[] wavelengths = {490, 560, 660, 830, 1670, 11500, 2240, 710};
     private static final float[] bandwidths = {66, 82, 67, 128, 217, 1000, 252, 380};
     private static final Map<String, String> bandDescriptions = new HashMap<String,  String>();
+    private static final String UNITS = "W/(m^2*sr*µm)";
 
     static {
         bandDescriptions.put("1", "Visible (30m)");
@@ -124,6 +125,7 @@ public class LandsatGeotiffReader extends AbstractProductReader {
                     band.setScalingOffset(landsatMetadata.getScalingOffset(bandNumber));
 
                     band.setDescription(bandDescriptions.get(bandNumber));
+                    band.setUnit(UNITS);
                 }
             }
         }
