@@ -80,4 +80,20 @@
             <path>doc/help/icol.hs</path>
         </helpSet>
     </extension>
+
+    <extension point="beam-core:rgbProfiles">
+        <rgbProfile>
+            <name>LandsatTM 3,2,1</name>
+            <red>radiance_3</red>
+            <green>radiance_2</green>
+            <blue>radiance_1</blue>
+        </rgbProfile>
+        <rgbProfile>
+            <name>LandsatTM 4,3,2</name>
+            <red>radiance_4</red>
+            <green>radiance_3</green>
+            <blue>radiance_2</blue>
+        </rgbProfile>
+    </extension>
+
 </module>
