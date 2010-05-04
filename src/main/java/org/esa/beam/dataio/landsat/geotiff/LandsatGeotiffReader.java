@@ -78,13 +78,21 @@ public class LandsatGeotiffReader extends AbstractProductReader {
         productDim = max(productDim, panDim);
 
         MetadataElement metadataElement = landsatMetadata.getMetaDataElementRoot();
-        Product product = new Product(mtlFile.getName(), landsatMetadata.getProductType(), productDim.width, productDim.height);
+        Product product = new Product(getProductName(mtlFile), landsatMetadata.getProductType(), productDim.width, productDim.height);
+        product.setFileLocation(mtlFile);
 
         product.getMetadataRoot().addElement(metadataElement);
         addBands(product, landsatMetadata, mtlFile.getParentFile());
 
         return product;
     }
+
+    private static String getProductName(File mtlfile) {
+        String filename = mtlfile.getName();
+        int extensionIndex = filename.toLowerCase().indexOf("_mtl.txt");
+        return filename.substring(0, extensionIndex);
+    }
+
 
     private static Dimension max(Dimension dim1, Dimension dim2) {
         if (dim2 != null) {
