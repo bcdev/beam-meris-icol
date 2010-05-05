@@ -66,7 +66,7 @@ public class MerisAeMaskOp extends MerisBasisOp {
     private Band isCoastlineBand;
 
     @SourceProduct(alias = "l1b")
-    private Product l1bProduct;
+    private Product sourceProduct;
     @SourceProduct(alias = "land")
     private Product landProduct;
     @TargetProduct
@@ -78,14 +78,14 @@ public class MerisAeMaskOp extends MerisBasisOp {
     @Parameter
     private boolean correctOverLand;
     @Parameter
-    private int correctionMode;
-    @Parameter
     private boolean reshapedConvolution;
+    @Parameter
+    private int correctionMode;
 
 
     @Override
     public void initialize() throws OperatorException {
-        targetProduct = createCompatibleProduct(l1bProduct, "ae_mask_" + l1bProduct.getName(), "AEMASK");
+        targetProduct = createCompatibleProduct(sourceProduct, "ae_mask_" + sourceProduct.getName(), "AEMASK");
 
         Band maskBand = null;
         double sourceExtendReduction = 1.0;
@@ -107,13 +107,12 @@ public class MerisAeMaskOp extends MerisBasisOp {
             maskBand = targetProduct.addBand(AE_MASK_AEROSOL, ProductData.TYPE_INT8);
         }
 
-        final String productType = l1bProduct.getProductType();
+        final String productType = sourceProduct.getProductType();
         if (productType.indexOf("_RR") > -1) {
             aeWidth = (int) (RR_WIDTH/sourceExtendReduction);
         } else {
             aeWidth = (int) (FR_WIDTH/sourceExtendReduction);
         }
-
 
         FlagCoding flagCoding = createFlagCoding();
         maskBand.setFlagCoding(flagCoding);
@@ -124,26 +123,28 @@ public class MerisAeMaskOp extends MerisBasisOp {
         isLandBand = bandArithmeticOp1.getTargetProduct().getBandAt(0);
         
         BandMathsOp bandArithmeticOp2 =
-            BandMathsOp.createBooleanExpressionBand("l1_flags.COASTLINE", l1bProduct);
+            BandMathsOp.createBooleanExpressionBand("l1_flags.COASTLINE", sourceProduct);
         isCoastlineBand = bandArithmeticOp2.getTargetProduct().getBandAt(0);
 
         // todo: the following works for nested convolution - check if this is sufficient as 'edge processing' (proposal 3.2.1.5)
         if (reshapedConvolution) {
             relevantRect = new Rectangle(0, 0,
-                                         l1bProduct.getSceneRasterWidth(),
-                                         l1bProduct.getSceneRasterHeight());
+                                         sourceProduct.getSceneRasterWidth(),
+                                         sourceProduct.getSceneRasterHeight());
         } else {
-             if (l1bProduct.getSceneRasterWidth() - 2 * aeWidth < 0) {
+             // (AE algorithm is not applied in this case)
+            if (sourceProduct.getSceneRasterWidth() - 2 * aeWidth < 0 ||
+                    sourceProduct.getSceneRasterHeight() - 2 * aeWidth < 0) {
                 throw new OperatorException("Product is too small to apply AE correction - must be at least " +
                         2 * aeWidth + "x" + 2 * aeWidth + " pixel.");
             }
             relevantRect = new Rectangle(aeWidth, aeWidth,
-                                         l1bProduct.getSceneRasterWidth() - 2 * aeWidth,
-                                         l1bProduct.getSceneRasterHeight() - 2 * aeWidth);
+                                         sourceProduct.getSceneRasterWidth() - 2 * aeWidth,
+                                         sourceProduct.getSceneRasterHeight() - 2 * aeWidth);
         }
-        rectCalculator = new RectangleExtender(new Rectangle(l1bProduct.getSceneRasterWidth(), l1bProduct.getSceneRasterHeight()), aeWidth, aeWidth);
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
+        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), aeWidth, aeWidth);
+        if (sourceProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
         }
     }
 
@@ -168,7 +169,7 @@ public class MerisAeMaskOp extends MerisBasisOp {
         try {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
             Tile isCoastline = getSourceTile(isCoastlineBand, sourceRect, pm);
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, pm);
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, pm);
 
             Rectangle box = new Rectangle();
             Area costalArea = new Area();
@@ -186,12 +187,12 @@ public class MerisAeMaskOp extends MerisBasisOp {
             // even if land pixel is far away from water 
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
                 for (int x = relevantTragetRect.x; x < relevantTragetRect.x + relevantTragetRect.width; x++) {
-                    // if 'correctOverLand',  compute for both ocean and land ...
                     if (Math.abs(sza.getSampleFloat(x, y)) > 80.0) {
                         // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
                         // functions (PM4, 2010/03/04)
                         aeMask.setSample(x, y, 0);
                     } else {
+                        // if 'correctOverLand',  compute for both ocean and land ...
                         if (correctOverLand) {
                             // if 'correctInCoastalAreas',  check if pixel is in coastal area...
                             if (correctInCoastalAreas && !costalArea.contains(x, y)) {
