@@ -19,9 +19,6 @@ package org.esa.beam.meris.icol;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.GeoCoding;
-import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
@@ -35,8 +32,6 @@ import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
 import org.esa.beam.meris.icol.meris.MerisCoastDistanceOp;
-import org.esa.beam.meris.icol.utils.NavigationUtils;
-import org.esa.beam.util.RectangleExtender;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
@@ -52,11 +47,6 @@ public class ZmaxOp extends MerisBasisOp {
 
     public static final String ZMAX = "zmax";
 
-    private static final int SOURCE_EXTEND_RR = 80;
-    private static final int SOURCE_EXTEND_FR = 320;
-
-    private RectangleExtender rectCalculator;
-    private GeoCoding geoCoding;
     private Band isAemBand;
 
     @SourceProduct(alias="l1b")
@@ -77,83 +67,43 @@ public class ZmaxOp extends MerisBasisOp {
         zmaxBand.setNoDataValue(-1);
         zmaxBand.setNoDataValueUsed(true);
 
-        final String productType = l1bProduct.getProductType();
-        int sourceExtend;
-        if (productType.indexOf("_RR") > -1) {
-            sourceExtend = SOURCE_EXTEND_RR;
+//        BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep", aeMaskProduct);
+        BandMathsOp bandArithmeticOp;
+        if (correctOverLand) {
+            bandArithmeticOp = BandMathsOp.createBooleanExpressionBand("true", aeMaskProduct);
         } else {
-            sourceExtend = SOURCE_EXTEND_FR;
+            bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep", aeMaskProduct);
         }
-        geoCoding = l1bProduct.getGeoCoding();
-        rectCalculator = new RectangleExtender(new Rectangle(l1bProduct.getSceneRasterWidth(), l1bProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
-        
-        BandMathsOp bandArithmeticOp =
-            BandMathsOp.createBooleanExpressionBand(MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep", aeMaskProduct);
         isAemBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
-
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
     }
     
     @Override
     public void computeTile(Band band, Tile zmax, ProgressMonitor pm) throws OperatorException {
     	
     	final Rectangle targetRectangle = zmax.getRectangle();
-        final Rectangle sourceRectangle = rectCalculator.extend(targetRectangle);
         final int size = targetRectangle.height * targetRectangle.width;
         pm.beginTask("Processing frame...", size + 1);
         try {
-        	Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), sourceRectangle, pm);
-        	Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRectangle, pm);
-        	Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), sourceRectangle, pm);
-        	Tile coastDistance = getSourceTile(ldProduct.getBand("coast_distance"), sourceRectangle, pm);
-        	Tile isAEM = getSourceTile(isAemBand, sourceRectangle, pm);
+        	Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRectangle, pm);
+        	Tile coastDistance = getSourceTile(ldProduct.getBand("coast_distance"), targetRectangle, pm);
+        	Tile isAEM = getSourceTile(isAemBand, targetRectangle, pm);
 
-            PixelPos pPix = new PixelPos();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
-                pPix.y = y;
                 for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
-                    zmax.setSample(x, y, -1);
-                    if (x == 150 && y == 200)
-                    if (!correctOverLand && !isAEM.getSampleBoolean(x, y)) {
-                        continue;
-                    }
-                    pPix.x = x;
-                    final double azDiffRad = computeAzimuthDifferenceRad(vaa.getSampleFloat(x, y), saa.getSampleFloat(x, y));
-                    int l;
-                    int p0x;
-                    int p0y;
-
-                    double zMax;
-
-                    final double pp0Length = 0.0;
-                    final GeoPos pGeo = geoCoding.getGeoPos(pPix, null);
-                    final GeoPos p0Geo = NavigationUtils.lineWithAngle(pGeo, pp0Length, azDiffRad);
-                    final PixelPos p0Pix = geoCoding.getPixelPos(p0Geo, null);
-
-                    if (sourceRectangle.contains(p0Pix)) {
-                        p0x = MathUtils.floorInt(p0Pix.x);
-                        p0y = MathUtils.floorInt(p0Pix.y);
-                        float szaValue = sza.getSampleFloat(p0x, p0y);
-                        l = coastDistance.getSampleInt(p0x, p0y);
-                        if (l == MerisCoastDistanceOp.NO_DATA_VALUE) {
-                            zmax.setSample(x, y, -1);
-                        } else {
-                            zMax = l / Math.tan(szaValue * MathUtils.DTOR);
-                            zmax.setSample(x, y, (float) (zMax));
+                    double zMaxValue = -1;
+                    if (isAEM.getSampleBoolean(x, y)) {
+                        int l = coastDistance.getSampleInt(x, y);
+                        if (l != MerisCoastDistanceOp.NO_DATA_VALUE) {
+                            float szaValue = sza.getSampleFloat(x, y);
+                            zMaxValue = l / Math.tan(szaValue * MathUtils.DTOR);
                         }
                     }
+                    zmax.setSample(x, y, (float) (zMaxValue));
                 }
             }
         } finally {
             pm.done();
         }
-    }
-
-    private double computeAzimuthDifferenceRad(final double viewAzimuth,
-                                               final double sunAzimuth) {
-        return Math.acos(Math.cos(MathUtils.DTOR * (viewAzimuth - sunAzimuth)));
     }
 
 

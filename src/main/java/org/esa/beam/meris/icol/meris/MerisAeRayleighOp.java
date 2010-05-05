@@ -42,6 +42,7 @@ import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.RhoBracketAlgo;
 import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
+import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
@@ -262,8 +263,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-            Tile zmax = getSourceTile(zmaxProduct.getBand("zmax"), targetRect, pm);
-            Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand("zmaxCloud"), targetRect, pm);
+            Tile zmax = getSourceTile(zmaxProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
+            Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
 

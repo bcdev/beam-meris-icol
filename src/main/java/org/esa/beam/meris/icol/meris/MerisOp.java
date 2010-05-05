@@ -34,8 +34,7 @@ import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.ZmaxOp;
-import org.esa.beam.meris.icol.common.ZmaxCloudOp;
+import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
 import javax.media.jai.JAI;
@@ -231,17 +230,25 @@ public class MerisOp extends Operator {
 
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
         zmaxInput.put("l1b", sourceProduct);
-        zmaxInput.put("coastDistance", coastDistanceProduct);
+        zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
-        zmaxParameters.put("correctOverLand", correctOverLand);
+        String aeMaskExpression = MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep";
+        if (correctOverLand) {
+            aeMaskExpression = "true";
+        }
+        zmaxParameters.put("aeMaskExpression", aeMaskExpression);
+        zmaxParameters.put("distanceBandName", MerisCoastDistanceOp.COAST_DISTANCE);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(4);
         zmaxCloudInput.put("l1b", sourceProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
-        zmaxCloudInput.put("cloudDistance", cloudDistanceProduct);
-        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxCloudOp.class), emptyParams, zmaxCloudInput);
+        zmaxCloudInput.put("distance", cloudDistanceProduct);
+        Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(1);
+        zmaxCloudParameters.put("aeMaskExpression", MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep");
+        zmaxCloudParameters.put("distanceBandName", MerisCloudDistanceOp.CLOUD_DISTANCE);
+        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters, zmaxCloudInput);
 
         // test: create constant reflectance input
         Map<String, Product> constInput = new HashMap<String, Product>(1);

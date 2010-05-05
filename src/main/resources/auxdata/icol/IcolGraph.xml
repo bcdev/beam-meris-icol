@@ -99,10 +99,10 @@
 
     <node>
         <id>zmax</id>
-        <operator>org.esa.beam.meris.icol.ZmaxOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.common.ZmaxOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
-            <landDistance>landDistance</landDistance>
+            <distance>landDistance</distance>
             <ae_mask>aemask</ae_mask>
         </sources>
     </node>

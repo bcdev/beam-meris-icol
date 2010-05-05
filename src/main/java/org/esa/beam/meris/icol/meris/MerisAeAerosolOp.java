@@ -41,6 +41,7 @@ import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.RhoBracketAlgo;
 import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
+import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.util.BitSetter;
@@ -280,8 +281,8 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
 
         Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
-        Tile zmax = getSourceTile(zmaxProduct.getBand("zmax"), targetRect, pm);
-        Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand("zmaxCloud"), targetRect, pm);
+        Tile zmax = getSourceTile(zmaxProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
+        Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
         Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
         Tile[] rhoRaec = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];

@@ -22,48 +22,50 @@ import org.esa.beam.util.math.MathUtils;
 import java.awt.*;
 
 /**
- * Operator providing Zmax for cloud contribution in AE correction.
+ * Operator providing Zmax for land or cloud contribution in AE correction.
  *
  * @author Olaf Danne
  */
-@OperatorMetadata(alias = "ZmaxCloud",
+@OperatorMetadata(alias = "Zmax",
         version = "1.0",
         internal = true,
-        authors = "Marco Zühlke,Olaf Danne",
+        authors = "Marco Zühlke, Olaf Danne",
         copyright = "(c) 2007-2010 by Brockmann Consult",
-        description = "Zmax computation for cloud.")
-public class ZmaxCloudOp extends Operator {
+        description = "Zmax computation for land or cloud contribution in AE correction.")
+public class ZmaxOp extends Operator {
 
-    public static final String ZMAX_CLOUD = "zmaxcloud";
+    public static final String ZMAX = "zmax";
 
     private static final int NO_DATA_VALUE = -1;
 
     private Band isAemBand;
-    private Band cloudDistanceBand;
-    private double cloudDistanceNoDataValue;
+    private Band distanceBand;
+    private double distanceNoDataValue;
 
     @SourceProduct(alias="l1b")
     private Product l1bProduct;
     @SourceProduct(alias="ae_mask")
     private Product aeMaskProduct;
-    @SourceProduct(alias="cloudDistance")
-    private Product cdProduct;
+    @SourceProduct(alias="distance")
+    private Product distanceProduct;
     @TargetProduct
     private Product targetProduct;
-    @Parameter(defaultValue = MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep") //TODO replace with sensor neutral constant
+    @Parameter(notEmpty = true)
     private String aeMaskExpression;
+    @Parameter(notEmpty = true)
+    private String distanceBandName;
 
     @Override
     public void initialize() throws OperatorException {
-    	targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "zmaxcloud_" + l1bProduct.getName(), "ZMAXCLOUD");
-        Band zmaxBand = targetProduct.addBand(ZMAX_CLOUD, ProductData.TYPE_FLOAT32);
+    	targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "zmax_" + l1bProduct.getName(), "ZMAX");
+        Band zmaxBand = targetProduct.addBand(ZMAX, ProductData.TYPE_FLOAT32);
         zmaxBand.setNoDataValue(NO_DATA_VALUE);
         zmaxBand.setNoDataValueUsed(true);
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(aeMaskExpression, aeMaskProduct);
         isAemBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
-        cloudDistanceBand = cdProduct.getBand("cloud_distance");
-        cloudDistanceNoDataValue = cloudDistanceBand.getNoDataValue();
+        distanceBand = distanceProduct.getBand(distanceBandName);
+        distanceNoDataValue = distanceBand.getNoDataValue();
     }
 
     @Override
@@ -73,7 +75,7 @@ public class ZmaxCloudOp extends Operator {
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
         	Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, SubProgressMonitor.create(pm, 1));
-            Tile cloudDistance = getSourceTile(cloudDistanceBand, targetRect, SubProgressMonitor.create(pm, 1));
+            Tile cloudDistance = getSourceTile(distanceBand, targetRect, SubProgressMonitor.create(pm, 1));
         	Tile isAeMask = getSourceTile(isAemBand, targetRect, SubProgressMonitor.create(pm, 1));
 
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
@@ -81,7 +83,7 @@ public class ZmaxCloudOp extends Operator {
                     float zMaxValue = NO_DATA_VALUE;
                     if (isAeMask.getSampleBoolean(x, y)) {
                         int distance = cloudDistance.getSampleInt(x, y);
-                        if (distance != cloudDistanceNoDataValue) {
+                        if (distance != distanceNoDataValue) {
                             float szaValue = sza.getSampleFloat(x, y);
                             zMaxValue = (float) (distance / Math.tan(szaValue * MathUtils.DTOR));
                         }
@@ -98,7 +100,7 @@ public class ZmaxCloudOp extends Operator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(ZmaxCloudOp.class);
+            super(ZmaxOp.class);
         }
     }
 }

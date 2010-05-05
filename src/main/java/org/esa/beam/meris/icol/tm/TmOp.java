@@ -14,9 +14,10 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.ZmaxOp;
-import org.esa.beam.meris.icol.common.ZmaxCloudOp;
+import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
+import org.esa.beam.meris.icol.meris.MerisCloudDistanceOp;
+import org.esa.beam.meris.icol.meris.MerisCoastDistanceOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
 import java.text.ParseException;
@@ -322,10 +323,15 @@ public class TmOp extends TmBasisOp {
         // --> same operator as for MERIS, provide necessary TPGs
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
         zmaxInput.put("l1b", conversionProduct);
-        zmaxInput.put("coastDistance", coastDistanceProduct);
+        zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
-        zmaxParameters.put("correctOverLand", correctOverLand);
+        String aeMaskExpression = TmAeMaskOp.AE_MASK_RAYLEIGH + ".aep";
+        if (correctOverLand) {
+            aeMaskExpression = "true";
+        }
+        zmaxParameters.put("aeMaskExpression", aeMaskExpression);
+        zmaxParameters.put("distanceBandName", TmCoastDistanceOp.COAST_DISTANCE);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 
 
@@ -334,9 +340,11 @@ public class TmOp extends TmBasisOp {
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(5);
         zmaxCloudInput.put("l1b", conversionProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
-        zmaxCloudInput.put("cloudDistance", cloudDistanceProduct);
+        zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>();
-        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxCloudOp.class), zmaxCloudParameters, zmaxCloudInput);
+        zmaxCloudParameters.put("aeMaskExpression", TmAeMaskOp.AE_MASK_RAYLEIGH + ".aep");
+        zmaxCloudParameters.put("distanceBandName", TmCloudDistanceOp.CLOUD_DISTANCE);
+        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters, zmaxCloudInput);
 
 
         // AE Rayleigh:
