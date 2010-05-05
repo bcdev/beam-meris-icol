@@ -161,59 +161,68 @@ public class TmGeometryOp extends TmBasisOp {
             int x2 = sourceRectangle.x + sourceRectangle.width - 1;
             int y1 = sourceRectangle.y;
             int y2 = sourceRectangle.y + sourceRectangle.height - 1;
+            int tx1 = targetTile.getRectangle().x;
+            int tx2 = targetTile.getRectangle().x + targetTile.getRectangle().width - 1;
+            int ty1 = targetTile.getRectangle().y;
+            int ty2 = targetTile.getRectangle().y + targetTile.getRectangle().height - 1;
 
 
             for (int iTarY = y1+ aveBlock; iTarY <= y2+ aveBlock; iTarY+=2* aveBlock +1) {
                 for (int iTarX = x1+ aveBlock; iTarX <= x2+ aveBlock; iTarX+=2* aveBlock +1) {
                     int iX = ((iTarX-x1- aveBlock)/(2* aveBlock +1));
                     int iY = ((iTarY-y1- aveBlock)/(2* aveBlock +1));
+                    // todo: make sure they are within tile boundary values
+                    if (iX >= tx1 && iX <= tx2 && iY >= ty1 && iY <= ty2) {
 
-                    final PixelPos pixelPos = new PixelPos(iX, iY);
+                        final PixelPos pixelPos = new PixelPos(iX, iY);
 //                    final GeoPos geoPos = geocoding.getGeoPos(pixelPos, null);
-                    final GeoPos geoPosAve = getGeoposSpatialAverage(iTarX, iTarY);
+                        final GeoPos geoPosAve = getGeoposSpatialAverage(iTarX, iTarY);
 
-                    final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
-                    final double saa = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getAzimuth();
-                    final double vza = getViewZenithAngle(iTarX, iTarY);
-                    final double vaa = getViewAzimuthAngle(iTarX, iTarY);
+                        final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
+                        final double saa = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getAzimuth();
+                        final double vza = getViewZenithAngle(iTarX, iTarY);
+                        final double vaa = getViewAzimuthAngle(iTarX, iTarY);
 
-                    final double mus = Math.cos(sza * MathUtils.DTOR);
-                    final double muv = Math.cos(vza * MathUtils.DTOR);
-                    final double nus = Math.sin(sza * MathUtils.DTOR);
-                    final double nuv = Math.sin(vza * MathUtils.DTOR);
+                        final double mus = Math.cos(sza * MathUtils.DTOR);
+                        final double muv = Math.cos(vza * MathUtils.DTOR);
+                        final double nus = Math.sin(sza * MathUtils.DTOR);
+                        final double nuv = Math.sin(vza * MathUtils.DTOR);
 
-                    final double phi = saa - vaa;
+                        final double phi = saa - vaa;
 
-                    if (targetBand.getName().equals("latitude")) {
+                        if (targetBand.getName().equals("latitude")) {
 //                        System.out.println("ix, iy: " + iX + "," + iY + " // " + iTarX + "," + iTarY);
-                        targetTile.setSample(iX, iY, geoPosAve.getLat());
-                    } else if (targetBand.getName().equals("longitude")) {
-                        targetTile.setSample(iX, iY, geoPosAve.getLon());
-                    } else if (targetBand.getName().equals("altitude")) {
-                        final float altAve = getAltitudeSpatialAverage(iTarX, iTarY);
-                        targetTile.setSample(iX, iY, altAve);
-                    } else if (targetBand.getName().equals("sunZenith")) {
-                        targetTile.setSample(iX, iY, sza);
-                    }  else if (targetBand.getName().equals("sunAzimuth")) {
-                        targetTile.setSample(iX, iY, saa);
-                    } else if (targetBand.getName().equals("viewZenith")) {
-                        targetTile.setSample(iX, iY, vza);
-                    } else if (targetBand.getName().equals("viewAzimuth")) {
-                        targetTile.setSample(iX, iY, vaa);
-                    } else if (targetBand.getName().equals("airMass")) {
-                        final double airMass = 1.0/mus + 1.0/muv;
-                        targetTile.setSample(iX, iY, airMass);
-                    } else if (targetBand.getName().equals("scatteringAngle")) {
-                        //compute the COSINE of the back scattering angle
-                        final double csb = mus * muv + nus * nuv * Math.cos(phi * MathUtils.DTOR);
-                        targetTile.setSample(iX, iY, csb);
-                    } else if (targetBand.getName().equals("specularAngle")) {
-                         //compute the COSINE of the forward scattering angle
-                        final double csf = mus * muv - nus * nuv * Math.cos(phi * MathUtils.DTOR);
-                        targetTile.setSample(iX, iY, csf);
-                    } else if (radianceSourceTile != null) {
-                        final float radianceAve = getRadianceSpatialAverage(radianceSourceTile, iTarX, iTarY);
-                        targetTile.setSample(iX, iY, radianceAve);
+                            targetTile.setSample(iX, iY, geoPosAve.getLat());
+                        } else if (targetBand.getName().equals("longitude")) {
+                            targetTile.setSample(iX, iY, geoPosAve.getLon());
+                        } else if (targetBand.getName().equals("altitude")) {
+                            final float altAve = getAltitudeSpatialAverage(iTarX, iTarY);
+                            targetTile.setSample(iX, iY, altAve);
+                        } else if (targetBand.getName().equals("sunZenith")) {
+//                            System.out.println("iTarX, iTarY, iX, iY: " + iTarX + "," + iTarY + "," + iX + "," + iY +
+//                                    "// " + targetTile.getRectangle());
+                            targetTile.setSample(iX, iY, sza);
+                        } else if (targetBand.getName().equals("sunAzimuth")) {
+                            targetTile.setSample(iX, iY, saa);
+                        } else if (targetBand.getName().equals("viewZenith")) {
+                            targetTile.setSample(iX, iY, vza);
+                        } else if (targetBand.getName().equals("viewAzimuth")) {
+                            targetTile.setSample(iX, iY, vaa);
+                        } else if (targetBand.getName().equals("airMass")) {
+                            final double airMass = 1.0 / mus + 1.0 / muv;
+                            targetTile.setSample(iX, iY, airMass);
+                        } else if (targetBand.getName().equals("scatteringAngle")) {
+                            //compute the COSINE of the back scattering angle
+                            final double csb = mus * muv + nus * nuv * Math.cos(phi * MathUtils.DTOR);
+                            targetTile.setSample(iX, iY, csb);
+                        } else if (targetBand.getName().equals("specularAngle")) {
+                            //compute the COSINE of the forward scattering angle
+                            final double csf = mus * muv - nus * nuv * Math.cos(phi * MathUtils.DTOR);
+                            targetTile.setSample(iX, iY, csf);
+                        } else if (radianceSourceTile != null) {
+                            final float radianceAve = getRadianceSpatialAverage(radianceSourceTile, iTarX, iTarY);
+                            targetTile.setSample(iX, iY, radianceAve);
+                        }
                     }
                 }
                 pm.worked(1);
@@ -256,6 +265,43 @@ public class TmGeometryOp extends TmBasisOp {
 
         return radianceAve;
     }
+
+//    private float getRadianceSpatialAverage(Tile radianceTile, int iTarX, int iTarY) throws Exception {
+//
+//        float radianceAve = 0.0f;
+//
+//        int n = 0;
+//        final int minX = Math.max(0,iTarX-aveBlock);
+//        final int minY = Math.max(0,iTarY-aveBlock);
+//        final int rasterWidth = sourceProduct.getSceneRasterWidth();
+//        final int rasterHeight = sourceProduct.getSceneRasterHeight();
+////        final int maxX = Math.min(rasterWidth -1,iTarX+aveBlock);
+////        final int maxY = Math.min(rasterHeight -1,iTarY+aveBlock);
+////        final int maxX = Math.min(radianceTile.getWidth()-1,iTarX+aveBlock);
+////        final int maxY = Math.min(radianceTile.getHeight()-1,iTarY+aveBlock);
+//
+//        final int maxX = (iTarX + aveBlock >= rasterWidth) ? (rasterWidth- iTarX - aveBlock) : aveBlock;
+//        final int maxY = (iTarY + aveBlock >= rasterHeight) ? (rasterHeight - iTarY - aveBlock) : aveBlock;
+//
+//        for (int iy = minY; iy <= maxY; iy++) {
+//            for (int ix = minX; ix <= maxX; ix++) {
+//                final float radiance = radianceTile.getSampleFloat(ix, iy);
+//                boolean valid = (Double.compare(radiance, NO_DATA_VALUE) != 0);
+//                if (valid) {
+//                    n++;
+//                    radianceAve += radiance;
+//                }
+//            }
+//        }
+//        if (n > 0) {
+//            radianceAve /= n;
+//        } else {
+//            radianceAve = NO_DATA_VALUE;
+//        }
+//
+//        return radianceAve;
+//    }
+
 
     private float getAltitudeSpatialAverage(int iTarX, int iTarY) throws Exception {
 

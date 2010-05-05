@@ -16,8 +16,6 @@ import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
-import org.esa.beam.meris.icol.meris.MerisCloudDistanceOp;
-import org.esa.beam.meris.icol.meris.MerisCoastDistanceOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
 import java.text.ParseException;
@@ -51,6 +49,8 @@ public class TmOp extends TmBasisOp {
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0")
     private double userAot;
+    @Parameter(defaultValue = "false")
+    private boolean icolAerosolCase2 = false;
     @Parameter(defaultValue = "true")
     private boolean icolAerosolForWater = true;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25")

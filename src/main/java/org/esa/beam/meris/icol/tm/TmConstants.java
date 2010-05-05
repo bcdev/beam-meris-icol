@@ -8,13 +8,20 @@ package org.esa.beam.meris.icol.tm;
  */
 public interface TmConstants {
 
-    String LANDSAT5_RADIANCE_1_BAND_NAME = "radiance_1_blue_30m";
-    String LANDSAT5_RADIANCE_2_BAND_NAME = "radiance_2_green_30m";
-    String LANDSAT5_RADIANCE_3_BAND_NAME = "radiance_3_red_30m";
-    String LANDSAT5_RADIANCE_4_BAND_NAME = "radiance_4_nearir_30m";
-    String LANDSAT5_RADIANCE_5_BAND_NAME = "radiance_5_midir_30m";
-    String LANDSAT5_RADIANCE_6_BAND_NAME = "radiance_6_thermalir_120m";
-    String LANDSAT5_RADIANCE_7_BAND_NAME = "radiance_7_midir_30m";
+//    String LANDSAT5_RADIANCE_1_BAND_NAME = "radiance_1_blue_30m";
+//    String LANDSAT5_RADIANCE_2_BAND_NAME = "radiance_2_green_30m";
+//    String LANDSAT5_RADIANCE_3_BAND_NAME = "radiance_3_red_30m";
+//    String LANDSAT5_RADIANCE_4_BAND_NAME = "radiance_4_nearir_30m";
+//    String LANDSAT5_RADIANCE_5_BAND_NAME = "radiance_5_midir_30m";
+//    String LANDSAT5_RADIANCE_6_BAND_NAME = "radiance_6_thermalir_120m";
+//    String LANDSAT5_RADIANCE_7_BAND_NAME = "radiance_7_midir_30m";
+    String LANDSAT5_RADIANCE_1_BAND_NAME = "radiance_1";
+    String LANDSAT5_RADIANCE_2_BAND_NAME = "radiance_2";
+    String LANDSAT5_RADIANCE_3_BAND_NAME = "radiance_3";
+    String LANDSAT5_RADIANCE_4_BAND_NAME = "radiance_4";
+    String LANDSAT5_RADIANCE_5_BAND_NAME = "radiance_5";
+    String LANDSAT5_RADIANCE_6_BAND_NAME = "radiance_6";
+    String LANDSAT5_RADIANCE_7_BAND_NAME = "radiance_7";
 
     int LANDSAT5_RADIANCE_1_BAND_INDEX = 0;
     int LANDSAT5_RADIANCE_2_BAND_INDEX = 1;

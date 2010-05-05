@@ -66,7 +66,6 @@
        
     </dependencies>
 
-    <!--
 	<repositories>
         <repository>
             <id>bc-mvn-repo-http</id>
@@ -87,7 +86,7 @@
             <url>http://maven.geotools.fr/repository</url>
         </repository>
     </repositories>
-	
+
 	<distributionManagement>
         <repository>
             <id>bc-mvn-repo</id>
@@ -102,7 +101,6 @@
 			<uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
-	-->
 
     <build>
         <plugins>

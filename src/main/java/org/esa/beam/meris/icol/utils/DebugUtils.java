@@ -95,7 +95,7 @@ public class DebugUtils {
         }
         // (xb) rho_brr_9
         for (Band band : aeAerProduct.getBands()) {
-            if (band.getName().equals("rho_brr_9")) {
+            if (band.getName().startsWith("rho_brr_")) {
                 targetProduct.addBand(band);
             }
         }

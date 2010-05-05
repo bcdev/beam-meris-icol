@@ -74,9 +74,11 @@ public class IcolDialog extends SingleTargetProductDialog {
             return false;
         }
         final String productType = sourceProduct.getProductType();
+        final String productName = sourceProduct.getName();
+        final int productNumBands = sourceProduct.getBandGroup().getNodeCount();
         if (!EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() &&
-                !productType.startsWith("LANDSAT")) {
-            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM source product.");
+                !(productType.equals("L1T") && productName.startsWith("L5") && productNumBands == 7)) {
+            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF source product.");
             return false;
         }
         if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
@@ -96,8 +98,10 @@ public class IcolDialog extends SingleTargetProductDialog {
     @Override
     protected Product createTargetProduct() throws Exception {
         Product outputProduct = null;
-        String productType = model.getSourceProduct().getProductType();
-        if (productType.startsWith("LANDSAT")) {
+        final Product sourceProduct = model.getSourceProduct();
+        String productType = sourceProduct.getProductType();
+        final String productName = sourceProduct.getName();
+        if ((productType.equals("L1T") && productName.startsWith("L5"))) {
             outputProduct = createLandsat5Product();
         } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
