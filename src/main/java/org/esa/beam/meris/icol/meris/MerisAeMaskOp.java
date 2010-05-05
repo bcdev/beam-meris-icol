@@ -187,9 +187,7 @@ public class MerisAeMaskOp extends MerisBasisOp {
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
                 for (int x = relevantTragetRect.x; x < relevantTragetRect.x + relevantTragetRect.width; x++) {
                     // if 'correctOverLand',  compute for both ocean and land ...
-                    if (x == 270 && y == 280)
-                        System.out.println("");
-                    if (Math.abs(sza.getSampleFloat(x, y)) <= 80.0) {
+                    if (Math.abs(sza.getSampleFloat(x, y)) > 80.0) {
                         // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
                         // functions (PM4, 2010/03/04)
                         aeMask.setSample(x, y, 0);
