@@ -35,6 +35,7 @@ import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.ZmaxOp;
+import org.esa.beam.meris.icol.common.ZmaxCloudOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
 import javax.media.jai.JAI;
@@ -239,9 +240,8 @@ public class MerisOp extends Operator {
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(4);
         zmaxCloudInput.put("l1b", sourceProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
-        zmaxCloudInput.put("cloud", cloudProduct);
         zmaxCloudInput.put("cloudDistance", cloudDistanceProduct);
-        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisZmaxCloudOp.class), emptyParams, zmaxCloudInput);
+        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxCloudOp.class), emptyParams, zmaxCloudInput);
 
         // test: create constant reflectance input
         Map<String, Product> constInput = new HashMap<String, Product>(1);

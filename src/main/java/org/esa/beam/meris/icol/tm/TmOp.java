@@ -15,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.ZmaxOp;
+import org.esa.beam.meris.icol.common.ZmaxCloudOp;
 import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
@@ -333,12 +334,9 @@ public class TmOp extends TmBasisOp {
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(5);
         zmaxCloudInput.put("l1b", conversionProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
-        zmaxCloudInput.put("cloud", cloudProduct);
         zmaxCloudInput.put("cloudDistance", cloudDistanceProduct);
-        zmaxCloudInput.put("ctp", ctpProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>();
-        zmaxCloudParameters.put("userPSurf", landsatUserPSurf);
-        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmZmaxCloudOp.class), zmaxCloudParameters, zmaxCloudInput);
+        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxCloudOp.class), zmaxCloudParameters, zmaxCloudInput);
 
 
         // AE Rayleigh:

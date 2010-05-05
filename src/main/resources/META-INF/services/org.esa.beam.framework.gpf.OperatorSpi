@@ -5,7 +5,6 @@ org.esa.beam.meris.icol.meris.MerisCloudDistanceOp$Spi
 org.esa.beam.meris.icol.meris.MerisCloudTopPressureOp$Spi
 org.esa.beam.meris.icol.meris.MerisBrrCloudOp$Spi
 org.esa.beam.meris.icol.ZmaxOp$Spi
-org.esa.beam.meris.icol.meris.MerisZmaxCloudOp$Spi
 org.esa.beam.meris.icol.meris.MerisAeRayleighOp$Spi
 org.esa.beam.meris.icol.FresnelCoefficientOp$Spi
 org.esa.beam.meris.icol.meris.MerisAeAerosolOp$Spi
@@ -27,7 +26,6 @@ org.esa.beam.meris.icol.tm.TmRayleighCorrectionOp$Spi
 org.esa.beam.meris.icol.tm.TmAeMaskOp$Spi
 org.esa.beam.meris.icol.tm.TmCoastDistanceOp$Spi
 org.esa.beam.meris.icol.tm.TmCloudDistanceOp$Spi
-org.esa.beam.meris.icol.tm.TmZmaxCloudOp$Spi
 org.esa.beam.meris.icol.tm.TmAeRayleighOp$Spi
 org.esa.beam.meris.icol.tm.TmAeAerosolOp$Spi
 org.esa.beam.meris.icol.tm.TmRadianceCorrectionOp$Spi
@@ -39,3 +37,4 @@ org.esa.beam.meris.icol.ConstantValueOp$Spi
 org.esa.beam.meris.icol.TestImageOp$Spi
 org.esa.beam.meris.icol.CompareConvolutionOp$Spi
 org.esa.beam.meris.icol.meris.MerisBand11And15Op$Spi
+org.esa.beam.meris.icol.common.ZmaxCloudOp$Spi
