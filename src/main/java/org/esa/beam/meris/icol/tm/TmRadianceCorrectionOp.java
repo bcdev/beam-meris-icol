@@ -73,12 +73,12 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                 final int bandId = Integer.parseInt(bandNumber) - 1;
                 if (!IcolUtils.isIndexToSkip(bandId,
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
-                    String radianceBandName = "radiance_tm" + bandNumber;
+                    String radianceBandName = "radiance_" + bandNumber;
                     Band radianceBand = targetProduct.addBand(radianceBandName, ProductData.TYPE_FLOAT32);
                     radianceBand.setSpectralBandIndex(bandId);
                     radianceBand.setNoDataValue(-1);
                 }  else if (bandId == TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
-                    String temperatureBandName = "temperature_tm" + bandNumber;
+                    String temperatureBandName = "radiance_" + bandNumber;
                     Band temperatureBand = targetProduct.addBand(temperatureBandName, ProductData.TYPE_FLOAT32);
                     temperatureBand.setSpectralBandIndex(bandId);
                     temperatureBand.setNoDataValue(-1);

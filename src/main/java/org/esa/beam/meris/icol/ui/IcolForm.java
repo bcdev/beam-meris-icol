@@ -1,11 +1,15 @@
 package org.esa.beam.meris.icol.ui;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import com.bc.ceres.swing.TableLayout;
+import com.bc.ceres.swing.binding.BindingContext;
+import org.esa.beam.dataio.envisat.EnvisatProductReader;
+import org.esa.beam.framework.dataio.ProductReader;
+import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.gpf.ui.SourceProductSelector;
+import org.esa.beam.framework.gpf.ui.TargetProductSelector;
+import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
+import org.esa.beam.framework.ui.AppContext;
+import org.esa.beam.meris.icol.tm.TmConstants;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -20,18 +24,15 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.border.TitledBorder;
-
-import org.esa.beam.dataio.envisat.EnvisatProductReader;
-import org.esa.beam.framework.dataio.ProductReader;
-import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.gpf.ui.SourceProductSelector;
-import org.esa.beam.framework.gpf.ui.TargetProductSelector;
-import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
-import org.esa.beam.framework.ui.AppContext;
-import org.esa.beam.meris.icol.tm.TmConstants;
-
-import com.bc.ceres.swing.TableLayout;
-import com.bc.ceres.swing.binding.BindingContext;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 
 class IcolForm extends JTabbedPane {
@@ -81,7 +82,6 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField landsatTM60Value;
     private JCheckBox landsatComputeFlagSettingsOnly;
     private JCheckBox landsatComputeToTargetGridOnly;
-    private JCheckBox landsatInputOnTargetGrid;
     private JCheckBox upscaleToTMFR;
 
     private JCheckBox landsatCloudFlagApplyBrightnessFilterCheckBox;
@@ -188,7 +188,6 @@ class IcolForm extends JTabbedPane {
         bc.bind("landsatUserTm60", landsatTM60Value);
         bc.bind("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
         bc.bind("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
-        bc.bind("landsatInputOnTargetGrid", landsatInputOnTargetGrid);
         bc.bind("upscaleToTMFR", upscaleToTMFR);
 
         bc.bind("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilterCheckBox);
@@ -595,12 +594,6 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel("Surface TM apparent remperature (K): "));
         landsatTM60Value = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
         panel.add(landsatTM60Value);
-        panel.add(new JLabel(""));
-
-        landsatInputOnTargetGrid = new JCheckBox("Input is 'Geometry' product (scaled onto target grid)");
-        landsatInputOnTargetGrid.setSelected(false);
-		panel.add(landsatInputOnTargetGrid);
-        panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
         landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (scale to target grid)");

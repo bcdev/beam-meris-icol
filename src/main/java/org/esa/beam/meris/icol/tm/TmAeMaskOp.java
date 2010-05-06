@@ -14,6 +14,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.RectangleExtender;
 
@@ -186,7 +187,8 @@ public class TmAeMaskOp extends TmBasisOp {
 
     private boolean isCoastline(Tile isLandTile, Rectangle rect, int x, int y) {
 
-        if (x <= 0 || x >= isLandTile.getRectangle().width-1 || y <= 0 || y >= isLandTile.getRectangle().height-1) {
+        if (LandsatUtils.isCoordinatesOutOfBounds(x-1, y-1, isLandTile) ||
+            LandsatUtils.isCoordinatesOutOfBounds(x+1, y+1, isLandTile)) {
             return false;
         }
          // use this: isLandTile.getRectangle() !!!

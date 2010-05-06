@@ -27,6 +27,7 @@ import org.esa.beam.framework.gpf.ui.TargetProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.meris.icol.meris.MerisOp;
+import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.tm.TmOp;
 
 import java.io.File;
@@ -76,9 +77,15 @@ public class IcolDialog extends SingleTargetProductDialog {
         final String productType = sourceProduct.getProductType();
         final String productName = sourceProduct.getName();
         final int productNumBands = sourceProduct.getBandGroup().getNodeCount();
+        // input product must be either:
+        //    - MERIS L1b
+        //    - Landsat TM5 GeoTIFF  (L1T)
+        //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() &&
-                !(productType.equals("L1T") && productName.startsWith("L5") && productNumBands == 7)) {
-            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF source product.");
+                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX) &&
+                        productName.startsWith(TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX) && productNumBands == 7) &&
+                !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
         }
         if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
@@ -101,7 +108,9 @@ public class IcolDialog extends SingleTargetProductDialog {
         final Product sourceProduct = model.getSourceProduct();
         String productType = sourceProduct.getProductType();
         final String productName = sourceProduct.getName();
-        if ((productType.equals("L1T") && productName.startsWith("L5"))) {
+        if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX) &&
+                productName.startsWith((TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX)) ||
+                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX)))) {
             outputProduct = createLandsat5Product();
         } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();

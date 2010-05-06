@@ -70,8 +70,6 @@ public class TmOp extends TmBasisOp {
     @Parameter(defaultValue = "false")
     private boolean landsatComputeToTargetGridOnly = false;
     @Parameter(defaultValue = "false")
-    private boolean landsatInputOnTargetGrid = false;
-    @Parameter(defaultValue = "false")
     private boolean upscaleToTMFR = false;
 
     @Parameter(defaultValue="true")
@@ -147,7 +145,7 @@ public class TmOp extends TmBasisOp {
 
         // compute geometry product (ATBD D4, section 5.3.1) if not already done...
         Product geometryProduct = null;
-        if (landsatInputOnTargetGrid) {
+        if (sourceProduct.getProductType().startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX)) {
             geometryProduct = sourceProduct;
         } else {
             Map<String, Product> geometryInput = new HashMap<String, Product>(1);

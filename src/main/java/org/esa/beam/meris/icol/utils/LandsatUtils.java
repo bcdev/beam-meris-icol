@@ -4,6 +4,7 @@ import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.TiePointGrid;
+import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.util.math.MathUtils;
 
@@ -221,4 +222,12 @@ public class LandsatUtils {
         return rad;
     }
 
+    public static boolean isCoordinatesOutOfBounds(int x, int y, Tile tile) {
+        int tx1 = tile.getRectangle().x;
+        int tx2 = tile.getRectangle().x + tile.getRectangle().width - 1;
+        int ty1 = tile.getRectangle().y;
+        int ty2 = tile.getRectangle().y + tile.getRectangle().height - 1;
+                          
+        return (x < tx1 || x > tx2 || y < ty1 || y > ty2);
+    }
 }

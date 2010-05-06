@@ -40,14 +40,6 @@ public class TmGeometryOp extends TmBasisOp {
     public static final int NO_DATA_VALUE = -1;
     public static final int LANDSAT_ORIGINAL_RESOLUTION = 30;
 
-    public static final String RADIANCE_1_NAME = "radiance_1_blue_30m";
-    public static final String RADIANCE_2_NAME = "radiance_2_green_30m";
-    public static final String RADIANCE_3_NAME = "radiance_3_red_30m";
-    public static final String RADIANCE_4_NAME = "radiance_4_nearir_30m";
-    public static final String RADIANCE_5_NAME = "radiance_5_midir_30m";
-    public static final String RADIANCE_6_NAME = "radiance_6_thermalir_120m";
-    public static final String RADIANCE_7_NAME = "radiance_7_midir_30m";
-
     public static final String SUN_ZENITH_BAND_NAME = "sunZenith";
     public static final String SUN_AZIMUTH_BAND_NAME = "sunAzimuth";
     public static final String VIEW_ZENITH_BAND_NAME = "viewZenith";
@@ -109,7 +101,7 @@ public class TmGeometryOp extends TmBasisOp {
         } else {
             resolution = "_FR_";
         }
-        targetProduct = new Product(sourceProduct.getName() + "_ICOL", "LANDSAT" + resolution, sceneWidth, sceneHeight);
+        targetProduct = new Product(sourceProduct.getName() + "_ICOL", "L1G" + resolution, sceneWidth, sceneHeight);
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
         doy = LandsatUtils.getDayOfYear(startTime);
@@ -161,21 +153,13 @@ public class TmGeometryOp extends TmBasisOp {
             int x2 = sourceRectangle.x + sourceRectangle.width - 1;
             int y1 = sourceRectangle.y;
             int y2 = sourceRectangle.y + sourceRectangle.height - 1;
-            int tx1 = targetTile.getRectangle().x;
-            int tx2 = targetTile.getRectangle().x + targetTile.getRectangle().width - 1;
-            int ty1 = targetTile.getRectangle().y;
-            int ty2 = targetTile.getRectangle().y + targetTile.getRectangle().height - 1;
-
 
             for (int iTarY = y1+ aveBlock; iTarY <= y2+ aveBlock; iTarY+=2* aveBlock +1) {
                 for (int iTarX = x1+ aveBlock; iTarX <= x2+ aveBlock; iTarX+=2* aveBlock +1) {
                     int iX = ((iTarX-x1- aveBlock)/(2* aveBlock +1));
                     int iY = ((iTarY-y1- aveBlock)/(2* aveBlock +1));
-                    // todo: make sure they are within tile boundary values
-                    if (iX >= tx1 && iX <= tx2 && iY >= ty1 && iY <= ty2) {
-
-                        final PixelPos pixelPos = new PixelPos(iX, iY);
-//                    final GeoPos geoPos = geocoding.getGeoPos(pixelPos, null);
+                    
+                    if (!(LandsatUtils.isCoordinatesOutOfBounds(iX, iY, targetTile))) {
                         final GeoPos geoPosAve = getGeoposSpatialAverage(iTarX, iTarY);
 
                         final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
@@ -191,7 +175,6 @@ public class TmGeometryOp extends TmBasisOp {
                         final double phi = saa - vaa;
 
                         if (targetBand.getName().equals("latitude")) {
-//                        System.out.println("ix, iy: " + iX + "," + iY + " // " + iTarX + "," + iTarY);
                             targetTile.setSample(iX, iY, geoPosAve.getLat());
                         } else if (targetBand.getName().equals("longitude")) {
                             targetTile.setSample(iX, iY, geoPosAve.getLon());
@@ -199,8 +182,6 @@ public class TmGeometryOp extends TmBasisOp {
                             final float altAve = getAltitudeSpatialAverage(iTarX, iTarY);
                             targetTile.setSample(iX, iY, altAve);
                         } else if (targetBand.getName().equals("sunZenith")) {
-//                            System.out.println("iTarX, iTarY, iX, iY: " + iTarX + "," + iTarY + "," + iX + "," + iY +
-//                                    "// " + targetTile.getRectangle());
                             targetTile.setSample(iX, iY, sza);
                         } else if (targetBand.getName().equals("sunAzimuth")) {
                             targetTile.setSample(iX, iY, saa);
