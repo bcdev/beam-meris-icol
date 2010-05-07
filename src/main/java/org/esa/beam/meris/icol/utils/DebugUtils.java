@@ -65,11 +65,6 @@ public class DebugUtils {
 
     public static void addAeAerosolProductDebugBands(Product targetProduct, Product aeAerProduct) {
         for (Band band : aeAerProduct.getBands()) {
-            if (band.getName().equals("case2_index")) {
-                targetProduct.addBand(band);
-            }
-        }
-        for (Band band : aeAerProduct.getBands()) {
             if (band.getName().equals("alpha_index")) {
                 targetProduct.addBand(band);
             }

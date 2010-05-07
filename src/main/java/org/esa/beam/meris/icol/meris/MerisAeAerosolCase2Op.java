@@ -395,7 +395,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         double[] rhoBrr775 = new double[17];     // B12
                         double[] rhoBrr705 = new double[17];     // B9
 
-                        //  ICOL D6a ATBD, 2.2: begin case 2 algorithm
+                        //  ICOL D6a ATBD: begin case 2 algorithm
+
                         // for two iaer, compute two values of rhoBrrBracket in B13for inter-/extrapolation...
                         final double rhoBrr865Bracket16 = convolver.convolveSample(x, y, 16, Constants.bb865); // B13
                         final double rhoBrr865Bracket06 = convolver.convolveSample(x, y, 6, Constants.bb865);
@@ -407,16 +408,21 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         final double deltaRhoBrr775Bracket06 = Math.abs((rhoBrr775Bracket16 - rhoBrr775Bracket06) / 10.0);
                         final double deltaRhoBrr705Bracket06 = Math.abs((rhoBrr705Bracket16 - rhoBrr705Bracket06) / 10.0);
 
-                        double rhoW705Experimental = 0.0;
                         int searchIAOT = -1;
-
 
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             double rhoa = 0.0;
                             double rhoa0 = 0.0;
+                            double alphaBest = 0.0;
                             double aot865Best = 0.0;
                             double rhoBrr705Best = 0.0;
                             double rhoBrr705BestPrev = 0.0;
+                            double rhoW705Interpolated = 0.0;
+
+                            // With the proposed 3-band algorithm (705, 775, 865), we want to retrieve 3 unknowns:
+                            // - the water reflectance at 705nm
+                            // - the aerosol type
+                            // - the AOT at 865nm
 
                             // the final index of retrieved water reflectance rhoW705
                             int jrhow705 = 0;
@@ -438,20 +444,24 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                     // aot at 865nm depending on case 2 aerosol model:
                                     final double taua865IaerC2 = 0.1 * Math.pow((550.0 / 865.0), (iaerC2-1)/10.0);
 
-                                    // rhoBrr865 computation as for case 1, but with case 2 aerosol model index:
                                     pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaerC2);
                                     paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaerC2);
                                     corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                                     searchIAOT = -1;
                                     for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
+                                        // rhoBrr865 computation as for case 1, but with case 2 aerosol model and aot indices:
                                         taua865C2 = taua865IaerC2 * iiaot;
                                         RV rv = aerosolScatteringFuntions.aerosol_f(taua865C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                         //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                         rhoa0 = rv.rhoa;
                                         rhoa = rhoa0 * corrFac;
                                         rhoBrr865[iiaot] = rhoa + rhoBrrBracket865C2 * rv.tds * (rv.tus - Math.exp(-taua865C2 / muv));
+                                        // now add water reflectance contribution in B13 from table for given rhoW index
                                         rhoBrr865[iiaot] += (rhoB13Table[irhow705] * rv.tds * rv.tus);
 
+                                        // if we reached the MERIS measurement in B13, we are done and have the final
+                                        // index of aot at 865nm (aot865best, third unknown) for THIS aerosol type
+                                        // (iaer) and THIS rhoW (irhow705)
                                         if (rhoBrr865[iiaot] > rho_13) {
                                             searchIAOT = iiaot - 1;
                                         }
@@ -460,38 +470,55 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                         // interpolate aot865 for retrieved index and given case 2 aerosol model
                                         aot865[iaerC2-1] = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
                                                                                                        rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * taua865IaerC2;
-                                        double taua775C2 = aot865[iaerC2 - 1] * Math.pow((865.0 / 775.0), (iaerC2 - 1)/10.0);
 
+                                        // rhoBrr775 computation as for case 1, but with case 2 aerosol model index and DERIVED AOT 865!!:
+                                        double taua775C2 = aot865[iaerC2 - 1] * Math.pow((865.0 / 775.0), (iaerC2 - 1)/10.0);
                                         RV rv775 = aerosolScatteringFuntions.aerosol_f(taua775C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                         final double rhoa0775 = rv775.rhoa;
                                         final double rhoa775 = rhoa0775 * corrFac;
                                         rhoBrr775[searchIAOT] = rhoa775 + rhoBrrBracket775C2 * rv775.tds * (rv775.tus - Math.exp(-taua775C2 / muv));
+                                        // now add water reflectance contribution in B12 from table for given rhoW index
                                         rhoBrr775[searchIAOT] += (rhoB12Table[irhow705] * rv775.tds * rv775.tus);
 
                                         // ATBD D6a, 2.2, (iii) for ICOL 2.0
+                                        // if we reached the MERIS measurement in B12, we are done and have the final
+                                        // aerosol model (iaer, second unknown) for THIS rhoW (irhow705)
                                         if (rhoBrr775[searchIAOT] > rho_12) {
                                             iaer = iaerC2;
-                                            alpha = 0.1 - iaer / 10.0;
+                                            alphaBest = 0.1 - iaer / 10.0;
                                             aot865Best = aot865[iaerC2-1];
                                             break;
                                         }
                                     }
                                 }  // end iaer loop
                                 if (searchIAOT != -1) {
+                                    // rhoBrr705 computation with derived case 2 aerosol type index (iaer) and DERIVED AOT 865
                                     double tauaConst705 = aot865[iaer-1] * Math.pow((865.0 / 705.0), ((iaer - 1) / 10.0));
                                     pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
-                                    RV rv = aerosolScatteringFuntions.aerosol_f(taua865C2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                    RV rv = aerosolScatteringFuntions.aerosol_f(tauaConst705, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                     //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                     final double rhoa0705 = rv.rhoa;
                                     corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                                     final double rhoa705 = rhoa0705 * corrFac;
                                     double rhoBrrBracket705C1 = rhoBrr705Bracket06 + (iaer - 5) * deltaRhoBrr705Bracket06;
                                     rhoBrr705[searchIAOT] = rhoa705 + rhoBrrBracket705C1 * rv.tds * (rv.tus - Math.exp(-tauaConst705 / muv));
+                                    // now add water reflectance contribution in B9 from table for given rhoW index
                                     rhoBrr705[searchIAOT] += (rhoB9Table[irhow705] * rv.tds * rv.tus);
 
+                                    // if we reached the MERIS measurement in B9, we are done and have the final
+                                    // 'experimental' water reflectance at 705nm (ATBD D6a, eq. 11).
                                     if (rhoBrr705[searchIAOT] > rho_9) {
                                         rhoBrr705Best = rhoBrr705[searchIAOT];
                                         jrhow705 = irhow705;
+                                        if (jrhow705 > 0) {
+                                            double delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
+                                            if (Math.abs(delta705) > 1.0) {
+                                                // todo: raise a flag at conditions like this
+                                                delta705 = 0.0;
+                                            }
+                                            rhoW705Interpolated = rhoB9Table[jrhow705] + delta705 *
+                                                    (rhoB9Table[jrhow705 - 1] - rhoB9Table[jrhow705]);
+                                        }
                                         break;
                                     }
                                 } else {
@@ -500,17 +527,13 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             } // end irhow705 loop
                             // todo: raise a 'turbid water' flag if last irhow is reached
 
-                            // set final value of AOT, this goes into the product:
+                            // We are done with the case 2 retrieval. Set final values of alpha, AOT, these go into the
+                            // the product
                             aot = aot865Best;
+                            alpha = alphaBest;
 
-                            // retrieve 'experimental' value of rhoW in B9 (eq. 11):
-                            if (jrhow705 > 0) {
-                                double delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
-                                if (Math.abs(delta705) > 1.0) {
-                                    // todo: raise a flag at conditions like this
-                                    delta705 = 0.0;
-                                }
-                                rhoW705Experimental = rhoB9Table[jrhow705] + delta705 * (rhoB9Table[jrhow705 - 1] - rhoB9Table[jrhow705]);
+                            if (exportSeparateDebugBands && searchIAOT != -1) {
+                                rhoW9Tile.setSample(x, y, rhoW705Interpolated);
                             }
                         } else {
                             aot = userAot;
@@ -524,15 +547,10 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 final double rhoa0865 = rv.rhoa;
                                 corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart- zmaxCloudPart));
                                 final double rhoa865 = rhoa0865 * corrFac;
-                                // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0) s.a.
                                 rhoBrr865[iiaot] = rhoa865 + rhoBrrBracket865C1 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                             }
                         }
-                        //  end improved case 1
-
-                        if (exportSeparateDebugBands && searchIAOT != -1) {
-                            rhoW9Tile.setSample(x, y, rhoW705Experimental);
-                        }
+                        //  end case 2 algorithm
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
