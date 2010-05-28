@@ -45,6 +45,12 @@
         <module>beam-envisat-reader</module>
     </dependency>
     <dependency>
+        <module>beam-landsat-reader</module>
+    </dependency>
+    <dependency>
+        <module>beam-geotiff</module>
+    </dependency>
+    <dependency>
         <module>beam-visat</module>
         <optional>true</optional>
     </dependency>

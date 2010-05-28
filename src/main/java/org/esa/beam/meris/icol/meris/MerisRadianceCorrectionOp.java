@@ -28,13 +28,13 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
 import java.awt.Rectangle;
 
@@ -107,6 +107,7 @@ public class MerisRadianceCorrectionOp extends MerisBasisOp {
             }
         }
         ProductUtils.copyFlagBands(l1bProduct, targetProduct);
+        ProductUtils.copyFlagBands(aeAerosolProduct, targetProduct);
         if (l1bProduct.getPreferredTileSize() != null) {
             targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
         }
@@ -133,7 +134,7 @@ public class MerisRadianceCorrectionOp extends MerisBasisOp {
         try {
             String bandName = band.getName();
 
-            if (!bandName.startsWith("radiance") && !bandName.equals("l1_flags")) {
+            if (!bandName.startsWith("radiance") && !bandName.equals("l1_flags") && !bandName.equals(MerisAeAerosolOp.AOT_FLAGS)) {
 //			         || bandName.equals(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME)) {
                 Tile sourceTile = getSourceTile(l1bProduct.getBand(bandName), rectangle, pm);
                 //  write reflectances as output  (RS, 17.07.09)
@@ -171,7 +172,15 @@ public class MerisRadianceCorrectionOp extends MerisBasisOp {
                     }
                     pm.worked(1);
                 }
-			} else {
+			} else if (bandName.equals(MerisAeAerosolOp.AOT_FLAGS)) {
+//                Tile sourceTile = getSourceTile(aeAerosolProduct.getBand(bandName), rectangle, pm);
+//				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+//					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+//						targetTile.setSample(x, y, sourceTile.getSampleDouble(x, y));
+//					}
+//					pm.worked(1);
+//				}
+            } else {
 				final int bandNumber = band.getSpectralBandIndex() + 1;
 
 				Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);

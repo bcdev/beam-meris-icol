@@ -390,7 +390,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             zmaxCloudPart = Math.exp(-zmaxCloud.getSampleFloat(x, y) / HA);
                         }
 
-                        double aot = 0;
+                        double aot;
                         double[] rhoBrr865 = new double[17];     // B13
                         double[] rhoBrr775 = new double[17];     // B12
                         double[] rhoBrr705 = new double[17];     // B9
@@ -411,15 +411,13 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         int searchIAOT = -1;
 
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
-                            double rhoa = 0.0;
-                            double rhoa0 = 0.0;
                             double alphaBest = 0.0;
                             double aot865Best = 0.0;
                             double rhoBrr705Best = 0.0;
                             double rhoBrr705BestPrev = 0.0;
                             double rhoW705Interpolated = 0.0;
 
-                            // With the proposed 3-band algorithm (705, 775, 865), we want to retrieve 3 unknowns:
+                            // With the 3-band algorithm (705, 775, 865), we want to retrieve 3 unknowns:
                             // - the water reflectance at 705nm
                             // - the aerosol type
                             // - the AOT at 865nm
@@ -453,8 +451,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                         taua865C2 = taua865IaerC2 * iiaot;
                                         RV rv = aerosolScatteringFuntions.aerosol_f(taua865C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                         //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
-                                        rhoa0 = rv.rhoa;
-                                        rhoa = rhoa0 * corrFac;
+                                        final double rhoa0 = rv.rhoa;
+                                        final double rhoa = rhoa0 * corrFac;
                                         rhoBrr865[iiaot] = rhoa + rhoBrrBracket865C2 * rv.tds * (rv.tus - Math.exp(-taua865C2 / muv));
                                         // now add water reflectance contribution in B13 from table for given rhoW index
                                         rhoBrr865[iiaot] += (rhoB13Table[irhow705] * rv.tds * rv.tus);
