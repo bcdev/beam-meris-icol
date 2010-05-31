@@ -18,49 +18,22 @@ package org.esa.beam.meris.icol;
 
 import org.esa.beam.util.io.CsvReader;
 
-import javax.media.jai.KernelJAI;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.Random;
 
 /**
  * Created by marcoz.
  *
  * @author marcoz
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
+ * @version $Revision: 1.2 $ $Date: 2007/04/30 15:45:26 $
  */
 public class CoeffW {
 
-    public static final String FILENAME = "WHA3_FR_rayleigh_5s";
-
-    public static final int FR_KERNEL_SIZE = 100;
-    public static final int RR_KERNEL_SIZE = 25; 
-
-    private File auxdataTargetDir;
+    public static final String FILENAME = "WHA3_FR";
 
     private double[][] wFR;
-    private double[][] wRR;
-
-    // correction mode:
-    //    0: reshaped Rayleigh
-    //    1: reshaped aerosol
-    private int correctionMode;
-
-    public CoeffW(File auxdataTargetDir,
-                  boolean reshapedConvolution, int correctionMode) throws IOException {
-        this.correctionMode = correctionMode;
-        this.auxdataTargetDir = auxdataTargetDir;
-
-        File wFile = new File(auxdataTargetDir, FILENAME);
-        Reader reader = new FileReader(wFile);
-        loadCoefficient(reader);
-    }
 
     public CoeffW(Reader reader) throws IOException {
-        File wFile = new File(auxdataTargetDir, FILENAME);
         loadCoefficient(reader);
     }
 
@@ -89,14 +62,14 @@ public class CoeffW {
     public double[][] getCoeffForFR() {
         return wFR;
     }
-
+    
     public double[][] getCoeffForRR() {
         double[][] wRR = new double[26][26];
         for (int iaer = 0; iaer < 26; iaer++) {
             wRR[iaer][0] = wFR[iaer][0] + wFR[iaer][1] + wFR[iaer][2] * 0.5;
             int irr = 0;
             for (int i = 2; i <= 94; i += 4) {
-                irr++;                                                        
+                irr++;
                 wRR[iaer][irr] = wFR[iaer][i] * 0.5 +
                 					wFR[iaer][i+1] +
                 					wFR[iaer][i+2] +
@@ -106,169 +79,5 @@ public class CoeffW {
             wRR[iaer][25] = wFR[iaer][98] * 0.5 + wFR[iaer][99] + wFR[iaer][100];
         }
         return wRR;
-    }
-
-    private double[][] getReshapedRayleighCoeffForRR() {
-        double[][] wRR = new double[26][9];
-        double[][] wRROrig = getCoeffForRR();
-        for (int iaer = 0; iaer < 26; iaer++) {
-            for (int i=0; i<9; i++) {
-                // reduce resolution to 3.6km: take every third value
-                wRR[iaer][i] = wRROrig[iaer][3*i];
-            }
-        }
-
-        return wRR;
-    }
-
-    public double[] getReshapedRayleighCoeffForRR(int iaer) {
-        double[][] wRR = getReshapedRayleighCoeffForRR();
-        for (int i=0; i<wRR[iaer-1].length; i++) {
-            System.out.println("" + wRR[iaer-1][i]);
-        }
-        return wRR[iaer-1];
-    }
-
-    /**
-     * Creates an array of the specified size, containing some random data
-     */
-    private static double[] createRandomDoubleData(int x, double stdev) {
-        Random random = new Random(0);
-        double a[] = new double[x];
-        for (int i = 0; i < x; i++) {
-            a[i] = stdev*random.nextGaussian();
-        }
-        return a;
-    }
-
-    private double[][] getReshapedRayleighCoeffForFR() {
-        double[][] wFR = new double[26][8];
-        double[][] wFROrig = getCoeffForFR();
-        for (int iaer = 0; iaer < 26; iaer++) {
-            for (int i=0; i<8; i++) {
-                // reduce resolution to 3.6km: take every twelveth value
-                wFR[iaer][i] = wFROrig[iaer][12*i];
-            }
-        }
-
-        return wFR;
-    }
-
-    public double[] getReshapedRayleighCoeffForFR(int iaer) {
-        double[][] wFR = getReshapedRayleighCoeffForFR();
-        return wFR[iaer-1];
-    }
-
-    private double[][] getReshapedAerosolCoeffForRR() {
-        double[][] wRR = new double[26][10];
-        double[][] wRROrig = getCoeffForRR();
-        for (int iaer = 0; iaer < 26; iaer++) {
-            for (int i=0; i<10; i++) {
-                wRR[iaer][i] = wRROrig[iaer][i];
-            }
-        }
-
-        return wRR;
-    }
-
-    public double[] getReshapedAerosolCoeffForRR(int iaer) {
-        double[][] wRR = getReshapedAerosolCoeffForRR();
-        return wRR[iaer-1];
-    }
-
-    private double[][] getReshapedAerosolCoeffForFR() {
-        double[][] wFR = new double[26][40];
-        double[][] wFROrig = getCoeffForFR();
-        for (int iaer = 0; iaer < 26; iaer++) {
-            for (int i=0; i<40; i++) {
-                wFR[iaer][i] = wFROrig[iaer][i];
-            }
-        }
-
-        return wFR;
-    }
-
-    public double[] getReshapedAerosolCoeffForFR(int iaer) {
-        double[][] wFR = getReshapedAerosolCoeffForFR();
-        return wFR[iaer-1];
-    }
-
-    public KernelJAI getReshapedConvolutionKernelForRR(int iaer) {
-        KernelJAI kernel = null;
-        if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
-           kernel = createKernelByRotation(getReshapedRayleighCoeffForRR(iaer));
-        }  else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
-           kernel = createKernelByRotation(getReshapedAerosolCoeffForRR(iaer));
-        }
-        return kernel;
-    }
-
-    public KernelJAI getReshapedConvolutionKernelForFR(int iaer) {
-        KernelJAI kernel = null;
-        if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
-           kernel = createKernelByRotation(getReshapedRayleighCoeffForFR(iaer));
-        }  else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
-           kernel = createKernelByRotation(getReshapedAerosolCoeffForFR(iaer));
-        }
-        return kernel;
-    }
-
-    public int getCorrectionMode() {
-        return correctionMode;
-    }
-
-    public static KernelJAI createKernelByRotation(double[] array) {
-        int n = array.length;
-        int m = 2 * n - 1;
-        float[] kernelData = new float[m * m];
-        HashMap<Integer, Integer> counts = new HashMap<Integer, Integer>();
-        for (int y = 0; y < m; y++) {
-            for (int x = 0; x < m; x++) {
-                int index = computeIndex(x, y, n);
-                if (index < n) {
-                    Integer count = counts.get(index);
-                    if (count == null) {
-                        counts.put(index, 1);
-                    } else {
-                        counts.put(index, count + 1);
-                    }
-                    // System.out.print("" + index);
-                    kernelData[y * m + x] = (float) array[index];
-                } else {
-                    // System.out.print("#");
-                    kernelData[y * m + x] = 0.0f;
-                }
-            }
-        }
-
-        for (int y = 0; y < m; y++) {
-            for (int x = 0; x < m; x++) {
-                int index = computeIndex(x, y, n);
-                if (index < n) {
-                    Integer count = counts.get(index);
-                    //System.out.print("" + count%10);
-                    kernelData[y * m + x] /= count;
-                } else {
-                    //System.out.print("0");
-                }
-            }
-        }
-
-        float sum = 0;
-        for (int i = 0; i < kernelData.length; i++) {
-            sum += kernelData[i];
-        }
-        System.out.println("kernel sum = " + sum);
-        for (int i = 0; i < kernelData.length; i++) {
-            kernelData[i] /= sum;
-        }
-
-        return new KernelJAI(m, m, kernelData);
-    }
-
-    static int computeIndex(int x, int y, int n) {
-        int dx = x - (n - 1);
-        int dy = y - (n - 1);
-        return (int) Math.sqrt(dx * dx + dy * dy);
     }
 }

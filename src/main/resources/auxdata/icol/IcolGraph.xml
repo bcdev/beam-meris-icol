@@ -75,7 +75,7 @@
 
     <node>
         <id>aemask</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisAeMaskOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.AEMaskOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
             <land>landClass</land>
@@ -87,7 +87,7 @@
 
     <node>
         <id>landDistance</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisLandDistanceOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.LandDistanceOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
             <land>landClass</land>
@@ -99,17 +99,17 @@
 
     <node>
         <id>zmax</id>
-        <operator>org.esa.beam.meris.icol.common.ZmaxOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.ZmaxOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
-            <distance>landDistance</distance>
+            <landDistance>landDistance</landDistance>
             <ae_mask>aemask</ae_mask>
         </sources>
     </node>
 
     <node>
         <id>ae_ray</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisAeRayleighOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.AeRayleighOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
             <aemask>aemask</aemask>
@@ -121,7 +121,7 @@
     
     <node>
         <id>ae_aerosol</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisAeAerosolOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.AeAerosolOp$Spi</operator>
         <sources>
         	<l1b>l1b</l1b>
             <aemask>aemask</aemask>

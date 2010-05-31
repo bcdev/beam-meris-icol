@@ -1,7 +1,7 @@
 <module>
     <manifestVersion>1.0.0</manifestVersion>
     <symbolicName>beam-meris-icol</symbolicName>
-    <version>2.0</version>
+    <version>1.0.4</version>
     <name>MERIS ICOL Processor</name>
 
     <description>
@@ -17,8 +17,6 @@
     
     <changelog>
         <![CDATA[
-            <p>Changes in 1.1<br/>
-            [ICOL-?] Use JAI-based image convolution<br/>
             <p>Changes in 1.0.4<br/>
             [ICOL-7] Writing a patched N1 fails from the GUI<br/>
             Changes in 1.0.3<br/>
@@ -34,21 +32,13 @@
     </dependency>
     <dependency>
         <module>beam-meris-brr</module>
-    </dependency>
-    <dependency>
-        <module>beam-meris-sdr</module>
+        <version>2.0.2</version>
     </dependency>
     <dependency>
         <module>beam-meris-l2auxdata</module>
     </dependency>
     <dependency>
         <module>beam-envisat-reader</module>
-    </dependency>
-    <dependency>
-        <module>beam-landsat-reader</module>
-    </dependency>
-    <dependency>
-        <module>beam-geotiff</module>
     </dependency>
     <dependency>
         <module>beam-visat</module>
@@ -67,17 +57,6 @@
             <parent>tools</parent>
             <placeAfter/>
         </action>
-        <action>
-            <class>org.esa.beam.visat.actions.ProductImportAction</class>
-            <id>importLandsatGeoTIFFProduct</id>
-            <helpId>importLandsatGeoTIFFProduct</helpId>
-            <formatName>LandsatGeoTIFF</formatName>
-            <useAllFileFilter>true</useAllFileFilter>
-            <text>Import Landsat (GeoTIFF) Product...</text>
-            <mnemonic>L</mnemonic>
-            <shortDescr>Import a Landsat (GeoTIFF) data product or product subset.</shortDescr>
-            <description>Import a Landsat (in GeoTIFF format) data product or product subset.</description>
-        </action>
     </extension>
     
     <extension point="beam-ui:helpSets">
@@ -86,20 +65,4 @@
             <path>doc/help/icol.hs</path>
         </helpSet>
     </extension>
-
-    <extension point="beam-core:rgbProfiles">
-        <rgbProfile>
-            <name>LandsatTM 3,2,1</name>
-            <red>radiance_3</red>
-            <green>radiance_2</green>
-            <blue>radiance_1</blue>
-        </rgbProfile>
-        <rgbProfile>
-            <name>LandsatTM 4,3,2</name>
-            <red>radiance_4</red>
-            <green>radiance_3</green>
-            <blue>radiance_2</blue>
-        </rgbProfile>
-    </extension>
-
 </module>

@@ -16,19 +16,20 @@
  */
 package org.esa.beam.meris.icol;
 
-import com.bc.ceres.core.Assert;
-import org.esa.beam.util.math.MathUtils;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.esa.beam.util.math.MathUtils;
+
+import com.bc.ceres.core.Assert;
+
 /**
  * Created by marcoz.
  *
  * @author marcoz
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
+ * @version $Revision: $ $Date: $
  */
 public class AerosolScatteringFuntions {
 
@@ -194,14 +195,8 @@ public class AerosolScatteringFuntions {
 		if (fourier[iaer] == null) {
 			fourier[iaer] = readFourierAerosol(iaer+36);
 		}
-		int isza = selectIza(sza);
-		int ivza = selectIza(vza);
-        if (isza == 1) {
-            isza += 1;
-        }
-        if (ivza == 1) {
-            ivza += 1;
-        }
+		final int isza = selectIza(sza);
+		final int ivza = selectIza(vza);
 		final double szamin = angle[isza-1];
 		final double szamax = angle[isza];
 		final double vzamin = angle[ivza-1];
@@ -213,7 +208,6 @@ public class AerosolScatteringFuntions {
 		double szaMaxVzaMin;
 		double szaMaxVzaMax;
 		for (int k = 0; k <= 3; k++) {
-
 			if (isza <= ivza) {
 	           szaMinVzaMin = fourier[iaer][isza-1][ivza-1][0][k];
 	           szaMaxVzaMax = fourier[iaer][isza  ][ivza  ][0][k];
@@ -356,11 +350,6 @@ public class AerosolScatteringFuntions {
         double paerFB = paerF/paerB;
         return paerFB;
 	}
-    
-    public double aerosolPhaseB(double thetaf, double thetab, int iaer) throws IOException {
-        double paerB = aerosolPhase(thetab,iaer);
-        return paerB;
-	}
 	
 	public double aerosolPhase(double theta, int iaer) throws IOException {
 //		iaer = checkIndex(iaer, NUM_IAER);
@@ -486,10 +475,10 @@ public class AerosolScatteringFuntions {
 	}
 	
 	public static class RV {
-		public double tds;
-		public double tus;
-		public double sa;
+		double tds;
+		double tus;
+		double sa;
 		double fa;
-		public double rhoa;
+		double rhoa;
 	}
 }

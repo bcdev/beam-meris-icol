@@ -16,7 +16,8 @@
  */
 package org.esa.beam.meris.icol;
 
-import com.bc.ceres.core.ProgressMonitor;
+import java.awt.Rectangle;
+
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -25,21 +26,20 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
+import org.esa.beam.framework.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
-import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
 import org.esa.beam.util.ProductUtils;
 
-import java.awt.Rectangle;
+import com.bc.ceres.core.ProgressMonitor;
 
 
 /**
  * Created by marcoz.
  *
  * @author marcoz
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
+ * @version $Revision: 1.1 $ $Date: 2007/03/27 12:51:41 $
  */
-public class ReverseDemoProductOp extends MerisBasisOp {
+public class ReverseDemoProductOp extends MerisBasisOp  {
 
     @SourceProduct(alias="rhotoa")
     private Product rhoToaProduct;
@@ -64,8 +64,7 @@ public class ReverseDemoProductOp extends MerisBasisOp {
         	if (srcBand.getName().startsWith("rho_toa")) {
         		int bandNo = srcBand.getSpectralBandIndex()+1;
         		Band targetBand = targetProduct.addBand("rho_toa_AERC_" + bandNo, ProductData.TYPE_FLOAT32);
-//        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
         		targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
         		targetBand.setNoDataValue(srcBand.getNoDataValue());
         	}
@@ -74,8 +73,7 @@ public class ReverseDemoProductOp extends MerisBasisOp {
         	if (srcBand.getName().startsWith("rho_toa")) {
         		int bandNo = srcBand.getSpectralBandIndex()+1;
         		Band targetBand = targetProduct.addBand("rho_toa_AEAC_" + bandNo, ProductData.TYPE_FLOAT32);
-//        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
         		targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
         		targetBand.setNoDataValue(srcBand.getNoDataValue());
         	}
@@ -113,7 +111,7 @@ public class ReverseDemoProductOp extends MerisBasisOp {
 				Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
 				Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
 			
-				Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+				Tile aep = getSourceTile(aemaskProduct.getBand(AEMaskOp.AE_MASK), rectangle, pm);
 				Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
 
 				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {

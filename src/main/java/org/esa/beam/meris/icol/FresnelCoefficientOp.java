@@ -16,8 +16,13 @@
  */
 package org.esa.beam.meris.icol;
 
-import com.bc.ceres.core.NullProgressMonitor;
-import com.bc.ceres.core.ProgressMonitor;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.net.URL;
+
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
@@ -28,19 +33,15 @@ import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
+import org.esa.beam.framework.gpf.operators.common.BandArithmeticOp;
+import org.esa.beam.framework.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.net.URL;
+import com.bc.ceres.core.NullProgressMonitor;
+import com.bc.ceres.core.ProgressMonitor;
 
 
 @OperatorMetadata(alias = "Meris.IcolFresnelCoeff",
@@ -49,7 +50,7 @@ import java.net.URL;
         authors = "Marco Zühlke",
         copyright = "(c) 2007 by Brockmann Consult",
         description = "Fresnel Coefficient computation.")
-public class FresnelCoefficientOp extends MerisBasisOp {
+public class FresnelCoefficientOp extends MerisBasisOp  {
 
     public static final String RHO_TOA_BAND_PREFIX = "rho_toa";
 
@@ -72,15 +73,14 @@ public class FresnelCoefficientOp extends MerisBasisOp {
         Band[] sourceBands = sourceProduct.getBands();
         for (Band srcBand : sourceBands) {
 			Band targetBand = targetProduct.addBand(srcBand.getName(), ProductData.TYPE_FLOAT32);
-//			ProductUtils.copySpectralAttributes(srcBand, targetBand);
-             ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+			ProductUtils.copySpectralAttributes(srcBand, targetBand);
             targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
             targetBand.setNoDataValue(srcBand.getNoDataValue());
 		}
         targetProduct.addBand("cf", ProductData.TYPE_FLOAT32);
         
-        BandMathsOp bandArithmeticOp =
-            BandMathsOp.createBooleanExpressionBand(LandClassificationOp.LAND_FLAGS + ".F_LANDCONS", landProduct);
+        BandArithmeticOp bandArithmeticOp = 
+            BandArithmeticOp.createBooleanExpressionBand(LandClassificationOp.LAND_FLAGS + ".F_LANDCONS", landProduct);
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
         try {
             loadFresnelReflectionCoefficient();
@@ -115,7 +115,7 @@ public class FresnelCoefficientOp extends MerisBasisOp {
 			String bandName = band.getName();
         	final double noDataValue = band.getNoDataValue();
 
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
+        	Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
         	Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle, pm);
         	Tile isLand = getSourceTile(isLandBand, rectangle, pm);
         	if (bandName.equals("cf")) {
