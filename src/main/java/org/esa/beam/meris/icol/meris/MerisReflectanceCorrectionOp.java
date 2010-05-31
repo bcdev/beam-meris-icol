@@ -14,15 +14,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.esa.beam.meris.icol;
+package org.esa.beam.meris.icol.meris;
 
-import java.awt.Rectangle;
-import java.awt.image.RenderedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.MetadataAttribute;
@@ -35,29 +29,42 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.framework.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.util.ProductUtils;
+import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
-import com.bc.ceres.core.ProgressMonitor;
+import java.awt.Rectangle;
+import java.awt.image.RenderedImage;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
-@OperatorMetadata(alias = "Meris.IcolReverseRhoToa",
+/**
+ * Operator providing an output product with AE corrected MERIS TOA reflectances.
+ *
+ * @author Marco Zuehlke, Olaf Danne
+ * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
+ */
+@OperatorMetadata(alias = "Meris.IcolCorrectedReflectances",
         version = "1.0",
         internal = true,
         authors = "Marco Zühlke",
         copyright = "(c) 2007 by Brockmann Consult",
         description = "Corrects for the adjacency effect and computes rho TOA.")
-public class ReverseRhoToaOp extends MerisBasisOp  {
+public class MerisReflectanceCorrectionOp extends MerisBasisOp {
 
-    private static final int FLAG_AE_MASK = 1;
-    private static final int FLAG_LANDCONS = 2;
-    private static final int FLAG_CLOUD = 4;
-    private static final int FLAG_AE_APPLIED = 8;
-    private static final int FLAG_ALPHA_ERROR = 16;
-    private static final int FLAG_AOT_ERROR = 32;
+    private static final int FLAG_AE_MASK_RAYLEIGH = 1;
+    private static final int FLAG_AE_MASK_AEROSOL = 2;
+    private static final int FLAG_LANDCONS = 4;
+    private static final int FLAG_CLOUD = 8;
+    private static final int FLAG_AE_APPLIED_RAYLEIGH = 16;
+    private static final int FLAG_AE_APPLIED_AEROSOL = 32;
+    private static final int FLAG_ALPHA_ERROR = 64;
+    private static final int FLAG_AOT_ERROR = 128;
     
     @SourceProduct(alias="l1b")
     private Product l1bProduct;
@@ -67,13 +74,15 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
     private Product landProduct;
     @SourceProduct(alias="cloud")
     private Product cloudProduct;
-    @SourceProduct(alias="aemask")
-    private Product aemaskProduct;
+    @SourceProduct(alias="aemaskRayleigh")
+    private Product aemaskRayleighProduct;
+    @SourceProduct(alias="aemaskAerosol")
+    private Product aemaskAerosolProduct;
     @SourceProduct(alias="gascor")
     private Product gasCorProduct;
     @SourceProduct(alias="ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol")
+    @SourceProduct(alias="ae_aerosol", optional=true)
     private Product aeAerosolProduct;
    
     
@@ -93,12 +102,15 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
     @Parameter(defaultValue="true")
     private boolean exportAlphaAot = true;
 
+    @Parameter(defaultValue="true")
+    private boolean correctForBoth = true;
+
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
     private Band l1FlagBand;
     private Band aeFlagBand;
     private Map<Band, Band> copySource;
-    
+
     @Override
     public void initialize() throws OperatorException {
         String productType = l1bProduct.getProductType();
@@ -121,16 +133,16 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         if (exportRhoToaRayleigh) {
             rhoToaRayBands = addBandGroup(sourceBands, "rho_toa_AERC");
         }
-        if (exportRhoToaAerosol) {
+        if (correctForBoth && exportRhoToaAerosol) {
             rhoToaAerBands = addBandGroup(sourceBands, "rho_toa_AEAC");
         }
         if (exportAeRayleigh) {
             copyBandGroup(aeRayProduct, "rho_aeRay");
         }
-        if (exportAeAerosol) {
+        if (aeAerosolProduct != null && exportAeAerosol) {
             copyBandGroup(aeAerosolProduct, "rho_aeAer");
         }
-        if (exportAlphaAot) {
+        if (aeAerosolProduct != null && exportAlphaAot) {
             Band copyAlphaBand = ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
             copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
             copySource.put(copyAlphaBand, aeAerosolProduct.getBand("alpha"));
@@ -168,8 +180,12 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         final FlagCoding flagCoding = new FlagCoding(bandName);
         flagCoding.setDescription("Adjacency-Effect - Flag Coding");
 
-        cloudAttr = new MetadataAttribute("ae_mask", ProductData.TYPE_UINT8);
-        cloudAttr.getData().setElemInt(FLAG_AE_MASK);
+        cloudAttr = new MetadataAttribute("ae_mask_rayleigh", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_AE_MASK_RAYLEIGH);
+        flagCoding.addAttribute(cloudAttr);
+
+        cloudAttr = new MetadataAttribute("ae_mask_aerosol", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_AE_MASK_AEROSOL);
         flagCoding.addAttribute(cloudAttr);
 
         cloudAttr = new MetadataAttribute("landcons", ProductData.TYPE_UINT8);
@@ -180,8 +196,12 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         cloudAttr.getData().setElemInt(FLAG_CLOUD);
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("ae_applied", ProductData.TYPE_UINT8);
-        cloudAttr.getData().setElemInt(FLAG_AE_APPLIED);
+        cloudAttr = new MetadataAttribute("ae_applied_rayleigh", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_AE_APPLIED_RAYLEIGH);
+        flagCoding.addAttribute(cloudAttr);
+
+        cloudAttr = new MetadataAttribute("ae_applied_aerosol", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_AE_APPLIED_AEROSOL);
         flagCoding.addAttribute(cloudAttr);
 
         cloudAttr = new MetadataAttribute("alpha_out_of_range", ProductData.TYPE_UINT8);
@@ -203,7 +223,8 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
                 int bandNo = srcBand.getSpectralBandIndex()+1;
                 Band targetBand = targetProduct.addBand(bandPrefix + "_" + bandNo, ProductData.TYPE_FLOAT32);
                 
-                ProductUtils.copySpectralAttributes(srcBand, targetBand);
+//                ProductUtils.copySpectralAttributes(srcBand, targetBand);
+                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
                 targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
                 targetBand.setNoDataValue(srcBand.getNoDataValue());
                 bandList.add(targetBand);
@@ -219,10 +240,11 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         for (Band srcBand : sourceBands) {
             int bandNo = srcBand.getSpectralBandIndex()+1;
             Band targetBand = targetProduct.addBand(bandPrefix + "_" + bandNo, ProductData.TYPE_FLOAT32);
-            ProductUtils.copySpectralAttributes(srcBand, targetBand);
+//            ProductUtils.copySpectralAttributes(srcBand, targetBand);
+            ProductUtils.copySpectralBandProperties(srcBand, targetBand);
             targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
             targetBand.setNoDataValue(srcBand.getNoDataValue());
-            if (bandNo == 11 || bandNo== 15) {
+            if (bandNo == 11 || bandNo== 14 || bandNo== 15) {
                 prepareBandForCopy(srcBand, targetBand);
             } else {
                 bandList.add(targetBand);
@@ -257,14 +279,21 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         Rectangle rectangle = targetTile.getRectangle();
         Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle, pm);
         Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle, pm);
-        Tile aemask = getSourceTile(aemaskProduct.getBand(AEMaskOp.AE_MASK), rectangle, pm);
+        Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
+        Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
         Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rectangle, pm);
-        Tile aerosol = getSourceTile(aeAerosolProduct.getBand(AeAerosolOp.AOT_FLAGS), rectangle, pm);
+        Tile aerosol = null;
+        if (aeAerosolProduct != null) {
+            aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAeAerosolOp.AOT_FLAGS), rectangle, pm);
+        }
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
             for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                 int result = 0;
-                if (aemask.getSampleInt(x, y) == 1) {
-                    result += FLAG_AE_MASK;
+                if (aemaskRayleigh.getSampleInt(x, y) == 1) {
+                    result += FLAG_AE_MASK_RAYLEIGH;
+                }
+                if (aemaskAerosol.getSampleInt(x, y) == 1) {
+                    result += FLAG_AE_MASK_AEROSOL;
                 }
                 if (land.getSampleBit(x, y, 3)) {
                     result += FLAG_LANDCONS;
@@ -273,8 +302,11 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
                     result += FLAG_LANDCONS;
                 }
                 boolean aotError = aerosol.getSampleBit(x, y, 1);
-                if (aemask.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1 && !aotError) {
-                    result += FLAG_AE_APPLIED;
+                if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
+                    result += FLAG_AE_APPLIED_RAYLEIGH;
+                }
+                if (aemaskAerosol.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1 && !aotError) {
+                    result += FLAG_AE_APPLIED_AEROSOL;
                 }
                 if (aerosol.getSampleBit(x, y, 0)) {
                     result += FLAG_ALPHA_ERROR;
@@ -287,11 +319,11 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         }
     }
     
-    private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
+    private void correctForRayleigh(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile aep = getSourceTile(aemaskProduct.getBand(AEMaskOp.AE_MASK), rectangle, pm);
+        Tile aep = getSourceTile(aemaskRayleighProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
         Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
         Tile aeRayleigh = null;
 
@@ -317,11 +349,12 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
         }
     }
 
-    private void correctForRayleigh(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
+    private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile aep = getSourceTile(aemaskProduct.getBand(AEMaskOp.AE_MASK), rectangle, pm);
+        Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
+        Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
         Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
         Tile aeRayleigh = null;
         Tile aeAerosol = null;
@@ -330,18 +363,27 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
             for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                 double rhoToa = 0;
                 double gasCorValue = gasCor.getSampleDouble(x, y);
-                if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                double corrected = 0.0;
+                if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
                     if (aeRayleigh == null) {
                         aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
-                        aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
                     }
                     double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-                    double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
-                    double corrected = gasCorValue - aeRayleighValue - aeAerosolValue;
-                    if (corrected != 0) {
-                        rhoToa = corrected * tg.getSampleDouble(x, y);
-                    }
+                    corrected = gasCorValue - aeRayleighValue;
                 }
+                if (aepAerosol.getSampleInt(x, y) == 1) {
+                    if (aeAerosol == null) {
+                        aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
+                    }
+                    double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
+                    corrected -= aeAerosolValue;
+                }
+
+                if (corrected != 0.0) {
+                    rhoToa = corrected * tg.getSampleDouble(x, y);
+                }
+
+
                 if (rhoToa == 0) {
                     rhoToa = rhoToaR.getSampleDouble(x, y);
                 }
@@ -353,7 +395,7 @@ public class ReverseRhoToaOp extends MerisBasisOp  {
     
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(ReverseRhoToaOp.class);
+            super(MerisReflectanceCorrectionOp.class);
         }
     }
 }

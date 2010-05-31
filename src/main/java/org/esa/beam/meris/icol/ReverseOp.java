@@ -16,8 +16,7 @@
  */
 package org.esa.beam.meris.icol;
 
-import java.awt.Rectangle;
-
+import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
@@ -26,23 +25,24 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.framework.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
+import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
+import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
-import com.bc.ceres.core.ProgressMonitor;
+import java.awt.Rectangle;
 
 
 /**
  * Created by marcoz.
  *
  * @author marcoz
- * @version $Revision: 1.1 $ $Date: 2007/03/27 12:51:41 $
+ * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class ReverseOp extends MerisBasisOp  {
+public class ReverseOp extends MerisBasisOp {
 
     private transient L2AuxData auxData;
     
@@ -103,32 +103,36 @@ public class ReverseOp extends MerisBasisOp  {
 				Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
 				Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
 			
-				Tile aep = getSourceTile(aemaskProduct.getBand(AEMaskOp.AE_MASK), rectangle, pm);
+				Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
 				Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
 				Tile detectorIndex = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME), rectangle, pm);
 				Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" +  bandNumber), rectangle, pm);
 
 				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-						double radiance = 0;
-						double gasCorValue = gasCor.getSampleDouble(x, y);
-						if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
-							double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-							double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
-							double corrected = gasCorValue - aeRayleighValue - aeAerosolValue;
-							if (corrected > 0) {
-								double tgValue = tg.getSampleDouble(x, y);
-								double rhoToa = corrected * tgValue;
-							
-								radiance = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) * 
-										auxData.detector_solar_irradiance[bandNumber-1][detectorIndex.getSampleInt(x, y)]) /
-										(Math.PI * auxData.seasonal_factor);
-							}
-						}
-						if (radiance == 0) {
-							radiance = radianceR.getSampleDouble(x, y);
-						}
-						targetTile.setSample(x, y, radiance);
+                        if (detectorIndex.getSampleInt(x, y) != -1) {
+                            double radiance = 0;
+                            double gasCorValue = gasCor.getSampleDouble(x, y);
+                            if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                                double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
+                                double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
+                                double corrected = gasCorValue - aeRayleighValue - aeAerosolValue;
+                                if (corrected > 0) {
+                                    double tgValue = tg.getSampleDouble(x, y);
+                                    double rhoToa = corrected * tgValue;
+
+                                    radiance = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) *
+                                            auxData.detector_solar_irradiance[bandNumber-1][detectorIndex.getSampleInt(x, y)]) /
+                                            (Math.PI * auxData.seasonal_factor);
+                                }
+                            }
+                            if (radiance == 0) {
+                                radiance = radianceR.getSampleDouble(x, y);
+                            }
+                            targetTile.setSample(x, y, radiance);
+                        } else {
+                           targetTile.setSample(x, y, -1);
+                        }
 					}
 					pm.worked(1);
 				}

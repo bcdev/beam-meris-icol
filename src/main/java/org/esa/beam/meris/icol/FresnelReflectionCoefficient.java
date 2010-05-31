@@ -16,10 +16,10 @@
  */
 package org.esa.beam.meris.icol;
 
+import org.esa.beam.util.io.CsvReader;
 import org.esa.beam.util.math.FractIndex;
 import org.esa.beam.util.math.Interp;
 import org.esa.beam.util.math.LUT;
-import org.esa.beam.util.io.CsvReader;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,7 +28,7 @@ import java.io.Reader;
  * Created by marcoz.
  *
  * @author marcoz
- * @version $Revision: 1.1 $ $Date: 2007/04/27 15:30:03 $
+ * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 public class FresnelReflectionCoefficient {
 
