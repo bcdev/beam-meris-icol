@@ -94,9 +94,6 @@ public class ZmaxOp extends Operator {
                     float zMaxValue = NO_DATA_VALUE;
                     if (isAeMask.getSampleBoolean(x, y)) {
 
-                        if (x == 123 && y == 141) {
-                            System.out.println("");
-                        }
                         boolean found = false;
 
                         if (distanceBandName.equals(MerisCoastDistanceOp.COAST_DISTANCE)) {
