@@ -2,8 +2,10 @@ package org.esa.beam.meris.icol.tm;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.CrsGeoCoding;
 import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.GeoPos;
+import org.esa.beam.framework.datamodel.MapGeoCoding;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -19,10 +21,11 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
-import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
+import org.opengis.referencing.operation.MathTransform;
 
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 
 /**
@@ -95,14 +98,30 @@ public class TmGeometryOp extends TmBasisOp {
         sceneWidth = sourceProduct.getSceneRasterWidth()/(2*aveBlock+1) + 1;
         sceneHeight = sourceProduct.getSceneRasterHeight()/(2*aveBlock+1) + 1;
 
-        String resolution = "";
+        final String productType;
         if (landsatTargetResolution == TmConstants.LANDSAT5_RR) {
-            resolution = "_RR_";
+            productType = "L1G_RR_";
         } else {
-            resolution = "_FR_";
+            productType = "L1G_FR_";
         }
-        targetProduct = new Product(sourceProduct.getName() + "_ICOL", "L1G" + resolution, sceneWidth, sceneHeight);
-        ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
+        targetProduct = new Product(sourceProduct.getName() + "_ICOL", productType, sceneWidth, sceneHeight);
+        GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
+        if (srcGeoCoding instanceof CrsGeoCoding || srcGeoCoding instanceof MapGeoCoding) {
+            MathTransform imageToMapTransform = srcGeoCoding.getImageToMapTransform();
+            if (imageToMapTransform instanceof AffineTransform) {
+                AffineTransform affineTransform = (AffineTransform) imageToMapTransform;
+                final AffineTransform destTransform = new AffineTransform(affineTransform);
+                double scaleX = ((double)sourceProduct.getSceneRasterWidth()) / sceneWidth;
+                double scaleY = ((double)sourceProduct.getSceneRasterHeight()) / sceneHeight;
+                destTransform.scale(scaleX, scaleY);
+                Rectangle destBounds = new Rectangle(sceneWidth, sceneHeight);
+                try {
+                    targetProduct.setGeoCoding(new CrsGeoCoding(srcGeoCoding.getMapCRS(), destBounds, destTransform));
+                } catch (Exception e) {
+                    throw new OperatorException(e);
+                }
+            }
+        }
 
         doy = LandsatUtils.getDayOfYear(startTime);
         final String startGmtString = startTime.substring(12, 20);
@@ -117,7 +136,9 @@ public class TmGeometryOp extends TmBasisOp {
         }
 
         for (int i=0; i< TmConstants.LANDSAT5_RADIANCE_BAND_NAMES.length; i++) {
-            targetProduct.addBand(TmConstants.LANDSAT5_RADIANCE_BAND_NAMES[i], ProductData.TYPE_FLOAT32);
+            Band band = targetProduct.addBand(TmConstants.LANDSAT5_RADIANCE_BAND_NAMES[i], ProductData.TYPE_FLOAT32);
+            band.setGeophysicalNoDataValue(NO_DATA_VALUE);
+            band.setNoDataValueUsed(true);
         }
         
         Band latitudeBand = targetProduct.addBand(LATITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
@@ -218,8 +239,8 @@ public class TmGeometryOp extends TmBasisOp {
 
     private float getRadianceSpatialAverage(Tile radianceTile, int iTarX, int iTarY) throws Exception {
 
-        float radianceAve = 0.0f;
-
+        double radianceAve = 0.0;
+        double srcNoDataValue = radianceTile.getRasterDataNode().getGeophysicalNoDataValue();
         int n = 0;
         final int minX = Math.max(0,iTarX-aveBlock);
         final int minY = Math.max(0,iTarY-aveBlock);
@@ -230,9 +251,8 @@ public class TmGeometryOp extends TmBasisOp {
 
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
-                final float radiance = radianceTile.getSampleFloat(ix, iy);
-                boolean valid = (Double.compare(radiance, NO_DATA_VALUE) != 0);
-                if (valid) {
+                final double radiance = radianceTile.getSampleDouble(ix, iy);
+                if (srcNoDataValue != radiance) {
                     n++;
                     radianceAve += radiance;
                 }
@@ -244,7 +264,7 @@ public class TmGeometryOp extends TmBasisOp {
             radianceAve = NO_DATA_VALUE;
         }
 
-        return radianceAve;
+        return (float)radianceAve;
     }
 
 //    private float getRadianceSpatialAverage(Tile radianceTile, int iTarX, int iTarY) throws Exception {
