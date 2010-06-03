@@ -34,6 +34,8 @@ import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.common.CloudDistanceOp;
+import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 
@@ -213,20 +215,20 @@ public class MerisOp extends Operator {
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
 
-
+        Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
+        aemaskAerosolInput.put("source", sourceProduct);
+        aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> distanceParameters = new HashMap<String, Object>(3);
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
         distanceParameters.put("correctOverLand", correctOverLand);
-        Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCoastDistanceOp.class), distanceParameters, aemaskAerosolInput);
+        Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters, coastDistanceInput);
 
         Map<String, Product> cloudDistanceInput = new HashMap<String, Product>(2);
-        cloudDistanceInput.put("l1b", sourceProduct);
-        cloudDistanceInput.put("land", landProduct);
+        cloudDistanceInput.put("source", sourceProduct);
         cloudDistanceInput.put("cloud", cloudProduct);
         Map<String, Object> cloudDistanceParameters = new HashMap<String, Object>(1);
-        cloudDistanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-        Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCloudDistanceOp.class), cloudDistanceParameters, cloudDistanceInput);
+        Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudDistanceOp.class), cloudDistanceParameters, cloudDistanceInput);
 
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
         zmaxInput.put("l1b", sourceProduct);
@@ -238,7 +240,7 @@ public class MerisOp extends Operator {
             aeMaskExpression = "true";
         }
         zmaxParameters.put("aeMaskExpression", aeMaskExpression);
-        zmaxParameters.put("distanceBandName", MerisCoastDistanceOp.COAST_DISTANCE);
+        zmaxParameters.put("distanceBandName", CoastDistanceOp.COAST_DISTANCE);
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(4);
@@ -247,7 +249,7 @@ public class MerisOp extends Operator {
         zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(1);
         zmaxCloudParameters.put("aeMaskExpression", MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep");
-        zmaxCloudParameters.put("distanceBandName", MerisCloudDistanceOp.CLOUD_DISTANCE);
+        zmaxCloudParameters.put("distanceBandName", CloudDistanceOp.CLOUD_DISTANCE);
         Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters, zmaxCloudInput);
 
         // test: create constant reflectance input
@@ -405,7 +407,7 @@ public class MerisOp extends Operator {
                 DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX);
 
                 // (iv a) coastDistance
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct, MerisCoastDistanceOp.COAST_DISTANCE);
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE);
 
                 DebugUtils.addAeRayleighProductDebugBands(reverseRadianceProduct, aeRayProduct);
                 if (correctForBoth) {

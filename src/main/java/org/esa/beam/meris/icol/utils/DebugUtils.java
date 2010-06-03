@@ -7,7 +7,7 @@ import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
-import org.esa.beam.meris.icol.tm.TmCoastDistanceOp;
+import org.esa.beam.meris.icol.common.CoastDistanceOp;
 
 /**
  * @author Olaf Danne
@@ -183,7 +183,7 @@ public class DebugUtils {
 
    public static void addCoastDistanceProductDebugBand(Product targetProduct, Product coastDistanceProduct, String coastDistanceBandName) {
         for (Band band:coastDistanceProduct.getBands()) {
-            if (band.getName().equals(TmCoastDistanceOp.COAST_DISTANCE)) {
+            if (band.getName().equals(CoastDistanceOp.COAST_DISTANCE)) {
                 targetProduct.addBand(band);
             }
         }

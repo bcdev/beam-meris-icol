@@ -17,8 +17,6 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
-import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
-import org.esa.beam.meris.icol.meris.MerisCoastDistanceOp;
 import org.esa.beam.meris.icol.utils.NavigationUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.math.MathUtils;
@@ -96,7 +94,7 @@ public class ZmaxOp extends Operator {
 
                         boolean found = false;
 
-                        if (distanceBandName.equals(MerisCoastDistanceOp.COAST_DISTANCE)) {
+                        if (distanceBandName.equals(CoastDistanceOp.COAST_DISTANCE)) {
                             double z0 = 0;
                             double z1 = 60000;
                             double z;
