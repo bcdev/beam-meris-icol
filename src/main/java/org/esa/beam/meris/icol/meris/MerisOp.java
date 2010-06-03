@@ -216,8 +216,8 @@ public class MerisOp extends Operator {
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
 
         Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
-        aemaskAerosolInput.put("source", sourceProduct);
-        aemaskAerosolInput.put("land", landProduct);
+        coastDistanceInput.put("source", sourceProduct);
+        coastDistanceInput.put("land", landProduct);
         Map<String, Object> distanceParameters = new HashMap<String, Object>(3);
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
