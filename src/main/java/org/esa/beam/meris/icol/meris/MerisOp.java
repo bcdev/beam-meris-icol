@@ -231,7 +231,7 @@ public class MerisOp extends Operator {
         Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudDistanceOp.class), cloudDistanceParameters, cloudDistanceInput);
 
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
-        zmaxInput.put("l1b", sourceProduct);
+        zmaxInput.put("source", sourceProduct);
         zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
@@ -244,7 +244,7 @@ public class MerisOp extends Operator {
         Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
 
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(4);
-        zmaxCloudInput.put("l1b", sourceProduct);
+        zmaxCloudInput.put("source", sourceProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
         zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(1);

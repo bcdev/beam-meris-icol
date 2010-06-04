@@ -318,7 +318,7 @@ public class TmOp extends TmBasisOp {
         // zMax:
         // --> same operator as for MERIS, provide necessary TPGs
         Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
-        zmaxInput.put("l1b", conversionProduct);
+        zmaxInput.put("source", conversionProduct);
         zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
@@ -334,7 +334,7 @@ public class TmOp extends TmBasisOp {
         // zMaxCloud:
         // --> same operator as for MERIS, provide necessary TPGs
         Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(5);
-        zmaxCloudInput.put("l1b", conversionProduct);
+        zmaxCloudInput.put("source", conversionProduct);
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
         zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>();
