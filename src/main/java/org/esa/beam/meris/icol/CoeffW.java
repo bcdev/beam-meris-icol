@@ -218,6 +218,13 @@ public class CoeffW {
     }
 
     public static KernelJAI createKernelByRotation(double[] array) {
+        float[] kernelData = createFilterByRotation(array);
+
+        int m = 2 * array.length - 1;
+        return new KernelJAI(m, m, kernelData);
+    }
+
+    public static float[] createFilterByRotation(double[] array) {
         int n = array.length;
         int m = 2 * n - 1;
         float[] kernelData = new float[m * m];
@@ -262,9 +269,9 @@ public class CoeffW {
         for (int i = 0; i < kernelData.length; i++) {
             kernelData[i] /= sum;
         }
-
-        return new KernelJAI(m, m, kernelData);
+        return kernelData;
     }
+
 
     static int computeIndex(int x, int y, int n) {
         int dx = x - (n - 1);

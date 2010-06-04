@@ -66,6 +66,7 @@ class IcolForm extends JTabbedPane {
     private ButtonGroup generalGroup;
     private JFormattedTextField convolveModeValue;
     private JCheckBox nestedConvolutionCheckBox;
+    private JCheckBox openclConvolutionCheckBox;
     private JFormattedTextField tileSizeValue;
     private JCheckBox correctOverLandCheckBox;
     private JCheckBox correctInCoastalAreasCheckBox;
@@ -176,6 +177,7 @@ class IcolForm extends JTabbedPane {
         bc.bind("convolveMode", convolveModeValue);
         bc.bind("tileSize", tileSizeValue);
         bc.bind("reshapedConvolution", nestedConvolutionCheckBox);
+        bc.bind("openclConvolution", openclConvolutionCheckBox);
 
         bc.bind("productType", productTypeGroup);
         bc.bind("sourceProduct", sourceProductSelector.getProductNameComboBox());
@@ -482,6 +484,12 @@ class IcolForm extends JTabbedPane {
 //        panel.add(convolveModeValue);
 ////        convolveModeValue.setEnabled(false); // preliminary!
 //		panel.add(new JLabel());
+
+        openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
+        openclConvolutionCheckBox.setSelected(true);
+		panel.add(openclConvolutionCheckBox);
+        panel.add(new JLabel());
+        panel.add(new JLabel());
 
         nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
         nestedConvolutionCheckBox.setSelected(true);

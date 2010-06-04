@@ -38,6 +38,7 @@ import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
+import org.esa.beam.meris.icol.utils.IcolUtils;
 
 import javax.media.jai.JAI;
 import javax.media.jai.TileCache;
@@ -112,6 +113,8 @@ public class MerisOp extends Operator {
     private int convolveMode = 1;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;
+    @Parameter(defaultValue="true")
+    private boolean openclConvolution = true;
     @Parameter(defaultValue="64")
     private int tileSize = 64;
     @Parameter(defaultValue="true")
@@ -133,7 +136,7 @@ public class MerisOp extends Operator {
 //        if (tileSize > 0) {
 //            sourceProduct.setPreferredTileSize(tileSize, tileSize);
 //        }
-        sourceProduct.setPreferredTileSize(new Dimension(128, 128));
+
 
 //        JAI.getDefaultInstance().setTileCache(new FileTileCache(new File("C:\\temp\\gpf")));
         TileCache tc = JAI.getDefaultInstance().getTileCache();
@@ -257,6 +260,7 @@ public class MerisOp extends Operator {
         constInput.put("source", sourceProduct);
 //        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ConstantValueOp.class), emptyParams, rayleighProduct);
 //        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, rayleighProduct);
+        // end test
 
         Map<String, Product> brrCloudInput = new HashMap<String, Product>(4);
         brrCloudInput.put("l1b", sourceProduct);
@@ -265,13 +269,30 @@ public class MerisOp extends Operator {
         brrCloudInput.put("cloud", cloudProduct);
         Product brrCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrCloudOp.class), emptyParams, brrCloudInput);
 
+        // begin TEST JavaCL
+        Product brrConvolveProduct = null;
+        if (openclConvolution) {
+            Map<String, Product> brrConvolveInput = new HashMap<String, Product>(4);
+            brrConvolveInput.put("l1b", sourceProduct);
+            brrConvolveInput.put("brr", brrCloudProduct);
+            Map<String, Object> brrConvolveParams = new HashMap<String, Object>(1);
+            brrConvolveParams.put("openclConvolution", openclConvolution);
+            brrConvolveParams.put("bandPrefix", "brr");
+            brrConvolveParams.put("filterWeightsIndex", 0);
+            brrConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class), brrConvolveParams, brrConvolveInput);
+        // end TEST JavaCL
+        }
+
+
         Map<String, Product> aeRayInput = new HashMap<String, Product>(10);
         aeRayInput.put("l1b", sourceProduct);
         aeRayInput.put("refl", rad2reflProduct);
         aeRayInput.put("land", landProduct);
         aeRayInput.put("aemask", aemaskRayleighProduct);
-//        aeRayInput.put("ray1b", rayleighProduct);
         aeRayInput.put("ray1b", brrCloudProduct);
+        if (openclConvolution) {
+            aeRayInput.put("ray1bconv", brrConvolveProduct);  // use brr pre-convolved with JavaCL
+        }
 //        aeRayInput.put("ray1b", constProduct);  // test: use constant reflectance input
         aeRayInput.put("rhoNg", gasProduct);
         aeRayInput.put("zmax", zmaxProduct);
@@ -285,6 +306,7 @@ public class MerisOp extends Operator {
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("convolveAlgo", convolveMode); // v1.1
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
+        aeRayParams.put("openclConvolution", openclConvolution);
         Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeRayleighOp.class), aeRayParams, aeRayInput);
 
         Product aeAerProduct = null;
@@ -302,6 +324,23 @@ public class MerisOp extends Operator {
 //            Map<String, Product> constInputAer = new HashMap<String, Product>(1);
 //            constInputAer.put("source", sourceProduct);
 //            Product constProductAer = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, constInputAer);
+            // end test
+
+             // begin TEST JavaCL
+            Product rayAercConvolveProduct = null;
+            if (openclConvolution && !icolAerosolForWater) {
+                Map<String, Product> rayAercConvolveInput = new HashMap<String, Product>(4);
+                rayAercConvolveInput.put("l1b", sourceProduct);
+                rayAercConvolveInput.put("brr", aeRayProduct);
+                Map<String, Object> rayAercConvolveParams = new HashMap<String, Object>(1);
+                rayAercConvolveParams.put("openclConvolution", openclConvolution);
+                rayAercConvolveParams.put("bandPrefix", "rho_ray_aerc");
+//                int aerosolModelIndex = 10;
+                int aerosolModelIndex = IcolUtils.determineAerosolModelIndex(userAlpha);
+                rayAercConvolveParams.put("filterWeightsIndex", aerosolModelIndex-1);
+                rayAercConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class), rayAercConvolveParams, rayAercConvolveInput);
+            }
+            // end TEST JavaCL
 
             Map<String, Product> aeAerInput = new HashMap<String, Product>(8);
             aeAerInput.put("l1b", sourceProduct);
@@ -309,6 +348,9 @@ public class MerisOp extends Operator {
             aeAerInput.put("aemask", aemaskAerosolProduct);
             aeAerInput.put("zmax", zmaxProduct);
             aeAerInput.put("ae_ray", aeRayProduct);
+            if (openclConvolution && !icolAerosolForWater) {
+                aeAerInput.put("rayaercconv", rayAercConvolveProduct);  // use brr pre-convolved with JavaCL
+            }
 //            aeAerInput.put("ae_ray", constProductAer);  // test!!
             aeAerInput.put("cloud", cloudProduct);
             aeAerInput.put("zmaxCloud", zmaxCloudProduct);
@@ -322,9 +364,10 @@ public class MerisOp extends Operator {
             aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
             aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
             aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-            if (icolAerosolCase2) {
+            if (icolAerosolCase2 && icolAerosolForWater) {
                 aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeAerosolCase2Op.class), aeAerosolParams, aeAerInput);
             } else {
+                aeAerosolParams.put("openclConvolution", openclConvolution);
                 aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeAerosolOp.class), aeAerosolParams, aeAerInput);
             }
         }
@@ -378,7 +421,6 @@ public class MerisOp extends Operator {
             reverseRadianceParams.put("correctForBoth", correctForBoth);
             reverseRadianceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), reverseRadianceParams, reverseRadianceInput);
 
-
             // additional output bands for RS
             if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
 
@@ -396,8 +438,11 @@ public class MerisOp extends Operator {
                 DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, landProduct, flagCodingLand, LandClassificationOp.LAND_FLAGS);
 
                 // Rayleigh correction
-//                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, rayleighProduct);
                 DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
+
+                // brr convolution (test)
+                if (openclConvolution)
+                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
 
                 // (i) AE mask
                 DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, MerisAeMaskOp.AE_MASK_RAYLEIGH);
@@ -413,6 +458,15 @@ public class MerisOp extends Operator {
                 if (correctForBoth) {
                     DebugUtils.addAeAerosolProductDebugBands(reverseRadianceProduct, aeAerProduct);
                 }
+            } else {
+                // test:
+                // Rayleigh correction
+//                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
+
+                // brr convolution (test)
+//                if (openclConvolution)
+//                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
+                // end test
             }
             if (patchedFile != null) {
                 Map<String, Product> n1PatcherInput = new HashMap<String, Product>(2);

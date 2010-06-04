@@ -1,6 +1,7 @@
 org.esa.beam.meris.icol.meris.MerisAeMaskOp$Spi
 org.esa.beam.meris.icol.meris.MerisCloudTopPressureOp$Spi
 org.esa.beam.meris.icol.meris.MerisBrrCloudOp$Spi
+org.esa.beam.meris.icol.meris.MerisBrrConvolveOp$Spi
 org.esa.beam.meris.icol.meris.MerisAeRayleighOp$Spi
 org.esa.beam.meris.icol.FresnelCoefficientOp$Spi
 org.esa.beam.meris.icol.meris.MerisAeAerosolOp$Spi

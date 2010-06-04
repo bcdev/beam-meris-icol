@@ -301,18 +301,20 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
                 if (cloud.getSampleBit(x, y, 0)) {
                     result += FLAG_LANDCONS;
                 }
-                boolean aotError = aerosol.getSampleBit(x, y, 1);
                 if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
                     result += FLAG_AE_APPLIED_RAYLEIGH;
                 }
-                if (aemaskAerosol.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1 && !aotError) {
-                    result += FLAG_AE_APPLIED_AEROSOL;
-                }
-                if (aerosol.getSampleBit(x, y, 0)) {
-                    result += FLAG_ALPHA_ERROR;
-                }
-                if (aotError) {
-                    result += FLAG_AOT_ERROR;
+                if (aerosol != null) {
+                    boolean aotError = aerosol.getSampleBit(x, y, 1);
+                    if (aemaskAerosol.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1 && !aotError) {
+                        result += FLAG_AE_APPLIED_AEROSOL;
+                    }
+                    if (aerosol.getSampleBit(x, y, 0)) {
+                        result += FLAG_ALPHA_ERROR;
+                    }
+                    if (aotError) {
+                        result += FLAG_AOT_ERROR;
+                    }
                 }
                 targetTile.setSample(x, y, result);
             }

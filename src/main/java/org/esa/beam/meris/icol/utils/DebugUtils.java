@@ -134,11 +134,11 @@ public class DebugUtils {
 
 
     public static void addRayleighCorrDebugBands(Product targetProduct, Product rayleighProduct) {
-        for (Band band:rayleighProduct.getBands()) {
-            if (band.getName().startsWith(RayleighCorrectionOp.RAYLEIGH_REFL_BAND_PREFIX)) {
-                targetProduct.addBand(band);
-            }
-        }
+//        for (Band band:rayleighProduct.getBands()) {
+//            if (band.getName().startsWith(RayleighCorrectionOp.RAYLEIGH_REFL_BAND_PREFIX)) {
+//                targetProduct.addBand(band);
+//            }
+//        }
         // (iii) BRR before AE correction
         for (Band band : rayleighProduct.getBands()) {
             if (band.getName().startsWith(RayleighCorrectionOp.BRR_BAND_PREFIX)) {

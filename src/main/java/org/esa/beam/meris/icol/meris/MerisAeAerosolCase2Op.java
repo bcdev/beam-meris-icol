@@ -344,12 +344,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         } else {
                             alpha = userAlpha;
                         }
-                        int iaer = (int) (Math.round(-(alpha * 10.0)) + 1);
-                        if (iaer < 1) {
-                            iaer = 1;
-                            flagTile.setSample(x, y, 1);
-                        } else if (iaer > 26) {
-                            iaer = 26;
+                        int iaer = IcolUtils.determineAerosolModelIndex(alpha);
+                        if (iaer < 1 || iaer > 26) {
                             flagTile.setSample(x, y, 1);
                         }
 

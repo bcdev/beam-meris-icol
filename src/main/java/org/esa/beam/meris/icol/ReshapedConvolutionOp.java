@@ -102,7 +102,7 @@ public class ReshapedConvolutionOp extends Operator {
         }
     }
 
-    private static RenderedOp convolve(RenderedImage src, KernelJAI kernel) {
+    public static RenderedOp convolve(RenderedImage src, KernelJAI kernel) {
         final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_COPY);
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_REFLECT);
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_WRAP);

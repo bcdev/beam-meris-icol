@@ -92,6 +92,8 @@ public class MerisAeAerosolOp extends MerisBasisOp {
     private Product zmaxProduct;
     @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
+    @SourceProduct(alias = "rayaercconv", optional=true)
+    private Product ray1bconvProduct;
     @SourceProduct(alias = "cloud", optional = true)
     private Product cloudProduct;
     @SourceProduct(alias = "zmaxCloud")
@@ -115,6 +117,8 @@ public class MerisAeAerosolOp extends MerisBasisOp {
     private int convolveAlgo;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution;
+    @Parameter(defaultValue="true")
+    private boolean openclConvolution = true;
     @Parameter
     private String landExpression;
 
@@ -292,6 +296,18 @@ public class MerisAeAerosolOp extends MerisBasisOp {
             }
             rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect, pm);
         }
+
+        Tile[] rhoRaecConv = null;
+        if (openclConvolution && ray1bconvProduct != null) {
+            rhoRaecConv = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
+            for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
+                if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+                    continue;
+                }
+                rhoRaecConv[i] = getSourceTile(ray1bconvProduct.getBand("rho_ray_aerc_conv_" + (i + 1)), sourceRect, pm);
+            }
+        }
+
         final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
 
         Tile flagTile = targetTiles.get(flagBand);
@@ -355,14 +371,10 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         } else {
                             alpha = userAlpha;
                         }
-                        int iaer = (int) (Math.round(-(alpha * 10.0)) + 1);
-                        if (iaer < 1) {
-                            iaer = 1;
+                        int iaer = IcolUtils.determineAerosolModelIndex(alpha);
+                        if (iaer < 1 || iaer > 26) {
                             flagTile.setSample(x, y, 1);
-                        } else if (iaer > 26) {
-                            iaer = 26;
-                            flagTile.setSample(x, y, 1);
-                        }
+                        } 
 
                         //retrieve ROAG at 865 nm with two bounded AOTs
                         final double r1v = fresnelCoefficient.getCoeffFor(vza.getSampleFloat(x, y));
@@ -413,8 +425,15 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         // otherwise apply user input (as always over land)
                         // begin 'old' case 1 water
                         // first, compute <RO_AER> at 865 and 705nm
-                        final double rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
-                        final double rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
+                        double rhoBrrBracket865;
+                        double rhoBrrBracket705;
+                        if (openclConvolution && ray1bconvProduct != null) {
+                                rhoBrrBracket865 = rhoRaecConv[12].getSampleFloat(x, y);
+                                rhoBrrBracket705 = rhoRaecConv[8].getSampleFloat(x, y);
+                        } else {
+                            rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
+                            rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
+                        }
 
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
@@ -476,8 +495,12 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                 fresnelDebug[iwvl].setSample(x, y, -1);
                             }
                             if (searchIAOT != -1) {
-                                // todo: extract methods also in this part!
-                                double roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
+                                double roAerMean;
+                                if (openclConvolution && ray1bconvProduct != null) {
+                                    roAerMean = rhoRaecConv[iwvl].getSampleFloat(x, y);
+                                } else {
+                                    roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
+                                }
 
                                 float rhoRaecIwvl = rhoRaec[iwvl].getSampleFloat(x, y);
                                 Band band = (Band) rhoRaec[iwvl].getRasterDataNode();

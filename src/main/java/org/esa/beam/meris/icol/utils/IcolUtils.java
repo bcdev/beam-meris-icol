@@ -36,4 +36,13 @@ public class IcolUtils {
         l1nTile[14].setSample(x, y, l1nb15);
     }
 
+    public static int determineAerosolModelIndex(double alpha) {
+        int iaer = (int) (Math.round(-(alpha * 10.0)) + 1);
+        if (iaer < 1) {
+            iaer = 1;
+        } else if (iaer > 26) {
+            iaer = 26;
+        }
+        return iaer;
+    }
 }

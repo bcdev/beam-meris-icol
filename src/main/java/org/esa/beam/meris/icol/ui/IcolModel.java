@@ -49,6 +49,8 @@ public class IcolModel {
     private int convolveMode = 1;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;
+    @Parameter(defaultValue = "true")
+    private boolean openclConvolution = true;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
     @Parameter(defaultValue = "true")
@@ -219,6 +221,7 @@ public class IcolModel {
         params.put("convolveMode", convolveMode);
         params.put("tileSize", tileSize);
         params.put("reshapedConvolution", reshapedConvolution);
+        params.put("openclConvolution", openclConvolution);
         params.put("correctOverLand", correctOverLand);
         params.put("correctInCoastalAreas", correctInCoastalAreas);
         params.put("correctForBoth", correctForBoth);

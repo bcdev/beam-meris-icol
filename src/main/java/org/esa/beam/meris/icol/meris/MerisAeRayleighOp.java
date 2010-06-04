@@ -100,6 +100,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
     private Product aemaskProduct;
     @SourceProduct(alias = "ray1b")
     private Product ray1bProduct;
+    @SourceProduct(alias = "ray1bconv", optional=true)
+    private Product ray1bconvProduct;
     @SourceProduct(alias = "rhoNg")
     private Product gasCorProduct;
     @SourceProduct(alias = "zmax")
@@ -116,6 +118,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
     private String landExpression;
     @Parameter(interval = "[1, 3]", defaultValue = "1")
     private int convolveAlgo;
+    @Parameter(defaultValue="true")
+    private boolean openclConvolution = true;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution;
     @Parameter
@@ -157,16 +161,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
 
     private void createTargetProduct() {
         String productType = l1bProduct.getProductType();
-//        if (convolveAlgo == 1) {
-//            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, nestedConvolution);
-//        } else if (convolveAlgo == 2) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, coeffW, "brr_", 1, false, nestedConvolution);
-//        } else if (convolveAlgo == 3) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, coeffW, "brr_", 1, true, nestedConvolution);
-//        } else {
-//            throw new OperatorException("Illegal convolution algorithm.");
-//        }
-        // just use either new nested convolution scheme with FFT or 'old ICOL' convolution (no FFT)
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
                                                        EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS,
@@ -238,7 +232,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
             if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
                 continue;
             }
-            bandData[j] = getSourceTile(inProduct.getBand(bandPrefix + "_" + (i + 1)), rectangle, pm);
+            String bandIdentifier = bandPrefix + "_" + (i + 1);
+            bandData[j] = getSourceTile(inProduct.getBand(bandIdentifier), rectangle, pm);
             j++;
         }
         return bandData;
@@ -276,6 +271,10 @@ public class MerisAeRayleighOp extends MerisBasisOp {
             Tile[] sphAlbR = getTileGroup(ray1bProduct, "sphAlbR", targetRect, pm);
 
             Tile[] rhoAg = getTileGroup(ray1bProduct, "brr", sourceRect, pm);
+            Tile[] rhoAgConv = null;
+            if (openclConvolution && ray1bconvProduct != null) {
+                rhoAgConv = getTileGroup(ray1bconvProduct, "brr_conv", sourceRect, pm);
+            }
             final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoAg, targetRect, pm);
 
             //targets
@@ -309,16 +308,22 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                     if (aep.getSampleInt(x, y) == 1 && !isCloud && rhoAg[0].getSampleFloat(x, y) != -1) {
                         long t1 = System.currentTimeMillis();
-//                        double[] means = convolver.convolvePixel(x, y, 1);
-                        double[] means = convolver.convolvePixel(x, y, 2);
-//                        double[] means = convolveRhoAg(convolver, rhoAg, cloudFlags, x, y, targetRect, 1);
+                        double[] means = new double [numBands];
+                        if (!openclConvolution) {
+                            means = convolver.convolvePixel(x, y, 1);
+                        }
                         long t2 = System.currentTimeMillis();
                         convolutionCount++;
                         this.convolutionTime += (t2-t1);
 
                         final double muV = Math.cos(vza.getSampleFloat(x, y) * MathUtils.DTOR);
                         for (int b = 0; b < numBands; b++) {
-                            final double tmpRhoRayBracket = means[b];
+                            double tmpRhoRayBracket = 0.0;
+                            if (openclConvolution && ray1bconvProduct != null) {
+                                tmpRhoRayBracket = rhoAgConv[b].getSampleFloat(x, y);
+                            } else {
+                                tmpRhoRayBracket = means[b];
+                            }
 
                             if (x == 123 && y == 141 && b == 8)
                                 System.out.println("");
@@ -341,13 +346,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                                 System.out.println("values: " + rhoAgValue + "," + transRupValue + "," +
                                 transRdownValue + "," + tauRValue + "," + sphAlbValue + " " + aeRayRay);
                             }
-
-
-                            // this was the old ICOL:
-//                            final double aeRayRay = (transRup[b].getSampleFloat(x, y) - Math
-//                        	        .exp(-tauR[b].getSampleFloat(x, y) / muV))
-//                                    * (tmpRhoRayBracket - rhoAg[b].getSampleFloat(x, y)) * (transRdown[b].getSampleFloat(x, y) /
-//                                    (1d - tmpRhoRayBracket * sphAlbR[b].getSampleFloat(x, y)));
 
                             //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
                             double zmaxPart = 0.0;
@@ -398,8 +396,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                     }
                 }
                 pm.worked(1);
-//                System.out.println("Accumulated convolve time (" + convolutionCount + "*'convolvePixel'): " +
-//                        this.convolutionTime);
             }
 
         } catch (Exception e) {
@@ -407,65 +403,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         } finally {
             pm.done();
         }
-    }
-
-    private double[] convolveRhoAg(RhoBracketAlgo.Convolver convolver, Tile[] rhoAg, Tile cloudFlags, int x, int y, Rectangle targetRect, int iaer) {
-        double[] means = new double[rhoAg.length];
-
-        int sourceExtend;
-
-        final String productType = l1bProduct.getProductType();
-        if (productType.indexOf("_RR") > -1) {
-            sourceExtend = CoeffW.RR_KERNEL_SIZE;
-        } else {
-            sourceExtend = CoeffW.FR_KERNEL_SIZE;
-        }
-
-//        int xMin = Math.max(targetRect.x,  x-sourceExtend);
-//        int xMax = Math.min(targetRect.x + targetRect.width,  x+sourceExtend);
-//        int yMin = Math.max(targetRect.y,  y-sourceExtend);
-//        int yMax = Math.min(targetRect.y + targetRect.height,  y+sourceExtend);
-//
-
-
-//        if (!cloudFlags.getSampleBit(xMin, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMin, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, y, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMin, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(x, yMax, CloudClassificationOp.F_CLOUD) ||
-//             !cloudFlags.getSampleBit(xMax, yMax, CloudClassificationOp.F_CLOUD)) {
-//            convolve = true;
-//        }
-
-        int xMin = Math.max(targetRect.x, x - 9);
-        int xMax = Math.min(targetRect.x + targetRect.width - 1, x + 9);
-        int yMin = Math.max(targetRect.y, y - 9);
-        int yMax = Math.min(targetRect.y + targetRect.height - 1, y + 9);
-
-        boolean convolve = true;
-        for (int i = xMin; i <= xMax; i++) {
-            for (int j = yMin; j <= yMax; j++) {
-                if (cloudFlags.getSampleBit(i, j, CloudClassificationOp.F_CLOUD)) {
-                    convolve = false;
-                    break;
-                }
-            }
-            if (!convolve) {
-                break;
-            }
-        }
-
-        if (convolve) {
-            means = convolver.convolvePixel(x, y, iaer);
-        } else {
-            for (int b=0; b<rhoAg.length; b++) {
-                means[b] = rhoAg[b].getSampleDouble(x, y);
-            }
-        }
-
-        return means;
     }
 
     public static class Spi extends OperatorSpi {
