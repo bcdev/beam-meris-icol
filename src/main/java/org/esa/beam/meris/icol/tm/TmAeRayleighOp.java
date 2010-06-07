@@ -52,8 +52,6 @@ public class TmAeRayleighOp extends TmBasisOp {
     private CoeffW coeffW;
     RhoBracketAlgo rhoBracketAlgo;
 
-    private double[][] w;
-
     private Band[] aeRayBands;
     private Band[] rhoAeRcBands;
     private Band[] rhoAgBracketBands;        // additional output for RS
@@ -142,16 +140,6 @@ public class TmAeRayleighOp extends TmBasisOp {
 
     private void createTargetProduct() {
         String productType = l1bProduct.getProductType();
-//        if (convolveAlgo == 1) {
-//            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, nestedConvolution);
-//        } else if (convolveAlgo == 2) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, coeffW, "brr_", 1, false, nestedConvolution);
-//        } else if (convolveAlgo == 3) {
-//            rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, coeffW, "brr_", 1, true, nestedConvolution);
-//        } else {
-//            throw new OperatorException("Illegal convolution algorithm.");
-//        }
-        // just use either new nested convolution scheme with FFT or 'old ICOL' convolution (no FFT)
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
                                                        TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
@@ -212,19 +200,6 @@ public class TmAeRayleighOp extends TmBasisOp {
             j++;
         }
         return bands;
-
-//        Band[]  bands = new Band[numSpectralBands];
-//        for (int i = 0; i < bands.length; i++) {
-//            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-//                continue;
-//            }
-//            Band inBand = l1bProduct.getBandAt(i);
-//            bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[i]);
-//            bands[i].setNoDataValueUsed(true);
-//            bands[i].setNoDataValue(noDataValue);
-//        }
-//        return bands;
     }
 
     private Tile[] getTileGroup(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
@@ -253,18 +228,6 @@ public class TmAeRayleighOp extends TmBasisOp {
             j++;
         }
         return bandData;
-
-//        Tile[] tiles = null;
-//
-//        tiles = new Tile[bands.length];
-//        for (int i = 0; i < bands.length; i++) {
-//            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-//                continue;
-//            }
-//            tiles[i] = targetTiles.get(bands[i]);
-//        }
-//
-//        return tiles;
     }
 
     @Override
@@ -277,8 +240,8 @@ public class TmAeRayleighOp extends TmBasisOp {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-            Tile zmax = getSourceTile(zmaxProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
-            Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
+            Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
+            Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
 
             Tile[] rhoNg = getTileGroup(gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, targetRect, pm);
@@ -338,19 +301,12 @@ public class TmAeRayleighOp extends TmBasisOp {
                                         (1d - tmpRhoRayBracket * sphAlbR[b].getSampleFloat(x, y)));
 
                                 //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
-                                double zmaxPart = 0.0;
-                                if (zmax.getSampleFloat(x, y) >= 0) {
-                                    zmaxPart = Math.exp(-zmax.getSampleFloat(x, y) / HR);
-                                }
-
-                                double zmaxCloudPart = 0.0;
-                                if (zmaxCloud.getSampleFloat(x, y) >= 0) {
-                                    zmaxCloudPart = Math.exp(-zmaxCloud.getSampleFloat(x, y) / HR);
-                                }
+                                double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HR);
+                                double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HR);
 
                                 final double r1v = fresnelCoefficient.getCoeffFor(sza.getSampleFloat(x, y));
                                 double aeRayFresnelLand = 0.0d;
-                                if (zmax.getSampleFloat(x, y) >= 0) {
+                                if (zmaxPart != 0) {
                                     aeRayFresnelLand = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxPart;
                                     if (isLand.getSampleBoolean(x, y)) {
                                         // contribution must be subtracted over land - ICOL+ ATBD section 4.2
@@ -358,7 +314,7 @@ public class TmAeRayleighOp extends TmBasisOp {
                                     }
                                 }
                                 double aeRayFresnelCloud = 0.0d;
-                                if (zmaxCloud.getSampleFloat(x, y) >= 0) {
+                                if (zmaxCloudPart != 0) {
                                     aeRayFresnelCloud = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxCloudPart;
                                 }
 

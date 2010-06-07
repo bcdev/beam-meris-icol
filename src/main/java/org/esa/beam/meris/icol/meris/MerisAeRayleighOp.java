@@ -81,8 +81,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
     private CoeffW coeffW;
     RhoBracketAlgo rhoBracketAlgo;
 
-    private double[][] w;
-
     private Band[] aeRayBands;
     private Band[] rhoAeRcBands;
     private Band[] rhoAgBracketBands;        // additional output for RS
@@ -214,7 +212,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                 continue;
             }
             Band inBand = srcProduct.getBandAt(i);
-
             bands[j] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
 //            ProductUtils.copySpectralAttributes(inBand, bands[j]);
             ProductUtils.copySpectralBandProperties(inBand, bands[j]);
@@ -259,8 +256,8 @@ public class MerisAeRayleighOp extends MerisBasisOp {
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
             Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
-            Tile zmax = getSourceTile(zmaxProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
-            Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
+            Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
+            Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
 
@@ -302,9 +299,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                             rayleighDebug[b].setSample(x, y, -1);
                         }
                     }
-                    if (x == 123 && y == 141)
-                        System.out.println("");
-
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                     if (aep.getSampleInt(x, y) == 1 && !isCloud && rhoAg[0].getSampleFloat(x, y) != -1) {
                         long t1 = System.currentTimeMillis();
@@ -325,9 +319,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                                 tmpRhoRayBracket = means[b];
                             }
 
-                            if (x == 123 && y == 141 && b == 8)
-                                System.out.println("");
-
                             // rayleigh contribution without AE (tmpRhoRayBracket)
                             double aeRayRay = 0.0;
 
@@ -342,25 +333,13 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                                 * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
                                 (1d - tmpRhoRayBracket * sphAlbValue));
 
-                            if (x == 123 && y == 141 && b == 8) {
-                                System.out.println("values: " + rhoAgValue + "," + transRupValue + "," +
-                                transRdownValue + "," + tauRValue + "," + sphAlbValue + " " + aeRayRay);
-                            }
-
                             //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
-                            double zmaxPart = 0.0;
-                            final float zMaxValue = zmax.getSampleFloat(x, y);
-                            if (zMaxValue >= 0) {
-                                zmaxPart = Math.exp(-zmax.getSampleFloat(x, y) / HR);
-                            }
-                            double zmaxCloudPart = 0.0;
-                            if (zmaxCloud.getSampleFloat(x, y) >= 0) {
-                                zmaxCloudPart = Math.exp(-zmaxCloud.getSampleFloat(x, y) / HR);
-                            }
+                            double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HR);
+                            double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HR);
 
                             final double r1v = fresnelCoefficient.getCoeffFor(sza.getSampleFloat(x, y));
                             double aeRayFresnelLand = 0.0d;
-                            if (zmax.getSampleFloat(x, y) >= 0) {
+                            if (zmaxPart != 0) {
                                 aeRayFresnelLand = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxPart;
                                 if (isLand.getSampleBoolean(x, y)) {
                                    // contribution must be subtracted over land - ICOL+ ATBD section 4.2 
@@ -368,7 +347,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                                 }
                             }
                             double aeRayFresnelCloud = 0.0d;
-                            if (zmaxCloud.getSampleFloat(x, y) >= 0) {
+                            if (zmaxCloudPart != 0) {
                                 aeRayFresnelCloud = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxCloudPart;
                             }
 

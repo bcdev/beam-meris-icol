@@ -225,6 +225,7 @@ public class MerisOp extends Operator {
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
         distanceParameters.put("correctOverLand", correctOverLand);
+        distanceParameters.put("numDistances", 2);
         Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters, coastDistanceInput);
 
         Map<String, Product> cloudDistanceInput = new HashMap<String, Product>(2);
@@ -449,10 +450,12 @@ public class MerisOp extends Operator {
                 DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, MerisAeMaskOp.AE_MASK_AEROSOL);
 
                 // (iv) zMax
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX);
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
 
                 // (iv a) coastDistance
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE);
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE+"_1");
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE+"_2");
 
                 DebugUtils.addAeRayleighProductDebugBands(reverseRadianceProduct, aeRayProduct);
                 if (correctForBoth) {

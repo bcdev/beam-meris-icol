@@ -4,7 +4,6 @@ import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -17,11 +16,14 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
-import org.esa.beam.meris.icol.utils.NavigationUtils;
+import org.esa.beam.meris.icol.meris.MerisAeAerosolOp;
+import org.esa.beam.meris.icol.meris.MerisAeRayleighOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Operator providing Zmax for land or cloud contribution in AE correction.
@@ -40,12 +42,11 @@ public class ZmaxOp extends Operator {
 
     private static final int NO_DATA_VALUE = -1;
 
-    private Band isAemBand;
-    private Band distanceBand;
-    private double distanceNoDataValue;
+    private Band aeMaskBand;
+    private Map<Band, Band> distanceBandMap;
 
-    @SourceProduct(alias = "l1b")
-    private Product l1bProduct;
+    @SourceProduct(alias = "source")
+    private Product sourceProduct;
     @SourceProduct(alias = "ae_mask")
     private Product aeMaskProduct;
     @SourceProduct(alias = "distance")
@@ -59,30 +60,39 @@ public class ZmaxOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "zmax_" + l1bProduct.getName(), "ZMAX");
-        Band zmaxBand = targetProduct.addBand(ZMAX, ProductData.TYPE_FLOAT32);
-        zmaxBand.setNoDataValue(NO_DATA_VALUE);
-        zmaxBand.setNoDataValueUsed(true);
+        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "zmax_" + sourceProduct.getName(), "ZMAX");
+        int numZmax = distanceProduct.getNumBands();
+        distanceBandMap = new HashMap<Band, Band>(numZmax);
+        for (int i = 0; i < numZmax; i++) {
+            Band zmaxBand = targetProduct.addBand(ZMAX + "_" + (i+1), ProductData.TYPE_FLOAT32);
+            zmaxBand.setNoDataValue(NO_DATA_VALUE);
+            zmaxBand.setNoDataValueUsed(true);
+
+            Band distBand;
+            if (numZmax == 1) {
+                distBand = distanceProduct.getBand(distanceBandName);
+            } else {
+                distBand = distanceProduct.getBand(distanceBandName + "_" + (i+1));
+            }
+            distanceBandMap.put(zmaxBand, distBand);
+        }
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(aeMaskExpression, aeMaskProduct);
-        isAemBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
-        distanceBand = distanceProduct.getBand(distanceBandName);
-        distanceNoDataValue = distanceBand.getNoDataValue();
+        aeMaskBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
     }
 
     @Override
-    public void computeTile(Band band, Tile zmax, ProgressMonitor pm) throws OperatorException {
-
+    public void computeTile(Band zmaxBand, Tile zmax, ProgressMonitor pm) throws OperatorException {
         final Rectangle targetRect = zmax.getRectangle();
+
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, SubProgressMonitor.create(pm, 1));
-            Tile cloudDistance = getSourceTile(distanceBand, targetRect, SubProgressMonitor.create(pm, 1));
-            Tile isAeMask = getSourceTile(isAemBand, targetRect, SubProgressMonitor.create(pm, 1));
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, SubProgressMonitor.create(pm, 1));
+            Tile aeMask = getSourceTile(aeMaskBand, targetRect, SubProgressMonitor.create(pm, 1));
 
-            Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
-            Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-            Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
+            Band distanceBand = distanceBandMap.get(zmaxBand);
+            Tile distance = getSourceTile(distanceBand, targetRect, SubProgressMonitor.create(pm, 1));
+            double distanceNoDataValue = distanceBand.getNoDataValue();
 
             PixelPos pPix = new PixelPos();
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
@@ -90,65 +100,52 @@ public class ZmaxOp extends Operator {
                 for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
                     pPix.x = x;
                     float zMaxValue = NO_DATA_VALUE;
-                    if (isAeMask.getSampleBoolean(x, y)) {
-
-                        boolean found = false;
-
-//                        if (distanceBandName.equals(CoastDistanceOp.COAST_DISTANCE)) {
-//                            double z0 = 0;
-//                            double z1 = 60000;
-//                            double z;
-//                            final double azDiffRad = computeAzimuthDifferenceRad(vaa.getSampleFloat(x, y), saa.getSampleFloat(x, y));
-//                            do {
-//                                z = (z0 + z1) / 2;
-//                                final double pp0Length = z * Math.tan(vza.getSampleFloat(x, y) * MathUtils.DTOR);
-//                                final GeoPos pGeo = l1bProduct.getGeoCoding().getGeoPos(pPix, null);
-//                                final GeoPos p0Geo = NavigationUtils.lineWithAngle(pGeo, pp0Length, azDiffRad);
-//                                final PixelPos p0Pix = l1bProduct.getGeoCoding().getPixelPos(p0Geo, null);
-//
-//                                if (targetRect.contains(p0Pix)) {
-//                                    int p0x = MathUtils.floorInt(p0Pix.x);
-//                                    int p0y = MathUtils.floorInt(p0Pix.y);
-//                                    final int l = cloudDistance.getSampleInt(p0x, p0y);
-//                                    if (l == -1) {
-//                                        z1 = z;
-//                                    } else {
-//                                        final double lz = Math.tan(sza.getSampleFloat(p0x, p0y) * MathUtils.DTOR) * z;
-//                                        if (lz > l) {
-//                                            z1 = z;
-//                                        } else {
-//                                            z0 = z;
-//                                            found = true;
-//                                        }
-//                                    }
-//                                } else {
-//                                    z1 = z;
-//                                }
-//                                zMaxValue = (float) z;
-//                            } while ((z1 - z0) > 200);
-//                        }
-
-                        if (!found) {
-                            int distance = cloudDistance.getSampleInt(x, y);
-                            if (distance != distanceNoDataValue) {
-                                float szaValue = sza.getSampleFloat(x, y);
-                                zMaxValue = (float) (distance / Math.tan(szaValue * MathUtils.DTOR));
-                            }
+                    if (aeMask.getSampleBoolean(x, y)) {
+                        int distanceValue = distance.getSampleInt(x, y);
+                        if (distanceValue != distanceNoDataValue) {
+                            float szaValue = sza.getSampleFloat(x, y);
+                            zMaxValue = (float) (distanceValue / Math.tan(szaValue * MathUtils.DTOR));
                         }
                     }
                     zmax.setSample(x, y, zMaxValue);
                 }
+                checkForCancelation(pm);
+                pm.worked(1);
             }
-            checkForCancelation(pm);
-            pm.worked(1);
         } finally {
             pm.done();
         }
     }
+    
+    public static double computeZmaxPart(Tile[] zmaxTiles, int x, int y, double scaleHeight) {
+        double zmaxPart = computeZmaxPart(zmaxTiles[0], x, y, scaleHeight);
+        for (int i = 1; i < zmaxTiles.length; i++) {
+            zmaxPart = computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
+        }
+        return zmaxPart;
+    }
 
-    private double computeAzimuthDifferenceRad(final double viewAzimuth,
-                                               final double sunAzimuth) {
-        return Math.acos(Math.cos(MathUtils.DTOR * (viewAzimuth - sunAzimuth)));
+    public static double computeZmaxPart(Tile zmaxTile, int x, int y, double scaleHeight) {
+        double zmaxPart = 0.0;
+        final float zmaxValue = zmaxTile.getSampleFloat(x, y);
+        if (zmaxValue >= 0) {
+            zmaxPart = Math.exp(-zmaxValue / scaleHeight);
+        }
+        return zmaxPart;
+    }
+
+    public static Tile[] getSourceTiles(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
+        Tile[] tiles = new Tile[zmaxProduct.getNumBands()];
+        for (int i = 0; i < tiles.length; i++) {
+            final Band band = zmaxProduct.getBandAt(i);
+            tiles[i] = op.getSourceTile(band, targetRect, pm);
+        }
+        return tiles;
+    }
+
+    public static Tile getSourceTile(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
+        Band band = zmaxProduct.getBand(ZMAX + "_1");
+        return op.getSourceTile(band, targetRect, pm);
     }
 
     public static class Spi extends OperatorSpi {

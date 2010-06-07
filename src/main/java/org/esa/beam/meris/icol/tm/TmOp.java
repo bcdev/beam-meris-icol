@@ -305,6 +305,7 @@ public class TmOp extends TmBasisOp {
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
         distanceParameters.put("correctOverLand", correctOverLand);
+        distanceParameters.put("numDistances", 2);
         Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters, coastDistanceInput);
 
 
@@ -440,8 +441,10 @@ public class TmOp extends TmBasisOp {
             DebugUtils.addSingleDebugBand(correctionProduct, ctpProduct, TmConstants.LANDSAT5_CTP_BAND_NAME);
             DebugUtils.addSingleDebugBand(correctionProduct, aemaskRayleighProduct, MerisAeMaskOp.AE_MASK_RAYLEIGH);
             DebugUtils.addSingleDebugBand(correctionProduct, aemaskAerosolProduct, MerisAeMaskOp.AE_MASK_AEROSOL);
-            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX);
-            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE);
+            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
+            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
+            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_1");
+            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_2");
             DebugUtils.addAeRayleighProductDebugBands(correctionProduct, aeRayProduct);
             DebugUtils.addAeAerosolProductDebugBands(correctionProduct, aeAerProduct);
         }

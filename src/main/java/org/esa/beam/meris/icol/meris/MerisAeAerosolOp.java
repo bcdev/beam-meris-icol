@@ -285,8 +285,8 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
 
         Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
-        Tile zmax = getSourceTile(zmaxProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
-        Tile zmaxCloud = getSourceTile(zmaxCloudProduct.getBand(ZmaxOp.ZMAX), targetRect, pm);
+        Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
+        Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
         Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
         Tile[] rhoRaec = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
@@ -398,19 +398,12 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         double paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaer);
                         double corrFac = 0.0;
 
-                        double zmaxPart = 0.0;
-                        if (zmax.getSampleFloat(x, y) >= 0) {
-                            zmaxPart = Math.exp(-zmax.getSampleFloat(x, y) / HA);
-                            if (isLand.getSampleBoolean(x, y)) {
-                                // contribution must be subtracted over land - ICOL+ ATBD section 4.2
-                                zmaxPart *= -1.0;
-                            }
+                        double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HA);
+                        if (isLand.getSampleBoolean(x, y)) {
+                            // contribution must be subtracted over land - ICOL+ ATBD section 4.2
+                            zmaxPart *= -1.0;
                         }
-
-                        double zmaxCloudPart = 0.0;
-                        if (zmaxCloud.getSampleFloat(x, y) >= 0) {
-                            zmaxCloudPart = Math.exp(-zmaxCloud.getSampleFloat(x, y) / HA);
-                        }
+                        double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HA);
 
                         int searchIAOT = -1;
                         double aot = 0;
