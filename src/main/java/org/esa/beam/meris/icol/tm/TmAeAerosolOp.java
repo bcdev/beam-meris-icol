@@ -26,9 +26,9 @@ import org.esa.beam.meris.icol.RhoBracketKernellLoop;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.meris.MerisAeMaskOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.util.BitSetter;
-import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
@@ -149,16 +149,16 @@ public class TmAeAerosolOp extends TmBasisOp {
         alphaIndexBand = targetProduct.addBand("alpha_index", ProductData.TYPE_UINT8);
         aotBand = targetProduct.addBand("aot", ProductData.TYPE_FLOAT32);
 
-        rhoAeAcBands = addBandGroup("rho_ray_aeac", -1, instrument);
+        rhoAeAcBands = addBandGroup("rho_ray_aeac", -1);
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-            rhoRaecBracketBands = addBandGroup("rho_raec_bracket", -1, instrument);
-            rhoRaecDiffBands = addBandGroup("rho_raec_diff", -1, instrument);
+            rhoRaecBracketBands = addBandGroup("rho_raec_bracket", -1);
+            rhoRaecDiffBands = addBandGroup("rho_raec_diff", -1);
         }
-        aeAerBands = addBandGroup("rho_aeAer", 0, instrument);
+        aeAerBands = addBandGroup("rho_aeAer", 0);
 
         if (exportSeparateDebugBands) {
-            aerosolDebugBands = addBandGroup("rho_aeAer_aerosol", -1, instrument);
-            fresnelDebugBands = addBandGroup("rho_aeAer_fresnel", -1, instrument);
+            aerosolDebugBands = addBandGroup("rho_aeAer_aerosol", -1);
+            fresnelDebugBands = addBandGroup("rho_aeAer_fresnel", -1);
         }
 
         try {
@@ -187,20 +187,8 @@ public class TmAeAerosolOp extends TmBasisOp {
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
     }
 
-    private Band[] addBandGroup(String prefix, double noDataValue, String instrument) {
-        Band[]  bands = new Band[numSpectralBands];
-        for (int i = 0; i < bands.length; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            Band inBand = l1bProduct.getBandAt(i);
-            bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[i]);
-            ProductUtils.copySpectralBandProperties(inBand, bands[i]);
-            bands[i].setNoDataValueUsed(true);
-            bands[i].setNoDataValue(noDataValue);
-        }
-        return bands;
+    private Band[] addBandGroup(String prefix, double noDataValue) {
+        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip, targetProduct, prefix, noDataValue, false);
     }
 
     private Tile[] getTargetTileGroup(Map<Band, Tile> targetTiles, Band[] bands, String instrument) {

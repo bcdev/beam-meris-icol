@@ -15,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.brr.HelperFunctions;
 import org.esa.beam.meris.brr.LandClassificationOp;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
@@ -118,18 +119,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     }
 
     private Band[] addBandGroup(String prefix) {
-        Band[] bands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-
-            final Band inBand = sourceProduct.getBandAt(i);
-
-            bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[i]);
-            ProductUtils.copySpectralBandProperties(inBand, bands[i]);
-            bands[i].setNoDataValueUsed(true);
-            bands[i].setNoDataValue(NO_DATA_VALUE);
-        }
-        return bands;
+        return OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+                new int[]{}, targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     public static FlagCoding createFlagCoding(int bandLength) {

@@ -43,9 +43,9 @@ import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.util.BitSetter;
-import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
@@ -184,17 +184,17 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         rhoA12Band = targetProduct.addBand("rhoA12", ProductData.TYPE_FLOAT32);
         rhoA13Band = targetProduct.addBand("rhoA13", ProductData.TYPE_FLOAT32);
 
-        rhoAeAcBands = addBandGroup("rho_ray_aeac", NO_DATA_VALUE);
+        rhoAeAcBands = addBandGroup("rho_ray_aeac");
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-            rhoRaecBracketBands = addBandGroup("rho_raec_bracket", NO_DATA_VALUE);
-            rhoRaecDiffBands = addBandGroup("rho_raec_diff", NO_DATA_VALUE);
+            rhoRaecBracketBands = addBandGroup("rho_raec_bracket");
+            rhoRaecDiffBands = addBandGroup("rho_raec_diff");
         }
 //        aeAerBands = addBandGroup("rho_aeAer", 0);
-        aeAerBands = addBandGroup("rho_aeAer", NO_DATA_VALUE);
+        aeAerBands = addBandGroup("rho_aeAer");
 
         if (exportSeparateDebugBands) {
-            aerosolDebugBands = addBandGroup("rho_aeAer_aerosol", NO_DATA_VALUE);
-            fresnelDebugBands = addBandGroup("rho_aeAer_fresnel", NO_DATA_VALUE);
+            aerosolDebugBands = addBandGroup("rho_aeAer_aerosol");
+            fresnelDebugBands = addBandGroup("rho_aeAer_fresnel");
         }
 
         try {
@@ -224,19 +224,9 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
     }
 
-    private Band[] addBandGroup(String prefix, double noDataValue) {
-        Band[] bands = new Band[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < bands.length; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            Band inBand = l1bProduct.getBandAt(i);
-            bands[i] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-            ProductUtils.copySpectralBandProperties(inBand, bands[i]);
-            bands[i].setNoDataValueUsed(true);
-            bands[i].setNoDataValue(noDataValue);
-        }
-        return bands;
+    private Band[] addBandGroup(String prefix) {
+        return OperatorUtils.addBandGroup(l1bProduct, EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     private FlagCoding createFlagCoding() {

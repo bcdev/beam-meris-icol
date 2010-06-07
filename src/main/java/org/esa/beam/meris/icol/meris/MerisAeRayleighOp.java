@@ -19,11 +19,8 @@ package org.esa.beam.meris.icol.meris;
 import com.bc.ceres.core.NullProgressMonitor;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
-import org.esa.beam.framework.dataio.ProductIO;
-import org.esa.beam.framework.dataio.ProductWriter;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -31,7 +28,6 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.framework.gpf.internal.TileImpl;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
@@ -44,13 +40,12 @@ import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
-import org.esa.beam.util.ProductUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -168,14 +163,13 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         }
 
         targetProduct = createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(), "MER_AE_RAY");
-//        aeRayBands = addBandGroup("rho_aeRay", l1bProduct, 0);
-        aeRayBands = addBandGroup("rho_aeRay", l1bProduct, NO_DATA_VALUE);
-        rhoAeRcBands = addBandGroup("rho_ray_aerc", l1bProduct, NO_DATA_VALUE);
-        rhoAgBracketBands = addBandGroup("rho_ag_bracket", l1bProduct, NO_DATA_VALUE);
+        aeRayBands = addBandGroup("rho_aeRay");
+        rhoAeRcBands = addBandGroup("rho_ray_aerc");
+        rhoAgBracketBands = addBandGroup("rho_ag_bracket");
 
         if (exportSeparateDebugBands) {
-            rayleighdebugBands = addBandGroup("rho_aeRay_rayleigh", l1bProduct, NO_DATA_VALUE);
-            fresnelDebugBands = addBandGroup("rho_aeRay_fresnel", l1bProduct, NO_DATA_VALUE);
+            rayleighdebugBands = addBandGroup("rho_aeRay_rayleigh");
+            fresnelDebugBands = addBandGroup("rho_aeRay_fresnel");
         }
 
         if (l1bProduct.getPreferredTileSize() != null) {
@@ -183,22 +177,9 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         }
     }
 
-    private Band[] addBandGroup(String prefix, Product srcProduct, double noDataValue) {
-        Band[] bands = new Band[NUM_BANDS];
-        int j = 0;
-        for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            Band inBand = srcProduct.getBandAt(i);
-            bands[j] = targetProduct.addBand(prefix + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(inBand, bands[j]);
-            ProductUtils.copySpectralBandProperties(inBand, bands[j]);
-            bands[j].setNoDataValueUsed(true);
-            bands[j].setNoDataValue(noDataValue);
-            j++;
-        }
-        return bands;
+    private Band[] addBandGroup(String prefix) {
+        return OperatorUtils.addBandGroup(l1bProduct, EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                targetProduct, prefix, NO_DATA_VALUE, true);
     }
 
     private Tile[] getTileGroup(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
