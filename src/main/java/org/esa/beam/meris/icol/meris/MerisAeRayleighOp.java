@@ -183,27 +183,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         }
     }
 
-    // todo - This is the better writeProduct() impl. - move to ProductUtils
-    public static void writeProduct(Product product, String filePath, String format) {
-        try {
-            System.out.println("Writing " + filePath);
-            ProductWriter writer = ProductIO.getProductWriter(format);
-            writer.writeProductNodes(product, new File(filePath));
-            Band[] bands = product.getBands();
-            for (Band band : bands) {
-                System.out.println("Writing band " + band.getName());
-                Raster data = band.getSourceImage().getData();
-                TileImpl tile = new TileImpl(band, data);
-                // todo - write in tiles
-                writer.writeBandRasterData(band, 0, 0, band.getRasterWidth(), band.getRasterHeight(), tile.getDataBuffer(), ProgressMonitor.NULL);
-            }
-            System.out.println("Writing " + filePath + " done.");
-        } catch (IOException e) {
-            System.out.println("Writing " + filePath + " failed:");
-            e.printStackTrace();
-        }
-    }
-
     private Band[] addBandGroup(String prefix, Product srcProduct, double noDataValue) {
         Band[] bands = new Band[NUM_BANDS];
         int j = 0;
