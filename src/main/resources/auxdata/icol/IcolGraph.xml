@@ -75,7 +75,7 @@
 
     <node>
         <id>aemask</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisAeMaskOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.common.AeMaskOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
             <land>landClass</land>

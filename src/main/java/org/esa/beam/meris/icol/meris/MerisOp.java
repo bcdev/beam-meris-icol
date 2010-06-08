@@ -34,6 +34,7 @@ import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.common.AeMaskOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
@@ -197,26 +198,28 @@ public class MerisOp extends Operator {
         Product rayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(RayleighCorrectionOp.class), rayleighParameters, rayleighInput);
 
         Map<String, Product> aemaskRayleighInput = new HashMap<String, Product>(2);
-        aemaskRayleighInput.put("l1b", sourceProduct);
+        aemaskRayleighInput.put("source", sourceProduct);
         aemaskRayleighInput.put("land", landProduct);
         Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
         aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        aemaskRayleighParameters.put("coastlineExpression", "l1_flags.COASTLINE");
         aemaskRayleighParameters.put("correctOverLand", correctOverLand);
         aemaskRayleighParameters.put("correctInCoastalAreas", correctInCoastalAreas);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
-        Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
+        Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
 
         Map<String, Product> aemaskAerosolInput = new HashMap<String, Product>(2);
-        aemaskAerosolInput.put("l1b", sourceProduct);
+        aemaskAerosolInput.put("source", sourceProduct);
         aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
         aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        aemaskAerosolParameters.put("coastlineExpression", "l1_flags.COASTLINE");
         aemaskAerosolParameters.put("correctOverLand", correctOverLand);
         aemaskAerosolParameters.put("correctInCoastalAreas", correctInCoastalAreas);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
-        Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
+        Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
 
         Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
         coastDistanceInput.put("source", sourceProduct);
@@ -239,7 +242,7 @@ public class MerisOp extends Operator {
         zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
-        String aeMaskExpression = MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep";
+        String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
         if (correctOverLand) {
             aeMaskExpression = "true";
         }
@@ -252,7 +255,7 @@ public class MerisOp extends Operator {
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
         zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(1);
-        zmaxCloudParameters.put("aeMaskExpression", MerisAeMaskOp.AE_MASK_RAYLEIGH + ".aep");
+        zmaxCloudParameters.put("aeMaskExpression", AeMaskOp.AE_MASK_RAYLEIGH + ".aep");
         zmaxCloudParameters.put("distanceBandName", CloudDistanceOp.CLOUD_DISTANCE);
         Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters, zmaxCloudInput);
 
@@ -446,8 +449,8 @@ public class MerisOp extends Operator {
                     DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
 
                 // (i) AE mask
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, MerisAeMaskOp.AE_MASK_RAYLEIGH);
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, MerisAeMaskOp.AE_MASK_AEROSOL);
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, AeMaskOp.AE_MASK_RAYLEIGH);
+                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, AeMaskOp.AE_MASK_AEROSOL);
 
                 // (iv) zMax
                 DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
