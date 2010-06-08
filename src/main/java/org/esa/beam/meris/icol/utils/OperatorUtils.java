@@ -1,16 +1,27 @@
 package org.esa.beam.meris.icol.utils;
 
+import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.gpf.Operator;
+import org.esa.beam.framework.gpf.OperatorException;
+import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.tm.TmGaseousCorrectionOp;
 import org.esa.beam.util.ProductUtils;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class OperatorUtils {
+
+    private static final int[] ALL_BANDS = new int[]{};
+
     private OperatorUtils() {
     }
 
@@ -69,5 +80,31 @@ public class OperatorUtils {
             }
         }
         return targetBands;
+    }
+
+    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands, int[] bandsToSkip, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
+        Tile[] tiles = new Tile[numBands];
+        for (int i = 0; i < tiles.length; i++) {
+            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+                continue;
+            }
+            tiles[i] = op.getSourceTile(srcProduct.getBand(bandPrefix + "_" + (i+1)), rectangle, pm);
+        }
+        return tiles;
+    }
+
+    public static Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands) {
+        return getTargetTiles(targetTiles, bands, ALL_BANDS);
+    }
+
+    public static Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands, int[] bandsToSkip) {
+        Tile[] tiles = new Tile[bands.length];
+        for (int i = 0; i < bands.length; i++) {
+            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+                continue;
+            }
+            tiles[i] = targetTiles.get(bands[i]);
+        }
+        return tiles;
     }
 }

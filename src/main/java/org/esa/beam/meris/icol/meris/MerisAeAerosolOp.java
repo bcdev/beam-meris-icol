@@ -253,15 +253,8 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         coeffW = new CoeffW(auxdataTargetDir, reshapedConvolution, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
     }
 
-    private Tile[] getTargetTileGroup(Map<Band, Tile> targetTiles, Band[] bands) {
-        Tile[] tiles = new Tile[bands.length];
-        for (int i = 0; i < bands.length; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            tiles[i] = targetTiles.get(bands[i]);
-        }
-        return tiles;
+    private Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands) {
+        return OperatorUtils.getTargetTiles(targetTiles, bands, bandsToSkip);
     }
 
 
@@ -279,23 +272,13 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
         Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
-        Tile[] rhoRaec = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect, pm);
-        }
+        Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
+                EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
 
         Tile[] rhoRaecConv = null;
         if (openclConvolution && ray1bconvProduct != null) {
-            rhoRaecConv = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
-            for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
-                if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                    continue;
-                }
-                rhoRaecConv[i] = getSourceTile(ray1bconvProduct.getBand("rho_ray_aerc_conv_" + (i + 1)), sourceRect, pm);
-            }
+            rhoRaecConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "rho_ray_aerc_conv",
+                    EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
         }
 
         final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
@@ -306,19 +289,19 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
 
-        Tile[] rhoAeAcRaster = getTargetTileGroup(targetTiles, rhoAeAcBands);
-        Tile[] aeAerRaster = getTargetTileGroup(targetTiles, aeAerBands);
+        Tile[] rhoAeAcRaster = getTargetTiles(targetTiles, rhoAeAcBands);
+        Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-            rhoRaecBracket = getTargetTileGroup(targetTiles, rhoRaecBracketBands);
-            rhoRaecDiffRaster = getTargetTileGroup(targetTiles, rhoRaecDiffBands);
+            rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
+            rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
         }
         Tile[] aerosolDebug = null;
         Tile[] fresnelDebug = null;
         if (exportSeparateDebugBands) {
-            aerosolDebug = getTargetTileGroup(targetTiles, aerosolDebugBands);
-            fresnelDebug = getTargetTileGroup(targetTiles, fresnelDebugBands);
+            aerosolDebug = getTargetTiles(targetTiles, aerosolDebugBands);
+            fresnelDebug = getTargetTiles(targetTiles, fresnelDebugBands);
         }
 
         Tile surfacePressure = null;

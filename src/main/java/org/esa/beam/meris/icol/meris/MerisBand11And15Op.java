@@ -74,7 +74,7 @@ public class MerisBand11And15Op extends Operator {
         return tProduct;
     }
 
-    private Tile[] getTileGroup(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
+    private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         final Tile[] bandData = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
         int j = 0;
         for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
@@ -111,8 +111,8 @@ public class MerisBand11And15Op extends Operator {
 			} else {
 				final int bandNumber = band.getSpectralBandIndex() + 1;
 
-                Tile[] l1bTile = getTileGroup(refl1bProduct, "rho_toa", rectangle, pm);
-                Tile[] l1nTile = getTileGroup(corrReflProduct, "rho_toa", rectangle, pm);
+                Tile[] l1bTile = getSourceTiles(refl1bProduct, "rho_toa", rectangle, pm);
+                Tile[] l1nTile = getSourceTiles(corrReflProduct, "rho_toa", rectangle, pm);
 
 				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {

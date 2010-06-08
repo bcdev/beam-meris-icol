@@ -163,7 +163,7 @@ public class TmAeRayleighOp extends TmBasisOp {
                 targetProduct, prefix, noDataValue, true);
     }
 
-    private Tile[] getTileGroup(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
+    private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         final Tile[] bandData = new Tile[NUM_BANDS];
         int j = 0;
         for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
@@ -173,20 +173,6 @@ public class TmAeRayleighOp extends TmBasisOp {
                 bandData[i] = getSourceTile(inBand, rectangle, pm);
                 j++;
             }
-        }
-        return bandData;
-    }
-
-    private Tile[] getTargetTiles(Band[] bands, Map<Band, Tile> targetTiles) {
-        final Tile[] bandData = new Tile[NUM_BANDS];
-        int j = 0;
-        for (int i = 0; i < NUM_BANDS; i++) {
-            if (i == TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
-                continue;
-            }
-            Band band = bands[j];
-            bandData[i] = targetTiles.get(band);
-            j++;
         }
         return bandData;
     }
@@ -205,28 +191,28 @@ public class TmAeRayleighOp extends TmBasisOp {
             Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(MerisAeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
 
-            Tile[] rhoNg = getTileGroup(gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, targetRect, pm);
-            Tile[] transRup = getTileGroup(ray1bProduct, "transRv", targetRect, pm); //up
-            Tile[] transRdown = getTileGroup(ray1bProduct, "transRs", targetRect, pm); //down
-            Tile[] tauR = getTileGroup(ray1bProduct, "tauR", targetRect, pm);
-            Tile[] sphAlbR = getTileGroup(ray1bProduct, "sphAlbR", targetRect, pm);
+            Tile[] rhoNg = getSourceTiles(gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, targetRect, pm);
+            Tile[] transRup = getSourceTiles(ray1bProduct, "transRv", targetRect, pm); //up
+            Tile[] transRdown = getSourceTiles(ray1bProduct, "transRs", targetRect, pm); //down
+            Tile[] tauR = getSourceTiles(ray1bProduct, "tauR", targetRect, pm);
+            Tile[] sphAlbR = getSourceTiles(ray1bProduct, "sphAlbR", targetRect, pm);
 
-            Tile[] rhoAg = getTileGroup(ray1bProduct, "brr", sourceRect, pm);
+            Tile[] rhoAg = getSourceTiles(ray1bProduct, "brr", sourceRect, pm);
             final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoAg, targetRect, pm);
 
             //targets
-            Tile[] aeRayTiles = getTargetTiles(aeRayBands, targetTiles);
-            Tile[] rhoAeRcTiles = getTargetTiles(rhoAeRcBands, targetTiles);
+            Tile[] aeRayTiles = OperatorUtils.getTargetTiles(targetTiles, aeRayBands);
+            Tile[] rhoAeRcTiles = OperatorUtils.getTargetTiles(targetTiles, rhoAeRcBands);
             Tile[] rhoAgBracket = null;
             if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-                rhoAgBracket = getTargetTiles(rhoAgBracketBands, targetTiles);
+                rhoAgBracket = OperatorUtils.getTargetTiles(targetTiles, rhoAgBracketBands);
             }
 
             Tile[] rayleighDebug = null;
             Tile[] fresnelDebug = null;
             if (exportSeparateDebugBands) {
-                rayleighDebug = getTargetTiles(rayleighdebugBands, targetTiles);
-                fresnelDebug = getTargetTiles(fresnelDebugBands, targetTiles);
+                rayleighDebug = OperatorUtils.getTargetTiles(targetTiles, rayleighdebugBands);
+                fresnelDebug = OperatorUtils.getTargetTiles(targetTiles, fresnelDebugBands);
             }
 
             final int numBands = rhoNg.length;

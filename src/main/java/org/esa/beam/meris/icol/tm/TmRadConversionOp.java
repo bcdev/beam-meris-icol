@@ -6,6 +6,7 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.TiePointGrid;
+import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -14,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Utils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
@@ -32,7 +34,7 @@ import java.util.Map;
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
         description = "Converts radiances into reflectances and temperature (TM6) for Landsat.")
-public class TmRadConversionOp extends TmBasisOp {
+public class TmRadConversionOp extends Operator {
 
     private transient Band[] radianceBands;
     private transient Band[] reflectanceBands;
@@ -82,8 +84,6 @@ public class TmRadConversionOp extends TmBasisOp {
 
         ProductUtils.copyGeoCoding(geometryProduct, targetProduct);
         addTiePointGrids();
-
-        System.out.println("");
     }
     
     private void addTiePointGrids() {
@@ -164,13 +164,9 @@ public class TmRadConversionOp extends TmBasisOp {
         	for (int i = 0; i < radianceTile.length; i++) {
         		radianceTile[i] = getSourceTile(radianceBands[i], rectangle, pm);
             }
-
-            Tile[] reflectanceTile = new Tile[radianceBands.length];
-            for (int i = 0; i < reflectanceBands.length; i++) {
-                reflectanceTile[i] = targetTiles.get(reflectanceBands[i]);
-            }
-
             Tile szaTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME), rectangle, pm);
+
+            Tile[] reflectanceTile = OperatorUtils.getTargetTiles(targetTiles, radianceBands);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
@@ -188,6 +184,7 @@ public class TmRadConversionOp extends TmBasisOp {
                         }
                     }
                 }
+                checkForCancelation(pm);
 				pm.worked(1);
 			}
         } catch (Exception e) {
@@ -195,7 +192,6 @@ public class TmRadConversionOp extends TmBasisOp {
         } finally {
             pm.done();
         }
-        System.out.println("");
     }
 
     /**

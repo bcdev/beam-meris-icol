@@ -191,18 +191,8 @@ public class TmAeAerosolOp extends TmBasisOp {
         return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip, targetProduct, prefix, noDataValue, false);
     }
 
-    private Tile[] getTargetTileGroup(Map<Band, Tile> targetTiles, Band[] bands, String instrument) {
-        Tile[] tiles = null;
-
-        tiles = new Tile[bands.length];
-        for (int i = 0; i < bands.length; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            tiles[i] = targetTiles.get(bands[i]);
-        }
-
-        return tiles;
+    private Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands) {
+        return OperatorUtils.getTargetTiles(targetTiles, bands, bandsToSkip);
     }
 
     private FlagCoding createFlagCoding() {
@@ -254,19 +244,19 @@ public class TmAeAerosolOp extends TmBasisOp {
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
 
-        Tile[] rhoAeAcRaster = getTargetTileGroup(targetTiles, rhoAeAcBands, instrument);
-        Tile[] aeAerRaster = getTargetTileGroup(targetTiles, aeAerBands, instrument);
+        Tile[] rhoAeAcRaster = getTargetTiles(targetTiles, rhoAeAcBands);
+        Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-            rhoRaecBracket = getTargetTileGroup(targetTiles, rhoRaecBracketBands, instrument);
-            rhoRaecDiffRaster = getTargetTileGroup(targetTiles, rhoRaecDiffBands, instrument);
+            rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
+            rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
         }
         Tile[] aerosolDebug = null;
         Tile[] fresnelDebug = null;
         if (exportSeparateDebugBands) {
-            aerosolDebug = getTargetTileGroup(targetTiles, aerosolDebugBands, instrument);
-            fresnelDebug = getTargetTileGroup(targetTiles, fresnelDebugBands, instrument);
+            aerosolDebug = getTargetTiles(targetTiles, aerosolDebugBands);
+            fresnelDebug = getTargetTiles(targetTiles, fresnelDebugBands);
         }
 
         Tile surfacePressure = null;

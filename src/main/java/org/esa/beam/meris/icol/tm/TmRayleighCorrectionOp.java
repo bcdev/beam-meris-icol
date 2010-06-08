@@ -20,7 +20,6 @@ import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
 import org.esa.beam.util.BitSetter;
-import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 
@@ -39,6 +38,7 @@ import java.util.Map;
                   description = "Landsat TM rayleigh correction.")
 public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
+    public static final int NO_DATA_VALUE = -1;
     public static final String BRR_BAND_PREFIX = "brr";
     public static final String RAYLEIGH_REFL_BAND_PREFIX = "rayleigh_refl";
     public static final String RAY_CORR_FLAGS = "ray_corr_flags";
@@ -49,13 +49,13 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     private Band isLandBand;
     private Band[] brrBands;
     private Band[] rayleighReflBands;
-    private Band flagBand;
 
+    private Band flagBand;
     private Band[] transRvBands;
     private Band[] transRsBands;
     private Band[] tauRBands;
-    private Band[] sphAlbRBands;
 
+    private Band[] sphAlbRBands;
     @SourceProduct(alias = "refl")
     private Product sourceProduct;
     @SourceProduct(alias = "geometry")
@@ -78,8 +78,6 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     boolean exportRhoR = false;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25")
     private double userPSurf;
-
-    public static final int NO_DATA_VALUE = -1;
 
 
     @Override
@@ -162,13 +160,13 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
             Tile[] tauRData = null;
             Tile[] sphAlbRData = null;
             if (exportRayCoeffs) {
-                transRvData = getTargetTileGroup(transRvBands, targetTiles);
-                transRsData = getTargetTileGroup(transRsBands, targetTiles);
-                tauRData = getTargetTileGroup(tauRBands, targetTiles);
-                sphAlbRData = getTargetTileGroup(sphAlbRBands, targetTiles);
+                transRvData = OperatorUtils.getTargetTiles(targetTiles, transRvBands);
+                transRsData = OperatorUtils.getTargetTiles(targetTiles, transRsBands);
+                tauRData = OperatorUtils.getTargetTiles(targetTiles, tauRBands);
+                sphAlbRData = OperatorUtils.getTargetTiles(targetTiles, sphAlbRBands);
             }
-            Tile[] brr = getTargetTileGroup(brrBands, targetTiles);
-            Tile[] rayleigh_refl = getTargetTileGroup(rayleighReflBands, targetTiles);
+            Tile[] brr = OperatorUtils.getTargetTiles(targetTiles, brrBands);
+            Tile[] rayleigh_refl = OperatorUtils.getTargetTiles(targetTiles, rayleighReflBands);
             Tile brrFlags = targetTiles.get(flagBand);
 
             boolean[][] do_corr = new boolean[SUBWIN_HEIGHT][SUBWIN_WIDTH];
@@ -298,17 +296,6 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
         } finally {
             pm.done();
         }
-    }
-
-    private Tile[] getTargetTileGroup(Band[] bands, Map<Band, Tile> targetTiles) {
-        final Tile[] bandRaster = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < bands.length; i++) {
-            Band band = bands[i];
-            if (band != null) {
-                bandRaster[i] = targetTiles.get(band);
-            }
-        }
-        return bandRaster;
     }
 
 

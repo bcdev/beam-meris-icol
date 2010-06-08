@@ -1,9 +1,11 @@
 package org.esa.beam.meris.icol.tm;
 
 import com.bc.ceres.core.ProgressMonitor;
+import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -12,6 +14,7 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
 import org.esa.beam.util.ProductUtils;
@@ -29,7 +32,7 @@ import java.util.Map;
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
         description = "Landsat atmospheric functions.")
-public class TmGaseousTransmittanceOp extends TmBasisOp {
+public class TmGaseousTransmittanceOp extends Operator {
 
     private transient Band[] gaseousTransmittanceBands;
 
@@ -61,18 +64,10 @@ public class TmGaseousTransmittanceOp extends TmBasisOp {
         } catch (Exception e) {
             throw new OperatorException("could not load L2Auxdata", e);
         }
-
-        final int sceneWidth = geometryProduct.getSceneRasterWidth();
-        final int sceneHeight = geometryProduct.getSceneRasterHeight();
-        targetProduct = new Product(sourceProduct.getName() + "_ICOL", "ICOL", sceneWidth, sceneHeight);
-
-        ProductUtils.copyTiePointGrids(geometryProduct, targetProduct);
-        ProductUtils.copyGeoCoding(geometryProduct, targetProduct);
+        targetProduct = OperatorUtils.createCompatibleProduct(geometryProduct, sourceProduct.getName() + "_ICOL", "ICOL");
 
         gaseousTransmittanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-
         for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-
             gaseousTransmittanceBands[i] = targetProduct.addBand(TmConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i],
                                                                  ProductData.TYPE_FLOAT32);
             gaseousTransmittanceBands[i].setNoDataValueUsed(true);
@@ -83,15 +78,10 @@ public class TmGaseousTransmittanceOp extends TmBasisOp {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
 
-        pm.beginTask("Processing frame...", rectangle.height);
+        pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
-            Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle, pm);
-
-            Tile[] gaseousTransmittanceTile = new Tile[gaseousTransmittanceBands.length];
-            for (int i = 0; i < gaseousTransmittanceBands.length; i++) {
-                gaseousTransmittanceTile[i] = targetTiles.get(gaseousTransmittanceBands[i]);
-            }
-
+            Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle, SubProgressMonitor.create(pm, 1));
+            Tile[] gaseousTransmittanceTile = OperatorUtils.getTargetTiles(targetTiles, gaseousTransmittanceBands);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
@@ -103,6 +93,7 @@ public class TmGaseousTransmittanceOp extends TmBasisOp {
                     }
 
                 }
+                checkForCancelation(pm);
                 pm.worked(1);
             }
         } catch (Exception e) {

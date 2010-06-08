@@ -11,6 +11,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
@@ -28,14 +29,7 @@ import java.util.Map;
         description = "Landsat TM gaseous absorbtion correction.")
 public class TmGaseousCorrectionOp extends TmBasisOp {
     public static final String RHO_NG_BAND_PREFIX = "rho_ng";
-    public static final String GAS_FLAGS = "gas_flags";
     public static final String TG_BAND_PREFIX = "tg";
-
-    public static final int F_DO_CORRECT = 0;
-    public static final int F_SUN70 = 1;
-    public static final int F_ORINP0 = 2;
-    public static final int F_OROUT0 = 3;
-
     public static final int NO_DATA_VALUE = -1;
 
     private Band[] rhoNgBands;    // gas corrected reflectance , output
@@ -52,31 +46,14 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-        createTargetProduct();
-    }
-    
-    private void createTargetProduct() {
     	targetProduct = createCompatibleProduct(sourceProduct, "TM", "TM_L2");
 
-    	rhoNgBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-            rhoNgBands[i] = targetProduct.addBand(RHO_NG_BAND_PREFIX + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(sourceProduct.getBandAt(i), rhoNgBands[i]);
-            ProductUtils.copySpectralBandProperties(sourceProduct.getBandAt(i), rhoNgBands[i]);
-            rhoNgBands[i].setNoDataValueUsed(true);
-            rhoNgBands[i].setNoDataValue(NO_DATA_VALUE);
-        }
+        rhoNgBands = OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+                new int[]{}, targetProduct, RHO_NG_BAND_PREFIX, NO_DATA_VALUE, false);
 
         if (exportTg) {
-            tgBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        	for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-                tgBands[i] = targetProduct.addBand(TG_BAND_PREFIX + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-                tgBands[i].setNoDataValueUsed(true);
-                tgBands[i].setNoDataValue(NO_DATA_VALUE);
-            }
-        }
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
+            tgBands = OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+                    new int[]{}, targetProduct, TG_BAND_PREFIX, NO_DATA_VALUE, false);
         }
     }
 
@@ -98,26 +75,10 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
                         getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]), rectangle, pm);
             }
 
-            Tile[] rhoNgTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-            for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-                rhoNgTile[i] = targetTiles.get(rhoNgBands[i]);
-            }
-
-            Tile[] tgTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-            for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-                tgTile[i] = targetTiles.get(tgBands[i]);
-            }
-
-            Tile[] rhoNg = new Tile[rhoNgBands.length];
-            Tile[] tg = null;
+            Tile[] rhoNgTile = OperatorUtils.getTargetTiles(targetTiles, rhoNgBands);
+            Tile[] tgTile = null;
             if (exportTg) {
-                tg = new Tile[tgBands.length];
-            }
-            for (int i = 0; i < rhoNgBands.length; i++) {
-                rhoNg[i] = targetTiles.get(rhoNgBands[i]);
-                if (exportTg) {
-                    tg[i] = targetTiles.get(tgBands[i]);
-                }
+                tgTile = OperatorUtils.getTargetTiles(targetTiles, tgBands);
             }
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
@@ -129,9 +90,12 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
                             reflectance *= gaseousTransmittance;
                         }
                         rhoNgTile[bandId].setSample(x, y, reflectance);
-                        tgTile[bandId].setSample(x, y, gaseousTransmittance);
+                        if (exportTg) {
+                            tgTile[bandId].setSample(x, y, gaseousTransmittance);
+                        }
                     }
                 }
+                checkForCancelation(pm);
                 pm.worked(1);
             }
         } catch (Exception e) {
