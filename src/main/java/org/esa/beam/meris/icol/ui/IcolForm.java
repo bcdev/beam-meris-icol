@@ -9,25 +9,12 @@ import org.esa.beam.framework.gpf.ui.SourceProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
+import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
 
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTabbedPane;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -63,13 +50,9 @@ class IcolForm extends JTabbedPane {
     private ButtonGroup productTypeGroup;
     private ButtonGroup ctpGroup;
     private ButtonGroup radianceAEGroup;
-    private ButtonGroup generalGroup;
-    private JFormattedTextField convolveModeValue;
     private JCheckBox nestedConvolutionCheckBox;
     private JCheckBox openclConvolutionCheckBox;
-    private JFormattedTextField tileSizeValue;
-    private JCheckBox correctOverLandCheckBox;
-    private JCheckBox correctInCoastalAreasCheckBox;
+    private JComboBox aeAreaComboBox;
     private int landsatResolutionValue;
     private ButtonGroup landsatResolutionGroup;
     private JRadioButton landsatResolution300Button;
@@ -170,12 +153,8 @@ class IcolForm extends JTabbedPane {
         radianceAEGroupValueSet.put(correctForBothButton, true);
         bc.bind("correctForBoth", radianceAEGroup, radianceAEGroupValueSet);
 
-        bc.bind("correctInCoastalAreas", correctInCoastalAreasCheckBox);
-        bc.bind("correctOverLand", correctOverLandCheckBox);
+        bc.bind("aeArea", aeAreaComboBox);
 
-        Map<AbstractButton, Object> generalGroupValueSet = new HashMap<AbstractButton, Object>(4);
-        bc.bind("convolveMode", convolveModeValue);
-        bc.bind("tileSize", tileSizeValue);
         bc.bind("reshapedConvolution", nestedConvolutionCheckBox);
         bc.bind("openclConvolution", openclConvolutionCheckBox);
 
@@ -457,18 +436,21 @@ class IcolForm extends JTabbedPane {
     private JPanel createProcessingPanel() {
         // table layout with a third 'empty' column
         // todo: this is not nice! use GridBagLayout for more complex panels
-		TableLayout layout = new TableLayout(3);
+		TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setColumnWeightX(0, 0.1);
+        layout.setColumnWeightX(0, 1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+//        layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
-        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
+        layout.setCellColspan(0, 0, 2);
+        layout.setCellColspan(1, 0, 2);
+        layout.setCellColspan(4, 0, 2);
 		JPanel panel = new JPanel(layout);
 
 		panel.setBorder(BorderFactory.createTitledBorder(null, "Processing",
@@ -477,48 +459,29 @@ class IcolForm extends JTabbedPane {
                                                                 new Font("Tahoma", 0, 11),
                                                                 new Color(0, 70, 213)));
 
-        convolveModeValue = new JFormattedTextField();
-        tileSizeValue = new JFormattedTextField();
-
-//		panel.add(new JLabel("Convolution mode: "));
-//        panel.add(convolveModeValue);
-////        convolveModeValue.setEnabled(false); // preliminary!
-//		panel.add(new JLabel());
-
         openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
         openclConvolutionCheckBox.setSelected(true);
 		panel.add(openclConvolutionCheckBox);
-        panel.add(new JLabel());
-        panel.add(new JLabel());
+//        panel.add(new JLabel());
 
         nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
         nestedConvolutionCheckBox.setSelected(true);
 		panel.add(nestedConvolutionCheckBox);
-        panel.add(new JLabel());
-        panel.add(new JLabel());
+//        panel.add(new JLabel());
 
-//        panel.add(new JLabel("Tile size: "));
-//        panel.add(tileSizeValue);
-////        tileSizeValue.setEnabled(false); // preliminary!
-//		panel.add(new JLabel());
-
-        correctInCoastalAreasCheckBox = new JCheckBox("Apply AE algorithm in coastal areas only");
-        correctInCoastalAreasCheckBox.setSelected(false);
-		panel.add(correctInCoastalAreasCheckBox);
+        aeAreaComboBox = new JComboBox();
+        aeAreaComboBox.setRenderer(new AeAreaRenderer());
+        panel.add(new JLabel("Where to apply the AE algorithm:"));
         panel.add(new JLabel());
+//        panel.add(new JLabel());
+        panel.add(aeAreaComboBox);
         panel.add(new JLabel());
-
-        correctOverLandCheckBox = new JCheckBox("Apply AE algorithm over land");
-        correctOverLandCheckBox.setSelected(false);
-		panel.add(correctOverLandCheckBox);
-        panel.add(new JLabel());
-        panel.add(new JLabel());
+//        panel.add(new JLabel());
 
         icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
         icolAerosolCase2CheckBox.setSelected(false);
 		panel.add(icolAerosolCase2CheckBox);
-        panel.add(new JLabel());
-        panel.add(new JLabel());
+//        panel.add(new JLabel());
 
 		return panel;
 	}
@@ -902,4 +865,20 @@ class IcolForm extends JTabbedPane {
 	    }
 	}
 
+    private static class AeAreaRenderer extends DefaultListCellRenderer  {
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            final Component cellRendererComponent =
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            if (cellRendererComponent instanceof JLabel && value instanceof AeArea) {
+                final JLabel label = (JLabel) cellRendererComponent;
+                final AeArea aeArea = (AeArea) value;
+                label.setText(aeArea.getLabel());
+            }
+
+            return cellRendererComponent;
+        }
+    }
 }

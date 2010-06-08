@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.common.AeMaskOp;
@@ -112,10 +113,8 @@ public class TmOp extends TmBasisOp {
     private boolean reshapedConvolution = true;
     @Parameter(defaultValue="64")
     private int tileSize = 64;
-    @Parameter(defaultValue="true")
-    private boolean correctInCoastalAreas = true;
-    @Parameter(defaultValue="false")
-    private boolean correctOverLand = false;
+    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea = AeArea.COSTAL_OCEAN;
     @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
     private boolean exportSeparateDebugBands = false;
     @Parameter(defaultValue = "true")
@@ -280,8 +279,7 @@ public class TmOp extends TmBasisOp {
         aemaskRayleighInput.put("land", landProduct);
         Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
         aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aemaskRayleighParameters.put("correctOverLand", correctOverLand);
-        aemaskRayleighParameters.put("correctInCoastalAreas", correctInCoastalAreas);
+        aemaskRayleighParameters.put("aearea", aeArea);
         aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
@@ -291,8 +289,7 @@ public class TmOp extends TmBasisOp {
         aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
         aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aemaskAerosolParameters.put("correctOverLand", correctOverLand);
-        aemaskAerosolParameters.put("correctInCoastalAreas", correctInCoastalAreas);
+        aemaskRayleighParameters.put("aearea", aeArea);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
@@ -304,7 +301,7 @@ public class TmOp extends TmBasisOp {
         Map<String, Object> distanceParameters = new HashMap<String, Object>(4);
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
-        distanceParameters.put("correctOverLand", correctOverLand);
+        distanceParameters.put("correctOverLand", aeArea.correctOverLand());
         distanceParameters.put("numDistances", 2);
         Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters, coastDistanceInput);
 
@@ -324,7 +321,7 @@ public class TmOp extends TmBasisOp {
         zmaxInput.put("ae_mask", aemaskRayleighProduct);
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
         String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
-        if (correctOverLand) {
+        if (aeArea.correctOverLand()) {
             aeMaskExpression = "true";
         }
         zmaxParameters.put("aeMaskExpression", aeMaskExpression);

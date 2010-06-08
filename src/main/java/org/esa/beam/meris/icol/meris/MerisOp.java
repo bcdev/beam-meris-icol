@@ -32,6 +32,7 @@ import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
+import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.common.AeMaskOp;
@@ -118,10 +119,8 @@ public class MerisOp extends Operator {
     private boolean openclConvolution = true;
     @Parameter(defaultValue="64")
     private int tileSize = 64;
-    @Parameter(defaultValue="true")
-    private boolean correctInCoastalAreas = true;
-    @Parameter(defaultValue="false")
-    private boolean correctOverLand = false;
+    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea = AeArea.COSTAL_OCEAN;
 
     // N1PatcherOp
     @Parameter(description = "The file to which the patched L1b product is written.")
@@ -131,8 +130,7 @@ public class MerisOp extends Operator {
     public void initialize() throws OperatorException {
         System.out.println("Convolve algo: " + convolveMode);
         System.out.println("Tile size: "+ tileSize);
-        System.out.println("Apply AE over land: "+ correctOverLand);
-        System.out.println("Correct in coastal areas: "+ correctInCoastalAreas);
+        System.out.println("Apply AE over: "+ aeArea);
 
 //        if (tileSize > 0) {
 //            sourceProduct.setPreferredTileSize(tileSize, tileSize);
@@ -203,8 +201,7 @@ public class MerisOp extends Operator {
         Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
         aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         aemaskRayleighParameters.put("coastlineExpression", "l1_flags.COASTLINE");
-        aemaskRayleighParameters.put("correctOverLand", correctOverLand);
-        aemaskRayleighParameters.put("correctInCoastalAreas", correctInCoastalAreas);
+        aemaskRayleighParameters.put("aeArea", aeArea);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
         Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
@@ -215,8 +212,7 @@ public class MerisOp extends Operator {
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
         aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         aemaskAerosolParameters.put("coastlineExpression", "l1_flags.COASTLINE");
-        aemaskAerosolParameters.put("correctOverLand", correctOverLand);
-        aemaskAerosolParameters.put("correctInCoastalAreas", correctInCoastalAreas);
+        aemaskAerosolParameters.put("aeArea", aeArea);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
@@ -227,7 +223,7 @@ public class MerisOp extends Operator {
         Map<String, Object> distanceParameters = new HashMap<String, Object>(3);
         distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
-        distanceParameters.put("correctOverLand", correctOverLand);
+        distanceParameters.put("correctOverLand", aeArea.correctOverLand());
         distanceParameters.put("numDistances", 2);
         Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters, coastDistanceInput);
 
@@ -243,7 +239,7 @@ public class MerisOp extends Operator {
         zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
         String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
-        if (correctOverLand) {
+        if (aeArea.correctOverLand()) {
             aeMaskExpression = "true";
         }
         zmaxParameters.put("aeMaskExpression", aeMaskExpression);

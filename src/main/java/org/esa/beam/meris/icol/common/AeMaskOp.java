@@ -31,6 +31,7 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
+import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
@@ -79,10 +80,8 @@ public class AeMaskOp extends Operator {
     @Parameter
     private String coastlineExpression;
 
-    @Parameter
-    private boolean correctInCoastalAreas;
-    @Parameter
-    private boolean correctOverLand;
+    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea;
     @Parameter
     private boolean reshapedConvolution;
     @Parameter
@@ -191,6 +190,8 @@ public class AeMaskOp extends Operator {
                 }
                 pm.worked(1);
             }
+            boolean correctOverLand = aeArea.correctOverLand();
+            boolean correctInCoastalAreas = aeArea.correctCostalArea();
             // todo: over land, apply AE algorithm everywhere except for cloud pixels.
             // even if land pixel is far away from water
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {

@@ -4,6 +4,7 @@ import com.bc.ceres.binding.PropertyContainer;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.ParameterDescriptorFactory;
+import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
 
 import java.util.HashMap;
@@ -53,10 +54,8 @@ public class IcolModel {
     private boolean openclConvolution = true;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "true")
-    private boolean correctInCoastalAreas = true;
-    @Parameter(defaultValue = "false")
-    private boolean correctOverLand = false;
+    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea;
 
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
@@ -119,6 +118,7 @@ public class IcolModel {
 
     public IcolModel() {
         propertyContainer = PropertyContainer.createObjectBacked(this, new ParameterDescriptorFactory());
+        aeArea = AeArea.COSTAL_OCEAN;
     }
 
     public Product getSourceProduct() {
@@ -222,8 +222,7 @@ public class IcolModel {
         params.put("tileSize", tileSize);
         params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);
-        params.put("correctOverLand", correctOverLand);
-        params.put("correctInCoastalAreas", correctInCoastalAreas);
+        params.put("aeArea", aeArea);
         params.put("correctForBoth", correctForBoth);
     }
 }
