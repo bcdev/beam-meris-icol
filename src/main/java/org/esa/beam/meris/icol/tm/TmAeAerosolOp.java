@@ -83,10 +83,10 @@ public class TmAeAerosolOp extends TmBasisOp {
     private boolean exportSeparateDebugBands = false;
     @Parameter(defaultValue = "true")
     private boolean icolAerosolForWater = true;
-    @Parameter(interval = "[-2.5, 0.0]", defaultValue = "-1")
+    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0")
-    private double userAot;
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
+    private double userAot550;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
@@ -124,9 +124,11 @@ public class TmAeAerosolOp extends TmBasisOp {
 
     private int numSpectralBands;
     private int[] bandsToSkip;
+    private double userAot865;
 
     @Override
     public void initialize() throws OperatorException {
+        userAot865 = IcolUtils.convertAOT(userAot550, userAlpha, 550.0, 865.0);
         targetProduct = createCompatibleProduct(aeRayProduct, "ae_" + aeRayProduct.getName(), "AE");
 
         // this separation can be useful for an instrument-independent usage later
@@ -410,7 +412,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
                         } else {
-                            aot = userAot;
+                            aot = userAot865;
                             searchIAOT = MathUtils.floorInt(aot * 10);
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
@@ -428,7 +430,7 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        aotTile.setSample(x, y, aot);
+                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, 550.0));
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < numSpectralBands; iwvl++) {

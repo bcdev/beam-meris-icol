@@ -146,7 +146,7 @@ class IcolForm extends JTabbedPane {
         bc.bind("icolAerosolForWater", icolAerosolForWaterCheckBox);
         bc.bind("icolAerosolCase2", icolAerosolCase2CheckBox);
         bc.bind("userAlpha", angstroemValue);
-        bc.bind("userAot", aotValue);
+        bc.bind("userAot550", aotValue);
     	
         Map<AbstractButton, Object> radianceAEGroupValueSet = new HashMap<AbstractButton, Object>(4);
         radianceAEGroupValueSet.put(correctForRayleighButton, false);
@@ -401,11 +401,12 @@ class IcolForm extends JTabbedPane {
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
-        layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(1, 1);
+        layout.setColumnWeightX(2, 0.1);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
+        layout.setCellColspan(2, 0, 3);
         JPanel panel = new JPanel(layout);
 
         panel.setBorder(BorderFactory.createTitledBorder(null, "Aerosol Type Determination",
@@ -423,12 +424,11 @@ class IcolForm extends JTabbedPane {
 
         panel.add(new JLabel("AOT: "));
         panel.add(aotValue);
-		panel.add(new JPanel());
+		panel.add(new JLabel("(550nm)"));
 
         icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
         icolAerosolForWaterCheckBox.setSelected(false);
 		panel.add(icolAerosolForWaterCheckBox);
-        panel.add(new JPanel());
 
         return panel;
     }

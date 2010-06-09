@@ -50,8 +50,8 @@ public class TmOp extends TmBasisOp {
     private boolean useUserAlphaAndAot = false;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0")
-    private double userAot;
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
+    private double userAot550;
     @Parameter(defaultValue = "false")
     private boolean icolAerosolCase2 = false;
     @Parameter(defaultValue = "true")
@@ -381,7 +381,7 @@ public class TmOp extends TmBasisOp {
             aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
             aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
             aeAerosolParams.put("userAlpha", userAlpha);
-            aeAerosolParams.put("userAot", userAot);
+            aeAerosolParams.put("userAot550", userAot550);
             aeAerosolParams.put("userPSurf", landsatUserPSurf);
             aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
             aeAerosolParams.put("reshapedConvolution", reshapedConvolution);

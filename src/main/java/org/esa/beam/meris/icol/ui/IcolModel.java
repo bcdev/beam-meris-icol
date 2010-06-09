@@ -39,7 +39,7 @@ public class IcolModel {
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha = -1.0;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2")
-    private double userAot = 0.2;
+    private double userAot550 = 0.2;
 
     // MerisRadianceCorrectionOp
     @Parameter(defaultValue = "true")
@@ -188,7 +188,7 @@ public class IcolModel {
         params.put("icolAerosolForWater", icolAerosolForWater);
         params.put("icolAerosolCase2", icolAerosolCase2);
         params.put("userAlpha", userAlpha);
-        params.put("userAot", userAot);
+        params.put("userAot550", userAot550);
     }
 
     private void configLandsatOp(HashMap<String, Object> params) {

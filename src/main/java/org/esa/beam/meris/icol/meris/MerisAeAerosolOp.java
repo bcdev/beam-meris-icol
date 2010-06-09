@@ -107,10 +107,10 @@ public class MerisAeAerosolOp extends MerisBasisOp {
     private boolean exportSeparateDebugBands = false;
     @Parameter(defaultValue = "true")
     private boolean icolAerosolForWater = true;
-    @Parameter(interval = "[-2.5, 0.0]", defaultValue = "-1")
+    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0")
-    private double userAot;
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
+    private double userAot550;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
@@ -162,9 +162,11 @@ public class MerisAeAerosolOp extends MerisBasisOp {
             0.0131f, 0.0152f, 0.0177f, 0.0206f, 0.0240f, 0.0281f, 0.0331f, 0.0394f, 0.0474f, 0.0579f
     };
     private int[] bandsToSkip;
+    private double userAot865;
 
     @Override
     public void initialize() throws OperatorException {
+        userAot865 = IcolUtils.convertAOT(userAot550, userAlpha, 550.0, 865.0);
         bandsToSkip = new int[]{10, 14};
         targetProduct = createCompatibleProduct(aeRayProduct, "ae_" + aeRayProduct.getName(), "AE");
 
@@ -428,7 +430,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
                         } else {
-                            aot = userAot;
+                            aot = userAot865;
                             searchIAOT = MathUtils.floorInt(aot * 10);
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
@@ -446,7 +448,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        aotTile.setSample(x, y, aot);
+                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, 550.0));
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; iwvl++) {
