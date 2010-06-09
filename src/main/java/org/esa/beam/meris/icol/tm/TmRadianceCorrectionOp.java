@@ -8,7 +8,6 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
-import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
@@ -32,7 +31,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
     private Product gasCorProduct;
     @SourceProduct(alias="ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol", optional=true)
+    @SourceProduct(alias="ae_aerosol")
     private Product aeAerosolProduct;
     @SourceProduct(alias="aemaskRayleigh")
     private Product aemaskRayleighProduct;
@@ -41,9 +40,6 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
 
     @TargetProduct
     private Product targetProduct;
-
-    @Parameter(defaultValue="true")
-    private boolean correctForBoth = true;
 
     private int daysSince2000;
     private double seasonalFactor;
@@ -107,11 +103,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                     !IcolUtils.isIndexToSkip(bandNumber - 1,
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
                 Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
-                Tile aeAerosol = null;
-                if (correctForBoth && aeAerosolProduct != null) {
-                    aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
-                }
-
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
                 Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
                 Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
                 Tile reflectanceR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber),
@@ -126,7 +118,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                             double tgValue = tgTile.getSampleDouble(x, y);
                             final double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                             double corrected = gasCorValue - aeRayleighValue;
-                            if (correctForBoth && aepAerosol.getSampleInt(x, y) == 1) {
+                            if (aepAerosol.getSampleInt(x, y) == 1) {
                                 final double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
                                 corrected = corrected - aeAerosolValue;
                             }

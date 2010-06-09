@@ -37,11 +37,8 @@ import org.esa.beam.util.ProductUtils;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
 import java.awt.Rectangle;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -103,14 +100,10 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
     @Parameter(defaultValue="true")
     private boolean exportAlphaAot = true;
 
-    @Parameter(defaultValue="true")
-    private boolean correctForBoth = true;
-
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
     private Band l1FlagBand;
     private Band aeFlagBand;
-    private Map<Band, Band> copySource;
 
     @Override
     public void initialize() throws OperatorException {
@@ -127,14 +120,13 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
                 i++;
             }
         }
-        copySource = new HashMap<Band, Band>();
         if (exportRhoToa) {
             copyBandGroup(rhoToaProduct, "rho_toa");
         }
         if (exportRhoToaRayleigh) {
             rhoToaRayBands = addBandGroup(sourceBands, "rho_toa_AERC");
         }
-        if (correctForBoth && exportRhoToaAerosol) {
+        if (exportRhoToaAerosol) {
             rhoToaAerBands = addBandGroup(sourceBands, "rho_toa_AEAC");
         }
         if (exportAeRayleigh) {
@@ -145,11 +137,13 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         }
         if (aeAerosolProduct != null && exportAlphaAot) {
             Band copyAlphaBand = ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
-            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
-            copySource.put(copyAlphaBand, aeAerosolProduct.getBand("alpha"));
+            prepareBandForCopy(aeAerosolProduct.getBand("alpha"), copyAlphaBand);
+//            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
+//            copySource.put(copyAlphaBand, aeAerosolProduct.getBand("alpha"));
             Band copyAotBand = ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
-            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
-            copySource.put(copyAotBand, aeAerosolProduct.getBand("aot"));
+            prepareBandForCopy(aeAerosolProduct.getBand("aot"), copyAotBand);
+//            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
+//            copySource.put(copyAotBand, aeAerosolProduct.getBand("aot"));
         }
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
@@ -162,18 +156,10 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         ProductUtils.copyFlagBands(l1bProduct, targetProduct);
         l1FlagBand = targetProduct.getBand("l1_flags");
         prepareBandForCopy(l1bProduct.getBand("l1_flags"), l1FlagBand);
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
     }
     
     private void prepareBandForCopy(Band srcBand, Band targetBand) {
-        copySource.put(targetBand, srcBand);
-
-        RenderedImage image = srcBand.getSourceImage();
-        if (image != null) {
-            targetBand.setSourceImage(image);
-        }
+        targetBand.setSourceImage(srcBand.getSourceImage());
     }
     
     private FlagCoding createFlagCoding(String bandName) {
@@ -263,14 +249,14 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
             correctForRayleigh(targetTile, bandNumber, pm);
         } else if (rhoToaAerBands != null && rhoToaAerBands.contains(band)) {
             correctForRayleighAndAerosol(targetTile, bandNumber, pm);
-        } else if (copySource.containsKey(band)) {
-            Rectangle rectangle = targetTile.getRectangle();
-            Tile srcTile = getSourceTile(copySource.get(band), rectangle, pm);
-            for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                    targetTile.setSample(x, y, srcTile.getSampleDouble(x, y));
-                }
-            }
+//        } else if (copySource.containsKey(band)) {
+//            Rectangle rectangle = targetTile.getRectangle();
+//            Tile srcTile = getSourceTile(copySource.get(band), rectangle, pm);
+//            for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+//                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+//                    targetTile.setSample(x, y, srcTile.getSampleDouble(x, y));
+//                }
+//            }
         } else if (band == aeFlagBand) {
             computeAeFlags(targetTile, pm);
         }

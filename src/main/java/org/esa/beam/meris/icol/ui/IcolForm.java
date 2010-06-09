@@ -39,17 +39,14 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField ctpValue;
     private JFormattedTextField angstroemValue;
     private JFormattedTextField aotValue;
-    private JRadioButton correctForBothButton;
     private TargetProductSelector targetProductSelector;
     private SourceProductSelector sourceProductSelector;
     private ComboBoxModel comboBoxModelRhoToa;
     private ComboBoxModel comboBoxModelN1;
-    private JRadioButton correctForRayleighButton;
     private JRadioButton rhoToaProductTypeButton;
     private JRadioButton reflectanceProductTypeButton;
     private ButtonGroup productTypeGroup;
     private ButtonGroup ctpGroup;
-    private ButtonGroup radianceAEGroup;
     private JCheckBox nestedConvolutionCheckBox;
     private JCheckBox openclConvolutionCheckBox;
     private JComboBox aeAreaComboBox;
@@ -147,11 +144,6 @@ class IcolForm extends JTabbedPane {
         bc.bind("icolAerosolCase2", icolAerosolCase2CheckBox);
         bc.bind("userAlpha", angstroemValue);
         bc.bind("userAot550", aotValue);
-    	
-        Map<AbstractButton, Object> radianceAEGroupValueSet = new HashMap<AbstractButton, Object>(4);
-        radianceAEGroupValueSet.put(correctForRayleighButton, false);
-        radianceAEGroupValueSet.put(correctForBothButton, true);
-        bc.bind("correctForBoth", radianceAEGroup, radianceAEGroupValueSet);
 
         bc.bind("aeArea", aeAreaComboBox);
 
@@ -201,7 +193,7 @@ class IcolForm extends JTabbedPane {
         processingParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         processingParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         processingParam.setTableWeightX(1);
-        processingParam.setCellWeightY(3, 0, 1);
+        processingParam.setCellWeightY(2, 0, 1);
         processingParam.setTablePadding(2, 2);
 
         TableLayout merisParam = new TableLayout(1);
@@ -247,9 +239,6 @@ class IcolForm extends JTabbedPane {
         JPanel rhoToaPanel = createRhoToaBandSelectionPanel();
         processingParamTab.add(rhoToaPanel);
         
-		JPanel n1Panel = createRadiancePanel();
-		processingParamTab.add(n1Panel);
-
         JPanel landsatProcessingPanel = createLandsatProcessingPanel();
 		landsatParamTab.add(landsatProcessingPanel);
 
@@ -260,41 +249,6 @@ class IcolForm extends JTabbedPane {
 		landsatParamTab.add(landsatLandFlagSettingPanel);
 
 		merisParamTab.add(new JLabel(""));
-    }
-
-	private JPanel createRadiancePanel() {
-		TableLayout layout = new TableLayout(1);
-		layout.setTableAnchor(TableLayout.Anchor.WEST);
-		layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-		layout.setTableWeightX(1);
-		layout.setTablePadding(2, 2);
-		JPanel panel = new JPanel(layout);
-
-		panel.setBorder(BorderFactory.createTitledBorder(null, "RhoToa Product / Radiance Product",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
-		
-		radianceAEGroup = new ButtonGroup();
-        correctForRayleighButton = new JRadioButton("Correct for AE rayleigh");
-        panel.add(correctForRayleighButton);
-        radianceAEGroup.add(correctForRayleighButton);
-		correctForBothButton = new JRadioButton("Correct for AE rayleigh and AE aerosol");
-        correctForBothButton.setSelected(true);
-        radianceAEGroup.add(correctForBothButton);
-		panel.add(correctForBothButton);
-
-		ButtonGroup n1Group = new ButtonGroup();
-		n1Group.add(correctForRayleighButton);
-		n1Group.add(correctForBothButton);
-
-		return panel;
-	}
-	
-	private void setRadiancePanelEnabled(boolean enabled) {
-	    correctForRayleighButton.setEnabled(enabled);
-	    correctForBothButton.setEnabled(enabled);
     }
 
 	private JPanel createRhoToaBandSelectionPanel() {
@@ -809,7 +763,6 @@ class IcolForm extends JTabbedPane {
         if (rhoToaProductTypeButton.isSelected()) {
 	        formatNameComboBox.setModel(comboBoxModelRhoToa);
 	        setRhoToaBandSelectionPanelEnabled(true);
-	        setRadiancePanelEnabled(false);
 	    } else {
 	        // Radiance product
 	        boolean n1 = false;
@@ -829,7 +782,6 @@ class IcolForm extends JTabbedPane {
                 formatNameComboBox.setModel(comboBoxModelRhoToa);
             }
             setRhoToaBandSelectionPanelEnabled(false);
-            setRadiancePanelEnabled(true);
 	    }
         Product sourceProduct = sourceProductSelector.getSelectedProduct();
         final TargetProductSelectorModel selectorModel = targetProductSelector.getModel();

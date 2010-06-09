@@ -56,7 +56,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
     //vertical scale height
     private static final double HA = 3000;
-
+    private static final double AE_AOT_THRESHOLD = 0.01;
+    
     private Band isLandBand;
 
     @SourceProduct(alias = "l1b")
@@ -441,7 +442,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                                 aerosolDebug[iwvl].setSample(x, y, -1);
                                 fresnelDebug[iwvl].setSample(x, y, -1);
                             }
-                            if (searchIAOT != -1) {
+                            if (searchIAOT != -1 && aot > AE_AOT_THRESHOLD) {
                                 // todo: extract methods also in this part!
 
                                 double roAerMean = convolver.convolveSample(x, y, iaer, iwvl);

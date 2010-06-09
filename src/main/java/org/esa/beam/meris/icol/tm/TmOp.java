@@ -117,8 +117,6 @@ public class TmOp extends TmBasisOp {
     private AeArea aeArea = AeArea.COSTAL_OCEAN;
     @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
     private boolean exportSeparateDebugBands = false;
-    @Parameter(defaultValue = "true")
-    private boolean correctForBoth = true;
 
     // LandsatReflectanceConversionOp
     @Parameter(defaultValue="false")
@@ -364,31 +362,28 @@ public class TmOp extends TmBasisOp {
 
         // AE Aerosol:
         // --> same operator as for MERIS, distinguish Meris/Landsat case
-        Product aeAerProduct = null;
-        if (correctForBoth) {
-            Map<String, Product> aeAerInput = new HashMap<String, Product>(9);
-            aeAerInput.put("l1b", conversionProduct);
-            aeAerInput.put("land", landProduct);
-            aeAerInput.put("aemask", aemaskAerosolProduct);
-            aeAerInput.put("zmax", zmaxProduct);
-            aeAerInput.put("ae_ray", aeRayProduct);
-            aeAerInput.put("cloud", cloudProduct);
-            aeAerInput.put("ctp", ctpProduct);
-            aeAerInput.put("zmaxCloud", zmaxCloudProduct);
-            Map<String, Object> aeAerosolParams = new HashMap<String, Object>(9);
-            if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
-                exportSeparateDebugBands = true;
-            aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
-            aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
-            aeAerosolParams.put("userAlpha", userAlpha);
-            aeAerosolParams.put("userAot550", userAot550);
-            aeAerosolParams.put("userPSurf", landsatUserPSurf);
-            aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
-            aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
-            aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
-            aeAerosolParams.put("instrument", "LANDSAT5 TM");
-            aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeAerosolOp.class), aeAerosolParams, aeAerInput);
-        }
+        Map<String, Product> aeAerInput = new HashMap<String, Product>(9);
+        aeAerInput.put("l1b", conversionProduct);
+        aeAerInput.put("land", landProduct);
+        aeAerInput.put("aemask", aemaskAerosolProduct);
+        aeAerInput.put("zmax", zmaxProduct);
+        aeAerInput.put("ae_ray", aeRayProduct);
+        aeAerInput.put("cloud", cloudProduct);
+        aeAerInput.put("ctp", ctpProduct);
+        aeAerInput.put("zmaxCloud", zmaxCloudProduct);
+        Map<String, Object> aeAerosolParams = new HashMap<String, Object>(9);
+        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
+            exportSeparateDebugBands = true;
+        aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
+        aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
+        aeAerosolParams.put("userAlpha", userAlpha);
+        aeAerosolParams.put("userAot550", userAot550);
+        aeAerosolParams.put("userPSurf", landsatUserPSurf);
+        aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
+        aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
+        aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
+        aeAerosolParams.put("instrument", "LANDSAT5 TM");
+        Product aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeAerosolOp.class), aeAerosolParams, aeAerInput);
 
         // Reverse radiance:
         // MERIS: correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), ...
@@ -404,7 +399,6 @@ public class TmOp extends TmBasisOp {
             radianceCorrectionInput.put("aemaskRayleigh", aemaskRayleighProduct);
             radianceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
             Map<String, Object> radianceCorrectionParams = new HashMap<String, Object>(1);
-            radianceCorrectionParams.put("correctForBoth", correctForBoth);
             correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmRadianceCorrectionOp.class), radianceCorrectionParams, radianceCorrectionInput);
         } else if (productType == 1) {
             // Reverse rhoToa:

@@ -80,9 +80,6 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
     @Parameter(defaultValue = "true")
     private boolean exportAlphaAot = true;
 
-    @Parameter(defaultValue="true")
-    private boolean correctForBoth = true;
-
     private List<Band> rhoToaBands;
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
@@ -118,7 +115,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         if (exportRhoToaRayleigh) {
             rhoToaRayBands = addBandGroup(sourceBands, TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_AERC");
         }
-        if (correctForBoth && exportRhoToaAerosol) {
+        if (exportRhoToaAerosol) {
             rhoToaAerBands = addBandGroup(sourceBands, TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_AEAC");
         }
         if (exportAeRayleigh) {

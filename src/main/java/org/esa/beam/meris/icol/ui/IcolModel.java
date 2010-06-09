@@ -41,10 +41,6 @@ public class IcolModel {
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2")
     private double userAot550 = 0.2;
 
-    // MerisRadianceCorrectionOp
-    @Parameter(defaultValue = "true")
-    private boolean correctForBoth = true;
-
     // General
     @Parameter(interval = "[1, 3]", defaultValue = "3")
     private int convolveMode = 1;
@@ -223,6 +219,5 @@ public class IcolModel {
         params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);
         params.put("aeArea", aeArea);
-        params.put("correctForBoth", correctForBoth);
     }
 }

@@ -78,8 +78,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
     //vertical scale height
     private static final double HA = 3000;
-
     private static final double NO_DATA_VALUE = -1.0;
+    private static final double AE_AOT_THRESHOLD = 0.01;
 
     private Band isLandBand;
 
@@ -536,7 +536,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 aerosolDebug[iwvl].setSample(x, y, -1);
                                 fresnelDebug[iwvl].setSample(x, y, -1);
                             }
-                            if (searchIAOT != -1) {
+                            if (searchIAOT != -1 && aot > AE_AOT_THRESHOLD) {
                                 // todo: extract methods also in this part!
                                 double roAerMean;
                                 if (iwvl == Constants.bb9) {
