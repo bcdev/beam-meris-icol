@@ -156,8 +156,8 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         
         // create and add the flags coding
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
-        targetProduct.addFlagCoding(flagCoding);
-        aeFlagBand.setFlagCoding(flagCoding);
+        targetProduct.getFlagCodingGroup().add(flagCoding);
+        aeFlagBand.setSampleCoding(flagCoding);
         
         ProductUtils.copyFlagBands(l1bProduct, targetProduct);
         l1FlagBand = targetProduct.getBand("l1_flags");

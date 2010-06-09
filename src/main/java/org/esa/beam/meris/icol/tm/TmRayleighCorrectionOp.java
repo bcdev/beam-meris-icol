@@ -99,8 +99,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
         flagBand = targetProduct.addBand(RAY_CORR_FLAGS, ProductData.TYPE_INT16);
         FlagCoding flagCoding = createFlagCoding(brrBands.length);
-        flagBand.setFlagCoding(flagCoding);
-        targetProduct.addFlagCoding(flagCoding);
+        targetProduct.getFlagCodingGroup().add(flagCoding);
+        flagBand.setSampleCoding(flagCoding);
 
         if (exportRayCoeffs) {
             transRvBands = addBandGroup("transRv");

@@ -144,8 +144,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
         flagBand = targetProduct.addBand(AOT_FLAGS, ProductData.TYPE_UINT8);
         FlagCoding flagCoding = createFlagCoding();
-        flagBand.setFlagCoding(flagCoding);
-        targetProduct.addFlagCoding(flagCoding);
+        targetProduct.getFlagCodingGroup().add(flagCoding);
+        flagBand.setSampleCoding(flagCoding);
 
         alphaBand = targetProduct.addBand("alpha", ProductData.TYPE_FLOAT32);
         alphaIndexBand = targetProduct.addBand("alpha_index", ProductData.TYPE_UINT8);
