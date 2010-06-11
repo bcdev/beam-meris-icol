@@ -25,6 +25,8 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+
 /**
  * Operator providing Zmax for land or cloud contribution in AE correction.
  *
@@ -87,11 +89,11 @@ public class ZmaxOp extends Operator {
 
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
-            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, SubProgressMonitor.create(pm, 1));
-            Tile aeMask = getSourceTile(aeMaskBand, targetRect, SubProgressMonitor.create(pm, 1));
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, subPm1(pm));
+            Tile aeMask = getSourceTile(aeMaskBand, targetRect, subPm1(pm));
 
             Band distanceBand = distanceBandMap.get(zmaxBand);
-            Tile distance = getSourceTile(distanceBand, targetRect, SubProgressMonitor.create(pm, 1));
+            Tile distance = getSourceTile(distanceBand, targetRect, subPm1(pm));
             double distanceNoDataValue = distanceBand.getNoDataValue();
 
             PixelPos pPix = new PixelPos();
@@ -135,17 +137,21 @@ public class ZmaxOp extends Operator {
     }
 
     public static Tile[] getSourceTiles(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
-        Tile[] tiles = new Tile[zmaxProduct.getNumBands()];
-        for (int i = 0; i < tiles.length; i++) {
-            final Band band = zmaxProduct.getBandAt(i);
-            tiles[i] = op.getSourceTile(band, targetRect, pm);
+        pm.beginTask("Processing frame...", zmaxProduct.getNumBands());
+        try {
+            Tile[] tiles = new Tile[zmaxProduct.getNumBands()];
+            for (int i = 0; i < tiles.length; i++) {
+                final Band band = zmaxProduct.getBandAt(i);
+                tiles[i] = op.getSourceTile(band, targetRect, subPm1(pm));
+            }
+            return tiles;
+        } finally {
+            pm.done();
         }
-        return tiles;
     }
 
     public static Tile getSourceTile(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
-        Band band = zmaxProduct.getBand(ZMAX + "_1");
-        return op.getSourceTile(band, targetRect, pm);
+        return op.getSourceTile(zmaxProduct.getBand(ZMAX + "_1"), targetRect, pm);
     }
 
     public static class Spi extends OperatorSpi {

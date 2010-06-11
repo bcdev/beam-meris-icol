@@ -11,9 +11,12 @@ import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
+
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 /**
  * @author Olaf Danne
@@ -39,119 +42,103 @@ public class MerisBand11And15Op extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-
         String productType = l1bProduct.getProductType();
-        int index = productType.indexOf("_1");
-        productType = productType.substring(0, index) + "_1N";
-        targetProduct = createCompatibleBaseProduct("MER", productType);
+        productType = productType.substring(0, productType.indexOf("_1")) + "_1N";
+        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType, true);
+
         for (String bandName : corrReflProduct.getBandNames()) {
-            if(!bandName.equals("l1_flags")) {
-//                if (bandName.equals("rho_toa_11") || bandName.equals("rho_toa_15")) {
-//                    Band reflBand = targetProduct.addBand(bandName, ProductData.TYPE_FLOAT32);
-//                    reflBand.setSpectralBandIndex(Integer.parseInt(bandName.substring(8))-1);
-//                    reflBand.setNoDataValue(-1);
-//                } else {
-//                    ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
-//                }
-                ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
+            Band srcBand = corrReflProduct.getBand(bandName);
+            if (!srcBand.isFlagBand()) { // do flags band later
+                Band targetBand = ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
+                if (!bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15")) {
+                    targetBand.setSourceImage(corrReflProduct.getBand(bandName).getSourceImage());
+                }
             }
         }
-        ProductUtils.copyFlagBands(l1bProduct, targetProduct);
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
+        OperatorUtils.copyFlagBandsWithImages(corrReflProduct, targetProduct);
+        
+        Band detectorBand = ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct, targetProduct);
+        detectorBand.setSourceImage(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME).getSourceImage());
     }
-
-    private Product createCompatibleBaseProduct(String name, String type) {
-        final int sceneWidth = l1bProduct.getSceneRasterWidth();
-        final int sceneHeight = l1bProduct.getSceneRasterHeight();
-
-        Product tProduct = new Product(name, type, sceneWidth, sceneHeight);
-        ProductUtils.copyTiePointGrids(l1bProduct, tProduct);
-        ProductUtils.copyGeoCoding(l1bProduct, tProduct);
-        tProduct.setStartTime(l1bProduct.getStartTime());
-        tProduct.setEndTime(l1bProduct.getEndTime());
-        return tProduct;
-    }
-
-    private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
-        final Tile[] bandData = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
-        int j = 0;
-        for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
-            bandData[j] = getSourceTile(inProduct.getBand(bandPrefix + "_" + (i + 1)), rectangle, pm);
-            j++;
-        }
-        return bandData;
-    }
-
 
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
+        if (band.getName().equals("rho_toa_11")) {
+            computeRhoToa11(targetTile, band.getGeophysicalNoDataValue(), pm);
+        } else {
+            computeRhoToa15(targetTile, band.getGeophysicalNoDataValue(), pm);
+        }
+    }
 
-
-        Rectangle rectangle = targetTile.getRectangle();
-        pm.beginTask("Processing frame...", rectangle.height);
+    private void computeRhoToa11(Tile targetTile, double noDataValue, ProgressMonitor pm) {
+        Rectangle rect = targetTile.getRectangle();
+        pm.beginTask("Processing frame...", rect.height + 5);
         try {
-            String bandName = band.getName();
+            Tile l1bT10 = getSrc(refl1bProduct, 10, rect, subPm1(pm));
+            Tile l1bT11 = getSrc(refl1bProduct, 11, rect, subPm1(pm));
+            Tile l1bT12 = getSrc(refl1bProduct, 12, rect, subPm1(pm));
 
-            if (bandName.equals("rho_toa_15"))
-                            System.out.println("");
+            Tile l1nT10 = getSrc(corrReflProduct, 10, rect, subPm1(pm));
+            Tile l1nT12 = getSrc(corrReflProduct, 12, rect, subPm1(pm));
 
-            if (!bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15")
-			         || bandName.equals(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME)) {
-                Tile sourceTile = getSourceTile(corrReflProduct.getBand(bandName), rectangle, pm);
-                //  write reflectances as output  (RS, 17.07.09)
+            for (int y = rect.y; y < rect.y + rect.height; y++) {
+                for (int x = rect.x; x < rect.x + rect.width; x++) {
+                    final float l1b10 = l1bT10.getSampleFloat(x, y);
+                    if (l1b10 > 0.0) {
+                        final float l1b11 = l1bT11.getSampleFloat(x, y);
+                        final float l1b12 = l1bT12.getSampleFloat(x, y);
 
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-						targetTile.setSample(x, y, sourceTile.getSampleDouble(x, y));
-					}
-					pm.worked(1);
-				}
-			} else {
-				final int bandNumber = band.getSpectralBandIndex() + 1;
+                        final float l1n10 = l1nT10.getSampleFloat(x, y);
+                        final float l1n12 = l1nT12.getSampleFloat(x, y);
 
-                Tile[] l1bTile = getSourceTiles(refl1bProduct, "rho_toa", rectangle, pm);
-                Tile[] l1nTile = getSourceTiles(corrReflProduct, "rho_toa", rectangle, pm);
-
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-
-                        if (bandName.equals("rho_toa_15") && x == 150 && y == 150)
-                            System.out.println("");
-
-                        final float l1b10 = l1bTile[9].getSampleFloat(x, y);
-                        final float l1b11 = l1bTile[10].getSampleFloat(x, y);
-                        final float l1b12 = l1bTile[11].getSampleFloat(x, y);
-                        final float l1b14 = l1bTile[13].getSampleFloat(x, y);
-                        final float l1b15 = l1bTile[14].getSampleFloat(x, y);
-                        final float l1n10 = l1nTile[9].getSampleFloat(x, y);
-                        final float l1n12 = l1nTile[10].getSampleFloat(x, y);
-                        final float l1n14 = l1nTile[12].getSampleFloat(x, y);
-
-                        final float l1nb15 = l1b15 * l1n14 / l1b14;
                         final float l1b11ref = 0.5f * (l1b10 + l1b12); // is this what RS means??
                         final float l1n11ref = 0.5f * (l1n10 + l1n12); // is this what RS means??
                         final float l1nb11 = l1b11 * l1n11ref / l1b11ref;
 
-                        if (l1b14 > 0.0 && l1b11ref > 0.0) {
-                            if (bandName.equals("rho_toa_11")) {
-                               targetTile.setSample(x, y, l1nb11);
-                            } else {
-                               targetTile.setSample(x, y, l1nb15);
-                            }
-                        } else {
-                            targetTile.setSample(x, y, -1);
-                        }
-					}
-					pm.worked(1);
-				}
-			}
-        } catch (Exception e) {
-            throw new OperatorException(e);
+                        targetTile.setSample(x, y, l1nb11);
+                    } else {
+                        targetTile.setSample(x, y, noDataValue);
+                    }
+                }
+                checkForCancelation(pm);
+                pm.worked(1);
+            }
         } finally {
             pm.done();
         }
+    }
+
+    private void computeRhoToa15(Tile targetTile, double noDataValue, ProgressMonitor pm) {
+        Rectangle rect = targetTile.getRectangle();
+        pm.beginTask("Processing frame...", rect.height + 3);
+        try {
+            Tile l1bT14 = getSrc(refl1bProduct, 14, rect, subPm1(pm));
+            Tile l1bT15 = getSrc(refl1bProduct, 15, rect, subPm1(pm));
+
+            Tile l1nT14 = getSrc(corrReflProduct, 14, rect, subPm1(pm));
+
+            for (int y = rect.y; y < rect.y + rect.height; y++) {
+                for (int x = rect.x; x < rect.x + rect.width; x++) {
+                    final float l1b14 = l1bT14.getSampleFloat(x, y);
+                    if (l1b14 > 0.0) {
+                        final float l1b15 = l1bT15.getSampleFloat(x, y);
+                        final float l1n14 = l1nT14.getSampleFloat(x, y);
+                        final float l1nb15 = l1b15 * l1n14 / l1b14;
+                        targetTile.setSample(x, y, l1nb15);
+                    } else {
+                        targetTile.setSample(x, y, noDataValue);
+                    }
+                }
+                checkForCancelation(pm);
+                pm.worked(1);
+            }
+        } finally {
+            pm.done();
+        }
+    }
+
+    private Tile getSrc(Product product, int bandIndex, Rectangle rect, ProgressMonitor pm) {
+        return getSourceTile(product.getBand("rho_toa_" + bandIndex), rect, pm);
     }
 
     public static class Spi extends OperatorSpi {

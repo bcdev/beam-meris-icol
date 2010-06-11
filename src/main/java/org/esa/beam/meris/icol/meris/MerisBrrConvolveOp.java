@@ -14,6 +14,7 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.utils.Convoluter;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
@@ -67,7 +68,7 @@ public class MerisBrrConvolveOp extends Operator {
         String productType = l1bProduct.getProductType();
         int index = productType.indexOf("_1");
         productType = productType.substring(0, index) + "_1N";
-        targetProduct = createCompatibleBaseProduct("MER", productType);
+        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
         ProductUtils.copyFlagBands(l1bProduct, targetProduct);
 
         if (l1bProduct.getPreferredTileSize() != null) {
@@ -79,21 +80,20 @@ public class MerisBrrConvolveOp extends Operator {
         KernelJAI kernelJAI = CoeffW.createKernelByRotation(coeffs[filterWeightsIndex]);
 
         Convoluter convoluter = new Convoluter(kernelJAI, openclConvolution);
-        String[] sourceNames = brrProduct.getBandNames();
-        for (String name : sourceNames) {
-            if (!brrProduct.getBand(name).isFlagBand()) {
-                if (name.startsWith(bandPrefix)) {
-                    Band targetBand = ProductUtils.copyBand(name, brrProduct, targetProduct);
-                    final MultiLevelImage sourceImage = brrProduct.getBand(name).getSourceImage();
-                    RenderedImage outputImage;
-                    try {
-                            outputImage = convoluter.convolve(sourceImage);
-                    } catch (IOException e) {
-                        throw new OperatorException("cannot create convolved image", e);
-                    }
-                    targetBand.setSourceImage(outputImage);
-                    targetBand.setName(bandPrefix + "_conv_" + name.substring(bandPrefix.length()+1, name.length()));
+        Band[] srcBands = brrProduct.getBands();
+        for (Band srcBand: srcBands) {
+            String srcBandName = srcBand.getName();
+            if (!srcBand.isFlagBand() && srcBandName.startsWith(bandPrefix)) {
+                String targetBandName  = bandPrefix + "_conv_" + srcBandName.substring(bandPrefix.length()+1, srcBandName.length());
+                Band targetBand = ProductUtils.copyBand(srcBandName, brrProduct, targetBandName, targetProduct);
+                final MultiLevelImage sourceImage = srcBand.getSourceImage();
+                RenderedImage outputImage;
+                try {
+                    outputImage = convoluter.convolve(sourceImage);
+                } catch (IOException e) {
+                    throw new OperatorException("cannot create convolved image", e);
                 }
+                targetBand.setSourceImage(outputImage);
             }
         }
         convoluter.dispose();
@@ -109,19 +109,6 @@ public class MerisBrrConvolveOp extends Operator {
         resourceInstaller.install(".*", new NullProgressMonitor());
 
         coeffW = new CoeffW(auxdataTargetDir, false, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
-    }
-
-
-    private Product createCompatibleBaseProduct(String name, String type) {
-        final int sceneWidth = l1bProduct.getSceneRasterWidth();
-        final int sceneHeight = l1bProduct.getSceneRasterHeight();
-
-        Product tProduct = new Product(name, type, sceneWidth, sceneHeight);
-        ProductUtils.copyTiePointGrids(l1bProduct, tProduct);
-        ProductUtils.copyGeoCoding(l1bProduct, tProduct);
-        tProduct.setStartTime(l1bProduct.getStartTime());
-        tProduct.setEndTime(l1bProduct.getEndTime());
-        return tProduct;
     }
 
     public static class Spi extends OperatorSpi {

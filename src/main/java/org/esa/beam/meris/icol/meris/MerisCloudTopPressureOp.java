@@ -20,6 +20,8 @@ import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+
 /**
  * Operator for cloud top pressure computation for AE correction.
  *
@@ -35,26 +37,28 @@ import java.util.Map;
 public class MerisCloudTopPressureOp extends MerisBasisOp {
 
     private static final String INVALID_EXPRESSION = "l1_flags.INVALID";
-    private Band invalidBand;
 
     @SourceProduct(alias="input")
     private Product sourceProduct;
+
     @TargetProduct
     private Product targetProduct;
+
     @Parameter
     private boolean useUserCtp;
     @Parameter
     private double userCtp;
 
+    private Band invalidBand;
+    
     @Override
     public void initialize() throws OperatorException {
         if (useUserCtp) {
             targetProduct = createCompatibleProduct(sourceProduct, "MER_CTP", "MER_L2");
             targetProduct.addBand("cloud_top_press", ProductData.TYPE_FLOAT32);
 
-            BandMathsOp bandArithmeticOp =
-                BandMathsOp.createBooleanExpressionBand(INVALID_EXPRESSION, sourceProduct);
-            invalidBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
+            BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(INVALID_EXPRESSION, sourceProduct);
+            invalidBand = baOp.getTargetProduct().getBandAt(0);
         }  else {
             Map<String, Object> emptyParams = new HashMap<String, Object>();
             targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudTopPressureOp.class), emptyParams, sourceProduct);
@@ -63,23 +67,19 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
 
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
-        Rectangle rectangle = targetTile.getRectangle();
-        pm.beginTask("Processing frame...", rectangle.height);
-
-        Tile isInvalid = getSourceTile(invalidBand, rectangle, pm);
-
+        Rectangle rect = targetTile.getRectangle();
+        pm.beginTask("Processing frame...", rect.height + 1);
         try {
-			for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-					if (pm.isCanceled()) {
-						break;
-					}
+            Tile isInvalid = getSourceTile(invalidBand, rect, subPm1(pm));
+            for (int y = rect.y; y < rect.y + rect.height; y++) {
+				for (int x = rect.x; x < rect.x + rect.width; x++) {
                     if (isInvalid.getSampleBoolean(x, y)) {
 						targetTile.setSample(x, y, 0);
 					} else {
 				       targetTile.setSample(x, y, userCtp);
                     }
 				}
+                checkForCancelation(pm);
 				pm.worked(1);
 			}
         } finally {

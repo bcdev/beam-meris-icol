@@ -27,6 +27,8 @@ import org.esa.beam.util.math.MathUtils;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+
 /**
  * Operator for cloud distance computation for AE correction.
  *
@@ -84,8 +86,8 @@ public class CloudDistanceOp extends Operator {
         Rectangle sourceRectangle = rectCalculator.extend(targetRectangle);
         pm.beginTask("Processing frame...", targetRectangle.height);
         try {
-        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, pm);
-            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle, pm);
+        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, subPm1(pm));
+            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle, subPm1(pm));
 
             PixelPos startPix = new PixelPos();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
@@ -101,10 +103,9 @@ public class CloudDistanceOp extends Operator {
                     	cloudDistance.setSample(x, y, NO_DATA_VALUE);
                     }
                 }
+                checkForCancelation(pm);
                 pm.worked(1);
             }
-        } catch (Exception e) {
-            throw new OperatorException(e);
         } finally {
             pm.done();
         }

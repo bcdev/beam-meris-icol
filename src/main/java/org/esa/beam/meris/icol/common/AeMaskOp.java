@@ -41,6 +41,8 @@ import org.esa.beam.util.RectangleExtender;
 import java.awt.*;
 import java.awt.geom.Area;
 
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+
 /**
  * Operator for computation of the mask to be used for AE correction.
  *
@@ -134,22 +136,21 @@ public class AeMaskOp extends Operator {
         }
 
         // todo: the following works for nested convolution - check if this is sufficient as 'edge processing' (proposal 3.2.1.5)
+        int sourceWidth = sourceProduct.getSceneRasterWidth();
+        int sourceHeight = sourceProduct.getSceneRasterHeight();
         if (reshapedConvolution) {
-            relevantRect = new Rectangle(0, 0,
-                                         sourceProduct.getSceneRasterWidth(),
-                                         sourceProduct.getSceneRasterHeight());
+            relevantRect = new Rectangle(0, 0, sourceWidth, sourceHeight);
         } else {
              // (AE algorithm is not applied in this case)
-            if (sourceProduct.getSceneRasterWidth() - 2 * aeWidth < 0 ||
-                    sourceProduct.getSceneRasterHeight() - 2 * aeWidth < 0) {
+            if (sourceWidth - 2 * aeWidth < 0 || sourceHeight - 2 * aeWidth < 0) {
                 throw new OperatorException("Product is too small to apply AE correction - must be at least " +
                         2 * aeWidth + "x" + 2 * aeWidth + " pixel.");
             }
             relevantRect = new Rectangle(aeWidth, aeWidth,
-                                         sourceProduct.getSceneRasterWidth() - 2 * aeWidth,
-                                         sourceProduct.getSceneRasterHeight() - 2 * aeWidth);
+                                         sourceWidth - 2 * aeWidth,
+                                         sourceHeight - 2 * aeWidth);
         }
-        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), aeWidth, aeWidth);
+        rectCalculator = new RectangleExtender(new Rectangle(sourceWidth, sourceHeight), aeWidth, aeWidth);
     }
 
     private FlagCoding createFlagCoding() {
@@ -169,14 +170,14 @@ public class AeMaskOp extends Operator {
         Rectangle targetRect = aeMask.getRectangle();
         Rectangle sourceRect = rectCalculator.extend(targetRect);
         Rectangle relevantTragetRect = targetRect.intersection(relevantRect);
-        pm.beginTask("Processing frame...", sourceRect.height + relevantTragetRect.height);
+        pm.beginTask("Processing frame...", sourceRect.height + relevantTragetRect.height + 3);
         try {
-            Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
+            Tile isLand = getSourceTile(isLandBand, sourceRect, subPm1(pm));
             Tile isCoastline = null;
             if (isCoastlineBand != null) {
-                isCoastline = getSourceTile(isCoastlineBand, sourceRect, pm);
+                isCoastline = getSourceTile(isCoastlineBand, sourceRect, subPm1(pm));
             }
-            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, pm);
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, subPm1(pm));
 
             Rectangle box = new Rectangle();
             Area costalArea = new Area();

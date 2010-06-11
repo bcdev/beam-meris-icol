@@ -1,6 +1,7 @@
 package org.esa.beam.meris.icol.utils;
 
 import com.bc.ceres.core.ProgressMonitor;
+import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
@@ -25,36 +26,44 @@ public class OperatorUtils {
     private OperatorUtils() {
     }
 
-    /**
-     * creates a new product with the same size
-     *
-     * @param sourceProduct
-     * @param name
-     * @param type
-     * @return targetProduct
-     */
     public static Product createCompatibleProduct(Product sourceProduct, String name, String type) {
+        return createCompatibleProduct(sourceProduct, name, type, false);
+    }
+    /**
+     * Creates a new product with the same size.
+     * Copies geocoding and the start and stop time.
+     */
+    public static Product createCompatibleProduct(Product sourceProduct, String name, String type, boolean includeTiepoints) {
         final int sceneWidth = sourceProduct.getSceneRasterWidth();
         final int sceneHeight = sourceProduct.getSceneRasterHeight();
 
         Product targetProduct = new Product(name, type, sceneWidth, sceneHeight);
+        if (includeTiepoints) {
+            ProductUtils.copyTiePointGrids(sourceProduct, targetProduct);
+        }
         copyProductBase(sourceProduct, targetProduct);
         return targetProduct;
     }
 
     /**
      * Copies geocoding and the start and stop time.
-     *
-     * @param sourceProduct
-     * @param targetProduct
      */
-    public static void copyProductBase(Product sourceProduct,
-                                 Product targetProduct) {
+    public static void copyProductBase(Product sourceProduct, Product targetProduct) {
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
         targetProduct.setStartTime(sourceProduct.getStartTime());
         targetProduct.setEndTime(sourceProduct.getEndTime());
     }
 
+    public static void copyFlagBandsWithImages(Product sourceProduct, Product targetProduct) {
+        ProductUtils.copyFlagBands(sourceProduct, targetProduct);
+        Band[] bands = sourceProduct.getBands();
+        for (Band srcBand : bands) {
+            if (srcBand.isFlagBand()) {
+                Band targetBand = targetProduct.getBand(srcBand.getName());
+                targetBand.setSourceImage(srcBand.getSourceImage());
+            }
+        }
+    }
     
     public static Band[] addBandGroup(Product srcProduct, int numSrcBands, int[] bandsToSkip, Product targetProduct, String targetPrefix, double noDataValue, boolean compactTargetArray) {
         int numTargetBands = numSrcBands;
@@ -106,5 +115,9 @@ public class OperatorUtils {
             tiles[i] = targetTiles.get(bands[i]);
         }
         return tiles;
+    }
+
+    public static ProgressMonitor subPm1(ProgressMonitor pm) {
+        return SubProgressMonitor.create(pm, 1);
     }
 }

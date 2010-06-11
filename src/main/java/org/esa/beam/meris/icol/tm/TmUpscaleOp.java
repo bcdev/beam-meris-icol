@@ -40,7 +40,7 @@ public class TmUpscaleOp extends TmBasisOp {
                 targetBand = targetProduct.addBand(band.getName(), band.getDataType());
             }
 
-            if (band.getFlagCoding() != null) {
+            if (band.isFlagBand()) {
                 targetBand.setSampleCoding(band.getFlagCoding());
             }
 

@@ -22,6 +22,7 @@ import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.MetadataAttribute;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -33,12 +34,14 @@ import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 
 /**
@@ -53,7 +56,7 @@ import java.util.List;
         authors = "Marco Zühlke",
         copyright = "(c) 2007 by Brockmann Consult",
         description = "Corrects for the adjacency effect and computes rho TOA.")
-public class MerisReflectanceCorrectionOp extends MerisBasisOp {
+public class MerisReflectanceCorrectionOp extends Operator {
 
     private static final int FLAG_AE_MASK_RAYLEIGH = 1;
     private static final int FLAG_AE_MASK_AEROSOL = 2;
@@ -80,10 +83,9 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
     private Product gasCorProduct;
     @SourceProduct(alias="ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol", optional=true)
+    @SourceProduct(alias="ae_aerosol")
     private Product aeAerosolProduct;
    
-    
     @TargetProduct
     private Product targetProduct;
     
@@ -102,7 +104,6 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
 
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
-    private Band l1FlagBand;
     private Band aeFlagBand;
 
     @Override
@@ -110,7 +111,7 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         String productType = l1bProduct.getProductType();
         int index = productType.indexOf("_1");
         productType = productType.substring(0, index) + "_1N";
-        targetProduct = createCompatibleProduct(rhoToaProduct, "reverseRhoToa", productType);
+        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "reverseRhoToa", productType, true);
         Band[] allBands = rhoToaProduct.getBands();
         Band[] sourceBands = new Band[15];
         int i = 0;
@@ -132,18 +133,14 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         if (exportAeRayleigh) {
             copyBandGroup(aeRayProduct, "rho_aeRay");
         }
-        if (aeAerosolProduct != null && exportAeAerosol) {
+        if (exportAeAerosol) {
             copyBandGroup(aeAerosolProduct, "rho_aeAer");
         }
-        if (aeAerosolProduct != null && exportAlphaAot) {
+        if (exportAlphaAot) {
             Band copyAlphaBand = ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
-            prepareBandForCopy(aeAerosolProduct.getBand("alpha"), copyAlphaBand);
-//            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
-//            copySource.put(copyAlphaBand, aeAerosolProduct.getBand("alpha"));
+            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
             Band copyAotBand = ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
-            prepareBandForCopy(aeAerosolProduct.getBand("aot"), copyAotBand);
-//            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
-//            copySource.put(copyAotBand, aeAerosolProduct.getBand("aot"));
+            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
         }
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
@@ -153,15 +150,9 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         targetProduct.getFlagCodingGroup().add(flagCoding);
         aeFlagBand.setSampleCoding(flagCoding);
         
-        ProductUtils.copyFlagBands(l1bProduct, targetProduct);
-        l1FlagBand = targetProduct.getBand("l1_flags");
-        prepareBandForCopy(l1bProduct.getBand("l1_flags"), l1FlagBand);
+        OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
     }
-    
-    private void prepareBandForCopy(Band srcBand, Band targetBand) {
-        targetBand.setSourceImage(srcBand.getSourceImage());
-    }
-    
+
     private FlagCoding createFlagCoding(String bandName) {
         MetadataAttribute cloudAttr;
         final FlagCoding flagCoding = new FlagCoding(bandName);
@@ -202,24 +193,15 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         return flagCoding;
     }
 
-    private List<Band> copyBandGroup(Product sourceProduct, String bandPrefix) {
-        List<Band> bandList = new ArrayList<Band>(15);
+    private void copyBandGroup(Product sourceProduct, String bandPrefix) {
         Band[] sourceBands = sourceProduct.getBands();
         for (Band srcBand : sourceBands) {
-            if (srcBand.getName().startsWith(bandPrefix)) {
-                int bandNo = srcBand.getSpectralBandIndex()+1;
-                Band targetBand = targetProduct.addBand(bandPrefix + "_" + bandNo, ProductData.TYPE_FLOAT32);
-                
-//                ProductUtils.copySpectralAttributes(srcBand, targetBand);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
-                targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
-                targetBand.setNoDataValue(srcBand.getNoDataValue());
-                bandList.add(targetBand);
-
-                prepareBandForCopy(srcBand, targetBand);
+            String srcBandName = srcBand.getName();
+            if (srcBandName.startsWith(bandPrefix)) {
+                Band targetBand = ProductUtils.copyBand(srcBandName, sourceProduct, targetProduct);
+                targetBand.setSourceImage(srcBand.getSourceImage());
             }
         }
-        return bandList;
     }
     
     private List<Band> addBandGroup(Band[] sourceBands, String bandPrefix) {
@@ -227,12 +209,11 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
         for (Band srcBand : sourceBands) {
             int bandNo = srcBand.getSpectralBandIndex()+1;
             Band targetBand = targetProduct.addBand(bandPrefix + "_" + bandNo, ProductData.TYPE_FLOAT32);
-//            ProductUtils.copySpectralAttributes(srcBand, targetBand);
             ProductUtils.copySpectralBandProperties(srcBand, targetBand);
             targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
             targetBand.setNoDataValue(srcBand.getNoDataValue());
             if (bandNo == 11 || bandNo== 14 || bandNo== 15) {
-                prepareBandForCopy(srcBand, targetBand);
+                targetBand.setSourceImage(srcBand.getSourceImage());
             } else {
                 bandList.add(targetBand);
             }
@@ -249,49 +230,40 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
             correctForRayleigh(targetTile, bandNumber, pm);
         } else if (rhoToaAerBands != null && rhoToaAerBands.contains(band)) {
             correctForRayleighAndAerosol(targetTile, bandNumber, pm);
-//        } else if (copySource.containsKey(band)) {
-//            Rectangle rectangle = targetTile.getRectangle();
-//            Tile srcTile = getSourceTile(copySource.get(band), rectangle, pm);
-//            for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-//                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-//                    targetTile.setSample(x, y, srcTile.getSampleDouble(x, y));
-//                }
-//            }
         } else if (band == aeFlagBand) {
             computeAeFlags(targetTile, pm);
         }
     }
 
     private void computeAeFlags(Tile targetTile, ProgressMonitor pm) throws OperatorException {
-        Rectangle rectangle = targetTile.getRectangle();
-        Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle, pm);
-        Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle, pm);
-        Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-        Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
-        Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rectangle, pm);
-        Tile aerosol = null;
-        if (aeAerosolProduct != null) {
-            aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAeAerosolOp.AOT_FLAGS), rectangle, pm);
-        }
-        for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-            for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                int result = 0;
-                if (aemaskRayleigh.getSampleInt(x, y) == 1) {
-                    result += FLAG_AE_MASK_RAYLEIGH;
-                }
-                if (aemaskAerosol.getSampleInt(x, y) == 1) {
-                    result += FLAG_AE_MASK_AEROSOL;
-                }
-                if (land.getSampleBit(x, y, 3)) {
-                    result += FLAG_LANDCONS;
-                }
-                if (cloud.getSampleBit(x, y, 0)) {
-                    result += FLAG_LANDCONS;
-                }
-                if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
-                    result += FLAG_AE_APPLIED_RAYLEIGH;
-                }
-                if (aerosol != null) {
+        Rectangle rect = targetTile.getRectangle();
+        pm.beginTask("Processing frame...", rect.height + 6);
+        try {
+            Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rect, subPm1(pm));
+            Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rect, subPm1(pm));
+            Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rect, subPm1(pm));
+            Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rect, subPm1(pm));
+            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rect, subPm1(pm));
+            Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAeAerosolOp.AOT_FLAGS), rect, subPm1(pm));
+
+            for (int y = rect.y; y < rect.y + rect.height; y++) {
+                for (int x = rect.x; x < rect.x + rect.width; x++) {
+                    int result = 0;
+                    if (aemaskRayleigh.getSampleInt(x, y) == 1) {
+                        result += FLAG_AE_MASK_RAYLEIGH;
+                    }
+                    if (aemaskAerosol.getSampleInt(x, y) == 1) {
+                        result += FLAG_AE_MASK_AEROSOL;
+                    }
+                    if (land.getSampleBit(x, y, 3)) {
+                        result += FLAG_LANDCONS;
+                    }
+                    if (cloud.getSampleBit(x, y, 0)) {
+                        result += FLAG_LANDCONS;
+                    }
+                    if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
+                        result += FLAG_AE_APPLIED_RAYLEIGH;
+                    }
                     boolean aotError = aerosol.getSampleBit(x, y, 1);
                     if (aemaskAerosol.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1 && !aotError) {
                         result += FLAG_AE_APPLIED_AEROSOL;
@@ -302,86 +274,103 @@ public class MerisReflectanceCorrectionOp extends MerisBasisOp {
                     if (aotError) {
                         result += FLAG_AOT_ERROR;
                     }
+                    targetTile.setSample(x, y, result);
                 }
-                targetTile.setSample(x, y, result);
+                checkForCancelation(pm);
+                pm.worked(1);
             }
+        } finally {
+            pm.done();
         }
     }
-    
+
     private void correctForRayleigh(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
-        Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-        Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
-        Tile aeRayleigh = null;
+        pm.beginTask("Processing frame...", rectangle.height + 5);
+        try {
+            Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
+            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
+            Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, subPm1(pm));
+            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, subPm1(pm));
+            Tile aeRayleigh = null;
 
-        for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-            for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                double rhoToa = 0;
-                double gasCorValue = gasCor.getSampleDouble(x, y);
-                if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
-                    if (aeRayleigh == null) {
-                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);                
+            for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                    double rhoToa = 0;
+                    double gasCorValue = gasCor.getSampleDouble(x, y);
+                    if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                        if (aeRayleigh == null) {
+                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, subPm1(pm));
+                        }
+                        double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
+                        double corrected = gasCorValue - aeRayleighValue;
+                        if (corrected != 0) {
+                            rhoToa = corrected * tg.getSampleDouble(x, y);
+                        }
                     }
-                    double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-                    double corrected = gasCorValue - aeRayleighValue;
-                    if (corrected != 0) {
-                        rhoToa = corrected * tg.getSampleDouble(x, y);
+                    if (rhoToa == 0) {
+                        rhoToa = rhoToaR.getSampleDouble(x, y);
                     }
+                    targetTile.setSample(x, y, rhoToa);
                 }
-                if (rhoToa == 0) {
-                    rhoToa = rhoToaR.getSampleDouble(x, y);
-                }
-                targetTile.setSample(x, y, rhoToa);
+                checkForCancelation(pm);
+                pm.worked(1);
             }
+        } finally {
+            pm.done();
         }
     }
 
     private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
-        Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-        Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-        Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
-        Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
-        Tile aeRayleigh = null;
-        Tile aeAerosol = null;
+        pm.beginTask("Processing frame...", rectangle.height + 7);
+        try {
+            Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
+            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
+            Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, subPm1(pm));
+            Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, subPm1(pm));
+            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, subPm1(pm));
+            Tile aeRayleigh = null;
+            Tile aeAerosol = null;
 
-        for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-            for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                double rhoToa = 0;
-                double gasCorValue = gasCor.getSampleDouble(x, y);
-                double corrected = 0.0;
-                if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
-                    if (aeRayleigh == null) {
-                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
+            for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                    double rhoToa = 0;
+                    double gasCorValue = gasCor.getSampleDouble(x, y);
+                    double corrected = 0.0;
+                    if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                        if (aeRayleigh == null) {
+                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, subPm1(pm));
+                        }
+                        double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
+                        corrected = gasCorValue - aeRayleighValue;
                     }
-                    double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-                    corrected = gasCorValue - aeRayleighValue;
-                }
-                if (aepAerosol.getSampleInt(x, y) == 1) {
-                    if (aeAerosol == null) {
-                        aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
+                    if (aepAerosol.getSampleInt(x, y) == 1) {
+                        if (aeAerosol == null) {
+                            aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, subPm1(pm));
+                        }
+                        double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
+                        corrected -= aeAerosolValue;
                     }
-                    double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
-                    corrected -= aeAerosolValue;
-                }
 
-                if (corrected != 0.0) {
-                    rhoToa = corrected * tg.getSampleDouble(x, y);
-                }
+                    if (corrected != 0.0) {
+                        rhoToa = corrected * tg.getSampleDouble(x, y);
+                    }
 
 
-                if (rhoToa == 0) {
-                    rhoToa = rhoToaR.getSampleDouble(x, y);
+                    if (rhoToa == 0) {
+                        rhoToa = rhoToaR.getSampleDouble(x, y);
+                    }
+                    targetTile.setSample(x, y, rhoToa);
                 }
-                targetTile.setSample(x, y, rhoToa);
+                checkForCancelation(pm);
+                pm.worked(1);
             }
+        } finally {
+            pm.done();
         }
     }
 
-    
     public static class Spi extends OperatorSpi {
         public Spi() {
             super(MerisReflectanceCorrectionOp.class);

@@ -20,7 +20,6 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 public class RhoBracketJaiConvolve implements RhoBracketAlgo {
-    private double[/*26*/][/*RR=26|FR=101*/] w;
     private final Product rhoBracketProduct;
     private final String namePrefix;
     private int numBands;
@@ -28,7 +27,7 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
 
     public RhoBracketJaiConvolve(Product l1bProduct, String productType, CoeffW coeffW, String namePrefix, int iaerConv,
                                  int numBands, int[] bandsToSkip) {
-        KernelJAI convolveKernel = null;
+        KernelJAI convolveKernel;
         double reshapedScalingFactor = 1.0;
         if (productType.indexOf("_RR") > -1) {
             convolveKernel = coeffW.getReshapedConvolutionKernelForRR(iaerConv);

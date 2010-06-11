@@ -27,6 +27,8 @@ import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+
 /**
  * Operator for coast distance computation for AE correction.
  *
@@ -103,11 +105,11 @@ public class CoastDistanceOp extends Operator {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
         Rectangle sourceRectangle = rectCalculator.extend(targetRectangle);
-        pm.beginTask("Processing frame...", targetRectangle.height);
+        pm.beginTask("Processing frame...", targetRectangle.height + 3);
         try {
-        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, pm);
-        	Tile isLand = getSourceTile(isLandBand, sourceRectangle, pm);
-        	Tile isWater = getSourceTile(isWaterBand, sourceRectangle, pm);
+        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, subPm1(pm));
+        	Tile isLand = getSourceTile(isLandBand, sourceRectangle, subPm1(pm));
+        	Tile isWater = getSourceTile(isWaterBand, sourceRectangle, subPm1(pm));
             
             Tile[] distanceTiles = new Tile[numDistances];
             for (int i = 0; i < numDistances; i++) {
@@ -148,8 +150,6 @@ public class CoastDistanceOp extends Operator {
                 checkForCancelation(pm);
                 pm.worked(1);
             }
-        } catch (Exception e) {
-            throw new OperatorException(e);
         } finally {
             pm.done();
         }

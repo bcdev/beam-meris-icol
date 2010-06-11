@@ -55,9 +55,7 @@ import java.awt.image.RenderedImage;
         description = "Convolves reflectances using a given kernel.")
 public class ReshapedConvolutionOp extends Operator {
 
-//    private static final Interpolation BILIN = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
     private static final Interpolation BILIN = Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
-    private static final long MB = 1024 * 1024;
 
     @SourceProduct
     private Product sourceProduct;
@@ -67,37 +65,32 @@ public class ReshapedConvolutionOp extends Operator {
 
     @Parameter(notNull = true, notEmpty = true)
     private String namePrefix;
-
     @Parameter(converter = KernelConverter.class, notNull = true)
     private KernelJAI kernel;
-
     @Parameter(defaultValue = "-1")
     private int correctionMode;
-
     @Parameter(defaultValue = "1.0")
     private double reshapedScalingFactor;
 
+
     @Override
     public void initialize() throws OperatorException {
-
         targetProduct = new Product("P", "PT", sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight());
         String[] sourceNames = sourceProduct.getBandNames();
-        RenderedImage kernelFT = null;
         for (String name : sourceNames) {
-
             if (name.startsWith(namePrefix)) {
-                    Band targetBand = ProductUtils.copyBand(name, sourceProduct, targetProduct);
-                    RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
-                 if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
-                     // Rayleigh
-                     RenderedImage image1 = convolveDownscaled(sourceImage, kernel, BILIN,
-                                                               (float) reshapedScalingFactor);
-                     targetBand.setSourceImage(image1);
-                 } else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
-                     // aerosol
-                     RenderedImage image1 = convolve(sourceImage, kernel);
-                     targetBand.setSourceImage(image1);
-                 }
+                Band targetBand = ProductUtils.copyBand(name, sourceProduct, targetProduct);
+                RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
+                if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
+                    // Rayleigh
+                    RenderedImage image1 = convolveDownscaled(sourceImage, kernel, BILIN,
+                            (float) reshapedScalingFactor);
+                    targetBand.setSourceImage(image1);
+                } else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
+                    // aerosol
+                    RenderedImage image1 = convolve(sourceImage, kernel);
+                    targetBand.setSourceImage(image1);
+                }
             }
         }
     }
@@ -107,12 +100,10 @@ public class ReshapedConvolutionOp extends Operator {
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_REFLECT);
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_WRAP);
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_ZERO);
-        RenderingHints renderingHints = new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-                                                           borderExtender);
+        RenderingHints renderingHints = new RenderingHints(JAI.KEY_BORDER_EXTENDER, borderExtender);
         // The ConvolveDescriptor performs a kernel-based convolution in SPATIAL domain.
         final RenderedOp image = ConvolveDescriptor.create(src, kernel, renderingHints);
 //        System.out.printf("Convolved, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
-
         return image;
    }
 

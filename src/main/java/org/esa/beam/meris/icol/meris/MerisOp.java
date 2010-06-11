@@ -129,9 +129,9 @@ public class MerisOp extends Operator {
         System.out.println("Tile size: "+ tileSize);
         System.out.println("Apply AE over: "+ aeArea);
 
-//        if (tileSize > 0) {
-//            sourceProduct.setPreferredTileSize(tileSize, tileSize);
-//        }
+        if (tileSize > 0) {
+            sourceProduct.setPreferredTileSize(tileSize, tileSize);
+        }
 
 
 //        JAI.getDefaultInstance().setTileCache(new FileTileCache(new File("C:\\temp\\gpf")));
@@ -399,7 +399,6 @@ public class MerisOp extends Operator {
         band11And15Input.put("corrRad", reverseRhoToaProduct);
         Product finalRhoToaProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBand11And15Op.class), emptyParams, band11And15Input);
 
-        Product reverseRadianceProduct = null;
         if (productType == 0) {
             // radiance output product
             Map<String, Product> reverseRadianceInput = new HashMap<String, Product>(7);
@@ -412,7 +411,7 @@ public class MerisOp extends Operator {
             reverseRadianceInput.put("aemaskRayleigh", aemaskRayleighProduct);
             reverseRadianceInput.put("aemaskAerosol", aemaskAerosolProduct);
             Map<String, Object> reverseRadianceParams = new HashMap<String, Object>(1);
-            reverseRadianceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), reverseRadianceParams, reverseRadianceInput);
+            Product reverseRadianceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), reverseRadianceParams, reverseRadianceInput);
 
             // additional output bands for RS
             if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {

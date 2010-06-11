@@ -34,12 +34,6 @@ import java.util.Map;
         description = "Landsat atmospheric functions.")
 public class TmGaseousTransmittanceOp extends Operator {
 
-    private transient Band[] gaseousTransmittanceBands;
-
-    private transient L2AuxData auxData;
-
-    protected TmRayleighCorrection rayleighCorrection;
-
     final int NO_DATA_VALUE = -1;
 
     @SourceProduct(alias="l1g")
@@ -48,22 +42,17 @@ public class TmGaseousTransmittanceOp extends Operator {
     private Product conversionProduct;
     @SourceProduct(alias="geometry")
     private Product geometryProduct;
+
     @TargetProduct
     private Product targetProduct;
+
     @Parameter
     private double ozoneContent;
 
+    private Band[] gaseousTransmittanceBands;
+
     @Override
     public void initialize() throws OperatorException {
-        try {
-            // parts of MERIS auxdata can be used for Landsat as well,
-            // but first we need a compatible MERIS product to read the L2 auxdata...
-            Product merisCompatibleProduct = LandsatUtils.createMerisCompatibleProductForL2Auxdata(conversionProduct);
-            auxData = L2AuxdataProvider.getInstance().getAuxdata(merisCompatibleProduct);
-            rayleighCorrection = new TmRayleighCorrection(auxData);
-        } catch (Exception e) {
-            throw new OperatorException("could not load L2Auxdata", e);
-        }
         targetProduct = OperatorUtils.createCompatibleProduct(geometryProduct, sourceProduct.getName() + "_ICOL", "ICOL");
 
         gaseousTransmittanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
@@ -77,7 +66,6 @@ public class TmGaseousTransmittanceOp extends Operator {
 
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
-
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
             Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle, SubProgressMonitor.create(pm, 1));
@@ -96,18 +84,11 @@ public class TmGaseousTransmittanceOp extends Operator {
                 checkForCancelation(pm);
                 pm.worked(1);
             }
-        } catch (Exception e) {
-            throw new OperatorException(e);
         } finally {
             pm.done();
         }
     }
 
-    
-    /**
-     * The Service Provider Interface (SPI) for the operator.
-     * It provides operator meta-data and is a factory for new operator instances.
-     */
     public static class Spi extends OperatorSpi {
         public Spi() {
             super(TmGaseousTransmittanceOp.class);
