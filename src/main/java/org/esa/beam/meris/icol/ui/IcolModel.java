@@ -42,8 +42,6 @@ public class IcolModel {
     private double userAot550 = 0.2;
 
     // General
-    @Parameter(interval = "[1, 3]", defaultValue = "3")
-    private int convolveMode = 1;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;
     @Parameter(defaultValue = "true")
@@ -120,10 +118,6 @@ public class IcolModel {
     public Product getSourceProduct() {
         return sourceProduct;
     }
-
-//    public boolean isComputeRhoToa() {
-//        return (productType == 1);
-//    }
 
     private int getLandsatTargetResolution() {
         int landsatTargetResolutionValue = -1;
@@ -214,7 +208,6 @@ public class IcolModel {
 
     private void configGeneral(HashMap<String, Object> params) {
         params.put("productType", productType);
-        params.put("convolveMode", convolveMode);
         params.put("tileSize", tileSize);
         params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);

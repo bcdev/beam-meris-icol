@@ -76,8 +76,6 @@ public class TmAeRayleighOp extends TmBasisOp {
 
     @Parameter
     private String landExpression;
-    @Parameter(interval = "[1, 3]", defaultValue = "1")
-    private int convolveAlgo;
     @Parameter(defaultValue="false")
     private boolean reshapedConvolution;
     @Parameter

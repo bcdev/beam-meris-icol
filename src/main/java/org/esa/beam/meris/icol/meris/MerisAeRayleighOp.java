@@ -110,8 +110,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
 
     @Parameter
     private String landExpression;
-    @Parameter(interval = "[1, 3]", defaultValue = "1")
-    private int convolveAlgo;
     @Parameter(defaultValue="true")
     private boolean openclConvolution = true;
     @Parameter(defaultValue="true")

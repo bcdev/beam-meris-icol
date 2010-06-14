@@ -42,8 +42,6 @@ import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
-import javax.media.jai.JAI;
-import javax.media.jai.TileCache;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,12 +83,8 @@ public class MerisOp extends Operator {
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
     private double userAot550;
-//    @Parameter(interval = "[1, 3]", defaultValue = "3")
-//    private int convolveAlgo;      // v1.1
 
     // MerisReflectanceCorrectionOp
-    @Parameter(defaultValue="false")
-    private boolean isComputeRhoToa = false;
     @Parameter(defaultValue="true")
     private boolean exportRhoToa = true;
     @Parameter(defaultValue="true")
@@ -108,8 +102,6 @@ public class MerisOp extends Operator {
     // general
     @Parameter(defaultValue="0", valueSet= {"0","1"})
     private int productType = 0;
-    @Parameter(defaultValue="1",  valueSet= {"1","2","3"})
-    private int convolveMode = 1;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;
     @Parameter(defaultValue="true")
@@ -125,26 +117,12 @@ public class MerisOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        System.out.println("Convolve algo: " + convolveMode);
         System.out.println("Tile size: "+ tileSize);
         System.out.println("Apply AE over: "+ aeArea);
 
         if (tileSize > 0) {
             sourceProduct.setPreferredTileSize(tileSize, tileSize);
         }
-
-
-//        JAI.getDefaultInstance().setTileCache(new FileTileCache(new File("C:\\temp\\gpf")));
-        TileCache tc = JAI.getDefaultInstance().getTileCache();
-//        if (!(tc instanceof FailsafeTileCache)) {
-//            JAI.getDefaultInstance().setTileCache(new FailsafeTileCache(tc.getMemoryCapacity(),
-//                    new File("C:\\temp\\gpf")));
-//        }
-
-//        if (!(tc instanceof SwappingTileCache)) {
-//            JAI.getDefaultInstance().setTileCache(new SwappingTileCache(128L*1024L*1024L,
-//                    new DefaultSwapSpace(new File("C:\\temp\\gpf"), BeamLogManager.getSystemLogger())));
-//        }
 
         Map<String, Object> emptyParams = new HashMap<String, Object>();
         Product rad2reflProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), emptyParams, sourceProduct);
@@ -301,7 +279,6 @@ public class MerisOp extends Operator {
             exportSeparateDebugBands = true;
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
-        aeRayParams.put("convolveAlgo", convolveMode); // v1.1
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
         aeRayParams.put("openclConvolution", openclConvolution);
         Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeRayleighOp.class), aeRayParams, aeRayInput);
@@ -356,7 +333,6 @@ public class MerisOp extends Operator {
         aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
         aeAerosolParams.put("userAlpha", userAlpha);
         aeAerosolParams.put("userAot550", userAot550);
-        aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         Product aeAerProduct;

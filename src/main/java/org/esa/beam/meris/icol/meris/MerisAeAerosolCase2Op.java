@@ -112,8 +112,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
-    @Parameter(interval = "[1, 3]", defaultValue = "1")
-    private int convolveAlgo;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution;
     @Parameter

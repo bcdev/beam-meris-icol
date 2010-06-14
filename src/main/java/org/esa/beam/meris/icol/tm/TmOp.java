@@ -1,10 +1,8 @@
 package org.esa.beam.meris.icol.tm;
 
 import org.esa.beam.framework.datamodel.FlagCoding;
-import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
-import org.esa.beam.framework.dataop.dem.ElevationModel;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
@@ -42,12 +40,6 @@ public class TmOp extends TmBasisOp {
     @TargetProduct(description = "The target product.")
     Product targetProduct;
 
-    private GeoCoding geocoding;
-    private ElevationModel getasseElevationModel;
-    private final float SEA_LEVEL_PRESSURE = 1013.25f;
-
-    @Parameter(defaultValue = "false")
-    private boolean useUserAlphaAndAot = false;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
@@ -107,8 +99,6 @@ public class TmOp extends TmBasisOp {
     // general
     @Parameter(defaultValue="0", valueSet= {"0","1"})
     private int productType = 0;
-    @Parameter(defaultValue="1",  valueSet= {"1","2","3"})
-    private int convolveMode = 1;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;
     @Parameter(defaultValue="64")
@@ -119,8 +109,6 @@ public class TmOp extends TmBasisOp {
     private boolean exportSeparateDebugBands = false;
 
     // LandsatReflectanceConversionOp
-    @Parameter(defaultValue="false")
-    private boolean isComputeRhoToa = false;
     @Parameter(defaultValue="true")
     private boolean exportRhoToa = true;
     @Parameter(defaultValue="true")
@@ -133,9 +121,6 @@ public class TmOp extends TmBasisOp {
     private boolean exportAeAerosol = true;
     @Parameter(defaultValue="true")
     private boolean exportAlphaAot = true;
-
-    private int aveBlock;
-    private int minNAve;
 
 
     @Override
@@ -355,7 +340,6 @@ public class TmOp extends TmBasisOp {
             exportSeparateDebugBands = true;
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
-        aeRayParams.put("convolveAlgo", convolveMode); // v1.1
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
         aeRayParams.put("instrument", "LANDSAT5 TM");
         Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeRayleighOp.class), aeRayParams, aeRayInput);
@@ -379,7 +363,6 @@ public class TmOp extends TmBasisOp {
         aeAerosolParams.put("userAlpha", userAlpha);
         aeAerosolParams.put("userAot550", userAot550);
         aeAerosolParams.put("userPSurf", landsatUserPSurf);
-        aeAerosolParams.put("convolveAlgo", convolveMode); // v1.1
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
         aeAerosolParams.put("instrument", "LANDSAT5 TM");
