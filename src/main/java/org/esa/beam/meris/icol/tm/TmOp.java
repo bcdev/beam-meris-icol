@@ -101,6 +101,8 @@ public class TmOp extends TmBasisOp {
     private int productType = 0;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;
+    @Parameter(defaultValue="false")
+    private boolean openclConvolution = false;      // currently not used in TM
     @Parameter(defaultValue="64")
     private int tileSize = 64;
     @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
@@ -262,7 +264,7 @@ public class TmOp extends TmBasisOp {
         aemaskRayleighInput.put("land", landProduct);
         Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
         aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aemaskRayleighParameters.put("aearea", aeArea);
+        aemaskRayleighParameters.put("aeArea", aeArea);
         aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
@@ -272,7 +274,7 @@ public class TmOp extends TmBasisOp {
         aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
         aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aemaskRayleighParameters.put("aearea", aeArea);
+        aemaskRayleighParameters.put("aeArea", aeArea);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);

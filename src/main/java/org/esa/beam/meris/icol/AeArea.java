@@ -7,7 +7,7 @@ public enum AeArea {
     // 2. apply ICOL everywhere over ocean [no selection]
     OCEAN(false, false, "Everywhere over the ocean"),
     // 3. apply ICOL over ocean and land, in coastal region only [both selected]
-    COSTAL_ZONE(true, true, "Eostal regions over ocean and land"),
+    COSTAL_ZONE(true, true, "Costal regions over ocean and land"),
     // 4. apply ICOL everywhere over ocean and land [over land selected]
     EVERYWHERE(false, true, "Everywhere");
 

@@ -44,8 +44,8 @@ public class IcolModel {
     // General
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;
-    @Parameter(defaultValue = "true")
-    private boolean openclConvolution = true;
+    @Parameter(defaultValue = "false")
+    private boolean openclConvolution = false;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
     @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})

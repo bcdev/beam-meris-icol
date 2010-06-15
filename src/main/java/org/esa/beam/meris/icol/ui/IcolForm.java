@@ -414,7 +414,7 @@ class IcolForm extends JTabbedPane {
                                                                 new Color(0, 70, 213)));
 
         openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
-        openclConvolutionCheckBox.setSelected(true);
+        openclConvolutionCheckBox.setSelected(false);
 		panel.add(openclConvolutionCheckBox);
 //        panel.add(new JLabel());
 
