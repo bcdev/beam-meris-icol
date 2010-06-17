@@ -34,6 +34,7 @@ import java.util.Map;
         description = "Performs a correction of the adjacency effect, computes radiances and writes an output file.")
 public class TmOp extends TmBasisOp {
 
+    // todo: we need the ORIGINAL source product (mandatory) and the geometry product (optional)
     @SourceProduct(description = "The source product.")
     Product sourceProduct;
 
@@ -174,14 +175,14 @@ public class TmOp extends TmBasisOp {
         Map<String, Product> cloudInput = new HashMap<String, Product>(2);
         cloudInput.put("refl", conversionProduct);
         Map<String, Object> cloudParameters = new HashMap<String, Object>(8);
-        conversionParameters.put("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilter);
-        conversionParameters.put("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilter);
-        conversionParameters.put("landsatCloudFlagApplyNdsiFilter", landsatCloudFlagApplyNdsiFilter);
-        conversionParameters.put("landsatCloudFlagApplyTemperatureFilter", landsatCloudFlagApplyTemperatureFilter);
-        conversionParameters.put("cloudBrightnessThreshold", cloudBrightnessThreshold);
-        conversionParameters.put("cloudNdviThreshold", cloudNdviThreshold);
-        conversionParameters.put("cloudNdsiThreshold", cloudNdsiThreshold);
-        conversionParameters.put("cloudTM6Threshold", cloudTM6Threshold);
+        cloudParameters.put("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilter);
+        cloudParameters.put("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilter);
+        cloudParameters.put("landsatCloudFlagApplyNdsiFilter", landsatCloudFlagApplyNdsiFilter);
+        cloudParameters.put("landsatCloudFlagApplyTemperatureFilter", landsatCloudFlagApplyTemperatureFilter);
+        cloudParameters.put("cloudBrightnessThreshold", cloudBrightnessThreshold);
+        cloudParameters.put("cloudNdviThreshold", cloudNdviThreshold);
+        cloudParameters.put("cloudNdsiThreshold", cloudNdsiThreshold);
+        cloudParameters.put("cloudTM6Threshold", cloudTM6Threshold);
         Product cloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmCloudClassificationOp.class), cloudParameters, cloudInput);
 
         // Cloud Top Pressure
@@ -370,6 +371,16 @@ public class TmOp extends TmBasisOp {
         aeAerosolParams.put("instrument", "LANDSAT5 TM");
         Product aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeAerosolOp.class), aeAerosolParams, aeAerInput);
 
+        // AE Rayleigh/Aerosol merge:
+        Map<String, Product> aeTotalInput = new HashMap<String, Product>(9);
+        aeTotalInput.put("original", conversionProduct);
+        aeTotalInput.put("aemaskAer", aemaskAerosolProduct);
+        aeTotalInput.put("aemaskRay", aemaskRayleighProduct);
+        aeTotalInput.put("aeRay", aeRayProduct);
+        aeTotalInput.put("aeAer", aeAerProduct);
+        Map<String, Object> aeTotalParams = new HashMap<String, Object>(9);
+        Product aeTotalProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeMergeOp.class), aeTotalParams, aeTotalInput);
+
         // Reverse radiance:
         // MERIS: correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), ...
         // Landsat: provide adjusted TmReflectanceCorrectionOp
@@ -396,7 +407,7 @@ public class TmOp extends TmBasisOp {
             reflectanceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
             reflectanceCorrectionInput.put("gascor", gasProduct);
             reflectanceCorrectionInput.put("ae_ray", aeRayProduct);
-            reflectanceCorrectionInput.put("ae_aerosol", aeAerProduct);
+            reflectanceCorrectionInput.put("ae_aerosol", aeTotalProduct);
             Map<String, Object> reflectanceCorrectionParams = new HashMap<String, Object>(1);
             reflectanceCorrectionParams.put("exportRhoToa", exportRhoToa);
             reflectanceCorrectionParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
@@ -423,15 +434,29 @@ public class TmOp extends TmBasisOp {
             DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_2");
             DebugUtils.addAeRayleighProductDebugBands(correctionProduct, aeRayProduct);
             DebugUtils.addAeAerosolProductDebugBands(correctionProduct, aeAerProduct);
+            DebugUtils.addAeTotalProductDebugBands(correctionProduct, aeTotalProduct);
         }
 
         // if desired, upscale all bands to Tm full resolution
         if (upscaleToTMFR) {
-            Map<String, Product> upscaleInput = new HashMap<String, Product>(5);
-            upscaleInput.put("refl", correctionProduct);
-            Map<String, Object> upscaleParameters = new HashMap<String, Object>();
-            upscaleParameters.put("landsatTargetResolution", landsatTargetResolution);
-            Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleOp.class), upscaleParameters, upscaleInput);
+            // AE Rayleigh/Aerosol upscale:
+            Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
+            aeUpscaleInput.put("aeTotal", aeTotalProduct);
+            Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
+            int tmOrigProductWidth = 3026;  // todo: take from orig TM product, also write to geometry product metadata
+            int tmOrigProductHeight = 2531; // todo: take from orig TM product, also write to geometry product metadata
+            aeUpscaleParams.put("tmOrigProductWidth", tmOrigProductWidth);
+            aeUpscaleParams.put("tmOrigProductHeight", tmOrigProductHeight);
+            Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
+
+//            Map<String, Product> upscaleInput = new HashMap<String, Product>(5);
+//            upscaleInput.put("refl", correctionProduct);
+//            Map<String, Object> upscaleParameters = new HashMap<String, Object>();
+//            tmOrigProductWidth = 8201;  // todo: take from orig TM product, also write to geometry product metadata
+//            tmOrigProductHeight = 7181; // todo: take from orig TM product, also write to geometry product metadata
+//            upscaleParameters.put("tmOrigProductWidth", tmOrigProductWidth);
+//            upscaleParameters.put("tmOrigProductHeight", tmOrigProductHeight);
+//            Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleOp.class), upscaleParameters, upscaleInput);
             targetProduct = upscaleProduct;
         } else {
             targetProduct = correctionProduct;

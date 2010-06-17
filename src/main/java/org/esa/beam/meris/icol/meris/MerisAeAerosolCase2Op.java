@@ -393,7 +393,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             int jrhow705 = 0;
 
                             // rhoW705 loop (B9, Gerald Moore table):
-                            for (int irhow705 = 0; irhow705 < 20; irhow705++) {
+//                            for (int irhow705 = 0; irhow705 < 20; irhow705++) {
+                            for (int irhow705 = 0; irhow705 < 1; irhow705++) {
                                 rhoB9Table[irhow705] = irhow705 * 0.005f;
                                 if (irhow705 > 0 && searchIAOT != -1) {
                                     // 'best' value of rhoBrr705 retrieved with previous irhoW
@@ -519,7 +520,9 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, 550.0));
+//                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, 550.0));
+                        // write aot865 to output...
+                        aotTile.setSample(x, y, aot);
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; iwvl++) {

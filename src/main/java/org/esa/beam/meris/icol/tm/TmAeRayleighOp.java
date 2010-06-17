@@ -158,7 +158,7 @@ public class TmAeRayleighOp extends TmBasisOp {
 
     private Band[] addBandGroup(String prefix, double noDataValue) {
         return OperatorUtils.addBandGroup(l1bProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS, bandsToSkip,
-                targetProduct, prefix, noDataValue, true);
+                targetProduct, prefix, noDataValue, false);
     }
 
     private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {

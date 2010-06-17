@@ -55,12 +55,11 @@ public class TmGeometryOp extends TmBasisOp {
     public static final String LONGITUDE_BAND_NAME = "longitude";
     public static final String ALTITUDE_BAND_NAME = "altitude";
 
-    private GeoCoding geocoding;
+    private GeoCoding sourceGeocoding;
     private ElevationModel getasseElevationModel;
     private final float SEA_LEVEL_PRESSURE = 1013.25f;
 
     private int aveBlock;
-    private int minNAve;
 
     @SourceProduct(alias="l1g")
     private Product sourceProduct;
@@ -90,10 +89,9 @@ public class TmGeometryOp extends TmBasisOp {
         }
         getasseElevationModel = demDescriptor.createDem(Resampling.NEAREST_NEIGHBOUR);
 
-        geocoding = sourceProduct.getGeoCoding();
+        sourceGeocoding = sourceProduct.getGeoCoding();
 
         aveBlock = landsatTargetResolution /(2*LANDSAT_ORIGINAL_RESOLUTION);
-        minNAve = (2*aveBlock+1)*(2*aveBlock+1) - 1;
 
         sceneWidth = sourceProduct.getSceneRasterWidth()/(2*aveBlock+1) + 1;
         sceneHeight = sourceProduct.getSceneRasterHeight()/(2*aveBlock+1) + 1;
@@ -175,18 +173,19 @@ public class TmGeometryOp extends TmBasisOp {
             int y1 = sourceRectangle.y;
             int y2 = sourceRectangle.y + sourceRectangle.height - 1;
 
-            for (int iTarY = y1+ aveBlock; iTarY <= y2+ aveBlock; iTarY+=2* aveBlock +1) {
-                for (int iTarX = x1+ aveBlock; iTarX <= x2+ aveBlock; iTarX+=2* aveBlock +1) {
-                    int iX = ((iTarX-x1- aveBlock)/(2* aveBlock +1));
-                    int iY = ((iTarY-y1- aveBlock)/(2* aveBlock +1));
+            int aveSize = 2 * aveBlock + 1;
+            for (int iSrcY = y1+ aveBlock; iSrcY <= y2+ aveBlock; iSrcY+= aveSize) {
+                for (int iSrcX = x1+ aveBlock; iSrcX <= x2+ aveBlock; iSrcX+= aveSize) {
+                    int iTarX = ((iSrcX-x1- aveBlock)/ aveSize);
+                    int iTarY = ((iSrcY-y1- aveBlock)/ aveSize);
                     
-                    if (!(LandsatUtils.isCoordinatesOutOfBounds(iX, iY, targetTile))) {
-                        final GeoPos geoPosAve = getGeoposSpatialAverage(iTarX, iTarY);
+                    if (!(LandsatUtils.isCoordinatesOutOfBounds(iTarX, iTarY, targetTile))) {
+                        final GeoPos geoPosAve = getGeoposSpatialAverage(iSrcX, iSrcY);
 
                         final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
                         final double saa = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getAzimuth();
-                        final double vza = getViewZenithAngle(iTarX, iTarY);
-                        final double vaa = getViewAzimuthAngle(iTarX, iTarY);
+                        final double vza = getViewZenithAngle(iSrcX, iSrcY);
+                        final double vaa = getViewAzimuthAngle(iSrcX, iSrcY);
 
                         final double mus = Math.cos(sza * MathUtils.DTOR);
                         final double muv = Math.cos(vza * MathUtils.DTOR);
@@ -196,34 +195,34 @@ public class TmGeometryOp extends TmBasisOp {
                         final double phi = saa - vaa;
 
                         if (targetBand.getName().equals("latitude")) {
-                            targetTile.setSample(iX, iY, geoPosAve.getLat());
+                            targetTile.setSample(iTarX, iTarY, geoPosAve.getLat());
                         } else if (targetBand.getName().equals("longitude")) {
-                            targetTile.setSample(iX, iY, geoPosAve.getLon());
+                            targetTile.setSample(iTarX, iTarY, geoPosAve.getLon());
                         } else if (targetBand.getName().equals("altitude")) {
-                            final float altAve = getAltitudeSpatialAverage(iTarX, iTarY);
-                            targetTile.setSample(iX, iY, altAve);
+                            final float altAve = getAltitudeSpatialAverage(iSrcX, iSrcY);
+                            targetTile.setSample(iTarX, iTarY, altAve);
                         } else if (targetBand.getName().equals("sunZenith")) {
-                            targetTile.setSample(iX, iY, sza);
+                            targetTile.setSample(iTarX, iTarY, sza);
                         } else if (targetBand.getName().equals("sunAzimuth")) {
-                            targetTile.setSample(iX, iY, saa);
+                            targetTile.setSample(iTarX, iTarY, saa);
                         } else if (targetBand.getName().equals("viewZenith")) {
-                            targetTile.setSample(iX, iY, vza);
+                            targetTile.setSample(iTarX, iTarY, vza);
                         } else if (targetBand.getName().equals("viewAzimuth")) {
-                            targetTile.setSample(iX, iY, vaa);
+                            targetTile.setSample(iTarX, iTarY, vaa);
                         } else if (targetBand.getName().equals("airMass")) {
                             final double airMass = 1.0 / mus + 1.0 / muv;
-                            targetTile.setSample(iX, iY, airMass);
+                            targetTile.setSample(iTarX, iTarY, airMass);
                         } else if (targetBand.getName().equals("scatteringAngle")) {
                             //compute the COSINE of the back scattering angle
                             final double csb = mus * muv + nus * nuv * Math.cos(phi * MathUtils.DTOR);
-                            targetTile.setSample(iX, iY, csb);
+                            targetTile.setSample(iTarX, iTarY, csb);
                         } else if (targetBand.getName().equals("specularAngle")) {
                             //compute the COSINE of the forward scattering angle
                             final double csf = mus * muv - nus * nuv * Math.cos(phi * MathUtils.DTOR);
-                            targetTile.setSample(iX, iY, csf);
+                            targetTile.setSample(iTarX, iTarY, csf);
                         } else if (radianceSourceTile != null) {
-                            final float radianceAve = getRadianceSpatialAverage(radianceSourceTile, iTarX, iTarY);
-                            targetTile.setSample(iX, iY, radianceAve);
+                            final float radianceAve = getRadianceSpatialAverage(radianceSourceTile, iSrcX, iSrcY);
+                            targetTile.setSample(iTarX, iTarY, radianceAve);
                         }
                     }
                 }
@@ -317,7 +316,7 @@ public class TmGeometryOp extends TmBasisOp {
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
                 final PixelPos pixelPos = new PixelPos(ix, iy);
-                final GeoPos geoPos = geocoding.getGeoPos(pixelPos, null);
+                final GeoPos geoPos = sourceGeocoding.getGeoPos(pixelPos, null);
                 final float alt = getasseElevationModel.getElevation(geoPos);
                 boolean valid = (Double.compare(alt, NO_DATA_VALUE) != 0);
                 if (valid) {
@@ -335,21 +334,21 @@ public class TmGeometryOp extends TmBasisOp {
         return altAve;
     }
 
-    private GeoPos getGeoposSpatialAverage(int iTarX, int iTarY) {
+    private GeoPos getGeoposSpatialAverage(int iSrcX, int iSrcY) {
 
         float latAve = 0.0f;
         float lonAve = 0.0f;
 
         int n = 0;
-        final int minX = Math.max(0,iTarX-aveBlock);
-        final int minY = Math.max(0,iTarY-aveBlock);
-        final int maxX = Math.min(sourceProduct.getSceneRasterWidth()-1,iTarX+aveBlock);
-        final int maxY = Math.min(sourceProduct.getSceneRasterHeight()-1,iTarY+aveBlock);
+        final int minX = Math.max(0,iSrcX-aveBlock);
+        final int minY = Math.max(0,iSrcY-aveBlock);
+        final int maxX = Math.min(sourceProduct.getSceneRasterWidth()-1,iSrcX+aveBlock);
+        final int maxY = Math.min(sourceProduct.getSceneRasterHeight()-1,iSrcY+aveBlock);
 
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
                 final PixelPos pixelPos = new PixelPos(ix, iy);
-                final GeoPos geoPos = geocoding.getGeoPos(pixelPos, null);
+                final GeoPos geoPos = sourceGeocoding.getGeoPos(pixelPos, null);
                 boolean valid = (Double.compare(geoPos.getLat(), NO_DATA_VALUE) != 0) &&
                                 (Double.compare(geoPos.getLon(), NO_DATA_VALUE) != 0);
                 if (valid) {

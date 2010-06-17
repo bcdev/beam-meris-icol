@@ -81,9 +81,11 @@ public class IcolDialog extends SingleTargetProductDialog {
         //    - MERIS L1b
         //    - Landsat TM5 GeoTIFF  (L1T)
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
-        if (!EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() &&
-                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX) &&
-                        productName.startsWith(TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX) && productNumBands == 7) &&
+        if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
+                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+                !(productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) &&
+//                        productName.startsWith(TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX) &&
+//                        productNumBands == 7) &&
                 !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
@@ -108,9 +110,9 @@ public class IcolDialog extends SingleTargetProductDialog {
         final Product sourceProduct = model.getSourceProduct();
         String productType = sourceProduct.getProductType();
         final String productName = sourceProduct.getName();
-        if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX) &&
-                productName.startsWith((TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX)) ||
-                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX)))) {
+        if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) ||
+            (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
+                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             outputProduct = createLandsat5Product();
         } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();

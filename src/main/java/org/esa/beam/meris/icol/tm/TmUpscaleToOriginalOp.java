@@ -15,19 +15,18 @@ import javax.media.jai.operator.ScaleDescriptor;
 import java.awt.image.RenderedImage;
 
 /**
- * CURRENTLY NOT USED - REMOVE LATER!
- *
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class TmUpscaleOp extends TmBasisOp {
+public class TmUpscaleToOriginalOp extends TmBasisOp {
 
-    @SourceProduct(alias = "refl")
-    private Product sourceProduct;
+    // todo: provide the original source product
+//    @SourceProduct(alias = "original")
+//    private Product originalProduct;
+    @SourceProduct(alias = "aeTotal")
+    private Product aeTotalProduct;
     @TargetProduct
     private Product targetProduct;
-    @Parameter
-    private int landsatTargetResolution;
     @Parameter
     private int tmOrigProductWidth;
     @Parameter
@@ -35,13 +34,12 @@ public class TmUpscaleOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-//        float scalingFactor = (float) landsatTargetResolution / TmConstants.LANDSAT5_FR_ORIG;
-        float xScale = (float) tmOrigProductWidth / sourceProduct.getSceneRasterWidth();
-        float yScale = (float) tmOrigProductHeight / sourceProduct.getSceneRasterHeight();
-        targetProduct = createUpscaledProduct(sourceProduct, "upscale_" + sourceProduct.getName(), "UPSCALE", xScale, yScale);
+        float xScale = (float) tmOrigProductWidth / aeTotalProduct.getSceneRasterWidth();
+        float yScale = (float) tmOrigProductHeight / aeTotalProduct.getSceneRasterHeight();
+        targetProduct = createUpscaledProduct(aeTotalProduct, "upscale_" + aeTotalProduct.getName(), "UPSCALE", xScale, yScale);
 
-        for (Band band:sourceProduct.getBands()) {
-            Band targetBand = null;
+        for (Band band:aeTotalProduct.getBands()) {
+            Band targetBand;
             if (band.isFlagBand()) {
                 targetBand = targetProduct.addBand(band.getFlagCoding().getName(), band.getDataType());
             } else {
@@ -62,16 +60,14 @@ public class TmUpscaleOp extends TmBasisOp {
                                           null);
             System.out.printf("Upscaled, size: %d x %d\n", upscaledImage.getWidth(), upscaledImage.getHeight());
 
+            // todo: add (subtract) correction term in original resolution. write result to final target product.
+//            SubtractDescriptor.create(...)
+
             targetBand.setSourceImage(upscaledImage);
         }
-
-//        if (sourceProduct.getPreferredTileSize() != null) {
-//            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-//        }
     }
 
     private Product createUpscaledProduct(Product sourceProduct, String name, String type, float xScale, float yScale) {
-//        final int sceneWidth = (int) (xScale * sourceProduct.getSceneRasterWidth());
         final int sceneWidth = Math.round(xScale * sourceProduct.getSceneRasterWidth());
         final int sceneHeight = Math.round(yScale * sourceProduct.getSceneRasterHeight());
 
@@ -86,7 +82,7 @@ public class TmUpscaleOp extends TmBasisOp {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(TmUpscaleOp.class);
+            super(TmUpscaleToOriginalOp.class);
         }
     }
 }

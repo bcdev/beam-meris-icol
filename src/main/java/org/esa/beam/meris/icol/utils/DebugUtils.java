@@ -124,6 +124,16 @@ public class DebugUtils {
         }
     }
 
+    public static void addAeTotalProductDebugBands(Product targetProduct, Product aeTotalProduct) {
+        // (v) rho_r_bracket from AE Rayleigh correction
+        for (Band band : aeTotalProduct.getBands()) {
+            if (band.getName().startsWith("rho_ae_total")) {
+                targetProduct.addBand(band);
+            }
+        }
+    }
+
+
     public static void addRad2ReflDebugBands(Product targetProduct, Product rad2ReflProduct) {
         for (Band band:rad2ReflProduct.getBands()) {
             if (band.getName().startsWith(Rad2ReflOp.RHO_TOA_BAND_PREFIX)) {

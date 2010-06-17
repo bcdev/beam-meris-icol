@@ -166,7 +166,7 @@ public class TmRadConversionOp extends Operator {
             }
             Tile szaTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME), rectangle, pm);
 
-            Tile[] reflectanceTile = OperatorUtils.getTargetTiles(targetTiles, radianceBands);
+            Tile[] reflectanceTile = OperatorUtils.getTargetTiles(targetTiles, reflectanceBands);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
