@@ -10,6 +10,7 @@ org.esa.beam.meris.icol.ReverseDemoProductOp$Spi
 org.esa.beam.meris.icol.meris.MerisReflectanceCorrectionOp$Spi
 org.esa.beam.meris.icol.meris.MerisRadianceCorrectionOp$Spi
 org.esa.beam.meris.icol.meris.MerisOp$Spi
+org.esa.beam.meris.icol.meris.MerisUserCloudOp$Spi
 org.esa.beam.meris.icol.tm.TmOp$Spi
 org.esa.beam.meris.icol.tm.TmGeometryOp$Spi
 org.esa.beam.meris.icol.tm.TmRadConversionOp$Spi
