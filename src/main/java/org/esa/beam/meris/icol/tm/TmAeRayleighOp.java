@@ -41,6 +41,7 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 public class TmAeRayleighOp extends Operator {
+
     private static final int NUM_BANDS = TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS;
     private static final double HR = 8000; // Rayleigh scale height
 
@@ -134,8 +135,8 @@ public class TmAeRayleighOp extends Operator {
         String productType = l1bProduct.getProductType();
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
-                                                       TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
-                                                       new int[]{5});
+                                                       numSpectralBands,
+                                                       bandsToSkip);
         } else {
             rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
@@ -152,20 +153,21 @@ public class TmAeRayleighOp extends Operator {
     }
 
     private Band[] addBandGroup(String prefix, double noDataValue) {
-        return OperatorUtils.addBandGroup(l1bProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS, bandsToSkip,
+        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip,
                 targetProduct, prefix, noDataValue, false);
     }
 
     private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         final Tile[] bandData = new Tile[NUM_BANDS];
         int j = 0;
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-            if (!IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                final String prefixTmp = bandPrefix + "_" + (i + 1);
-                final Band inBand = inProduct.getBand(prefixTmp);
-                bandData[i] = getSourceTile(inBand, rectangle, pm);
-                j++;
+        for (int i = 0; i < numSpectralBands; i++) {
+            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+                continue;
             }
+            String bandIdentifier = bandPrefix + "_" + (i + 1);
+            Band inBand = inProduct.getBand(bandIdentifier);
+            bandData[i] = getSourceTile(inBand, rectangle, pm);
+            j++;
         }
         return bandData;
     }

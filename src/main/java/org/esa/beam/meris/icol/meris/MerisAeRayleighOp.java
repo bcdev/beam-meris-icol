@@ -69,11 +69,11 @@ import java.util.Map;
         description = "Contribution of rayleigh to the adjacency effect.")
 public class MerisAeRayleighOp extends Operator {
 
-    private FresnelReflectionCoefficient fresnelCoefficient;
     private static final int NUM_BANDS = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS - 2;
     private static final double NO_DATA_VALUE = -1.0;
-
     private static final double HR = 8000; // Rayleigh scale height
+
+    private FresnelReflectionCoefficient fresnelCoefficient;
     private CoeffW coeffW;
     RhoBracketAlgo rhoBracketAlgo;
 
@@ -118,16 +118,18 @@ public class MerisAeRayleighOp extends Operator {
     private boolean exportSeparateDebugBands = false;
 
 
+    private int numSpectralBands;
     private int[] bandsToSkip;
 
     @Override
     public void initialize() throws OperatorException {
+        numSpectralBands = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS;
+        bandsToSkip = new int[]{10, 14};
         try {
             loadFresnelReflectionCoefficient();
         } catch (IOException e) {
             throw new OperatorException(e);
         }
-        bandsToSkip = new int[]{10, 14};
         createTargetProduct();
 
         BandMathsOp bandArithmeticOp =
@@ -155,7 +157,7 @@ public class MerisAeRayleighOp extends Operator {
         String productType = l1bProduct.getProductType();
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
-                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS,
+                                                       numSpectralBands,
                                                        bandsToSkip);
         } else {
             rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
@@ -173,19 +175,20 @@ public class MerisAeRayleighOp extends Operator {
     }
 
     private Band[] addBandGroup(String prefix) {
-        return OperatorUtils.addBandGroup(l1bProduct, EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip,
                 targetProduct, prefix, NO_DATA_VALUE, true);
     }
 
     private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         final Tile[] bandData = new Tile[NUM_BANDS];
         int j = 0;
-        for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
+        for (int i = 0; i < numSpectralBands; i++) {
             if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
                 continue;
             }
             String bandIdentifier = bandPrefix + "_" + (i + 1);
-            bandData[j] = getSourceTile(inProduct.getBand(bandIdentifier), rectangle, pm);
+            Band inBand = inProduct.getBand(bandIdentifier);
+            bandData[j] = getSourceTile(inBand, rectangle, pm);
             j++;
         }
         return bandData;
