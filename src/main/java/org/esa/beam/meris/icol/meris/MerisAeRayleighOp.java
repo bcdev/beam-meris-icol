@@ -21,6 +21,7 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -28,7 +29,6 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
@@ -67,7 +67,7 @@ import java.util.Map;
         authors = "Marco Zuehlke",
         copyright = "(c) 2007 by Brockmann Consult",
         description = "Contribution of rayleigh to the adjacency effect.")
-public class MerisAeRayleighOp extends MerisBasisOp {
+public class MerisAeRayleighOp extends Operator {
 
     private FresnelReflectionCoefficient fresnelCoefficient;
     private static final int NUM_BANDS = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS - 2;
@@ -116,14 +116,14 @@ public class MerisAeRayleighOp extends MerisBasisOp {
     private boolean reshapedConvolution;
     @Parameter
     private boolean exportSeparateDebugBands = false;
-    private long convolutionTime = 0L;
-    private int convolutionCount = 0;
+
+
     private int[] bandsToSkip;
 
     @Override
     public void initialize() throws OperatorException {
         try {
-            loadAuxData();
+            loadFresnelReflectionCoefficient();
         } catch (IOException e) {
             throw new OperatorException(e);
         }
@@ -135,7 +135,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
     }
 
-    private void loadAuxData() throws IOException {
+    private void loadFresnelReflectionCoefficient() throws IOException {
         String auxdataSrcPath = "auxdata/icol";
         final String auxdataDestPath = ".beam/beam-meris-icol/" + auxdataSrcPath;
         File auxdataTargetDir = new File(SystemUtils.getUserHomeDir(), auxdataDestPath);
@@ -161,7 +161,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
             rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
 
-        targetProduct = createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(), "MER_AE_RAY");
+        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(), "MER_AE_RAY");
         aeRayBands = addBandGroup("rho_aeRay");
         rhoAeRcBands = addBandGroup("rho_ray_aerc");
         rhoAgBracketBands = addBandGroup("rho_ag_bracket");
@@ -169,10 +169,6 @@ public class MerisAeRayleighOp extends MerisBasisOp {
         if (exportSeparateDebugBands) {
             rayleighdebugBands = addBandGroup("rho_aeRay_rayleigh");
             fresnelDebugBands = addBandGroup("rho_aeRay_fresnel");
-        }
-
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
         }
     }
 
@@ -251,14 +247,10 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                     }
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                     if (aep.getSampleInt(x, y) == 1 && !isCloud && rhoAg[0].getSampleFloat(x, y) != -1) {
-                        long t1 = System.currentTimeMillis();
                         double[] means = new double [numBands];
                         if (!openclConvolution) {
                             means = convolver.convolvePixel(x, y, 1);
                         }
-                        long t2 = System.currentTimeMillis();
-                        convolutionCount++;
-                        this.convolutionTime += (t2-t1);
 
                         final double muV = Math.cos(vza.getSampleFloat(x, y) * MathUtils.DTOR);
                         for (int b = 0; b < numBands; b++) {
@@ -273,11 +265,11 @@ public class MerisAeRayleighOp extends MerisBasisOp {
                             double aeRayRay = 0.0;
 
                             // over water, compute the rayleigh contribution to the AE
-                            final float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
-                            final float transRupValue = transRup[b].getSampleFloat(x, y);
-                            final float tauRValue = tauR[b].getSampleFloat(x, y);
-                            final float transRdownValue = transRdown[b].getSampleFloat(x, y);
-                            final float sphAlbValue = sphAlbR[b].getSampleFloat(x, y);
+                            float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
+                            float transRupValue = transRup[b].getSampleFloat(x, y);
+                            float tauRValue = tauR[b].getSampleFloat(x, y);
+                            float transRdownValue = transRdown[b].getSampleFloat(x, y);
+                            float sphAlbValue = sphAlbR[b].getSampleFloat(x, y);
                             aeRayRay = (transRupValue - Math
                                 .exp(-tauRValue / muV))
                                 * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
@@ -310,7 +302,7 @@ public class MerisAeRayleighOp extends MerisBasisOp {
 
                             aeRayTiles[b].setSample(x, y, aeRay);
                             //correct the top of aerosol reflectance for the AE_RAY effect
-                            rhoAeRcTiles[b].setSample(x, y, rhoAg[b].getSampleFloat(x, y) - aeRay);
+                                rhoAeRcTiles[b].setSample(x, y, rhoAgValue - aeRay);
                             if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
                                 rhoAgBracket[b].setSample(x, y, tmpRhoRayBracket);
                             }

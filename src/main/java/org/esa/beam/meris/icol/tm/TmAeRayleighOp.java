@@ -5,6 +5,7 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -39,7 +40,7 @@ import java.util.Map;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class TmAeRayleighOp extends TmBasisOp {
+public class TmAeRayleighOp extends Operator {
     private static final int NUM_BANDS = TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS;
     private static final double HR = 8000; // Rayleigh scale height
 
@@ -76,15 +77,13 @@ public class TmAeRayleighOp extends TmBasisOp {
 
     @Parameter
     private String landExpression;
-    @Parameter(defaultValue="false")
+    @Parameter(defaultValue="true")
     private boolean reshapedConvolution;
     @Parameter
     private boolean exportSeparateDebugBands = false;
     @Parameter
     private String instrument;
     
-    private long convolutionTime = 0L;
-    private int convolutionCount = 0;
 
     private int numSpectralBands;
     private int[] bandsToSkip;
@@ -141,7 +140,7 @@ public class TmAeRayleighOp extends TmBasisOp {
             rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
 
-        targetProduct = createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(), "MER_AE_RAY");
+        targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(), "MER_AE_RAY");
         aeRayBands = addBandGroup("rho_aeRay", 0);
         rhoAeRcBands = addBandGroup("rho_ray_aerc", -1);
         rhoAgBracketBands = addBandGroup("rho_ag_bracket", -1);
@@ -149,10 +148,6 @@ public class TmAeRayleighOp extends TmBasisOp {
         if (exportSeparateDebugBands) {
             rayleighdebugBands = addBandGroup("rho_aeRay_rayleigh", -1);
             fresnelDebugBands = addBandGroup("rho_aeRay_fresnel", -1);
-        }
-
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
         }
     }
 
@@ -185,6 +180,7 @@ public class TmAeRayleighOp extends TmBasisOp {
             Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
+            Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
             Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
             Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
@@ -225,13 +221,9 @@ public class TmAeRayleighOp extends TmBasisOp {
                         }
                     }
                     if (aep.getSampleInt(x, y) == 1 && rhoAg[0].getSampleFloat(x, y) != -1) {
-                        long t1 = System.currentTimeMillis();
                         double[] means = convolver.convolvePixel(x, y, 1);
-                        long t2 = System.currentTimeMillis();
-                        convolutionCount++;
-                        this.convolutionTime += (t2-t1);
 
-                        final double muS = Math.cos(sza.getSampleFloat(x, y) * MathUtils.DTOR);
+                        final double muV = Math.cos(vza.getSampleFloat(x, y) * MathUtils.DTOR);
                         for (int b = 0; b < numBands; b++) {
                             if (!IcolUtils.isIndexToSkip(b, bandsToSkip)) {
                                 final double tmpRhoRayBracket = means[b];
@@ -240,10 +232,15 @@ public class TmAeRayleighOp extends TmBasisOp {
                                 double aeRayRay = 0.0;
 
                                 // over water, compute the rayleigh contribution to the AE
-                                aeRayRay = (transRup[b].getSampleFloat(x, y) - Math
-                                        .exp(-tauR[b].getSampleFloat(x, y) / muS))
-                                        * (tmpRhoRayBracket - rhoAg[b].getSampleFloat(x, y)) * (transRdown[b].getSampleFloat(x, y) /
-                                        (1d - tmpRhoRayBracket * sphAlbR[b].getSampleFloat(x, y)));
+                                float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
+                                float transRupValue = transRup[b].getSampleFloat(x, y);
+                                float tauRValue = tauR[b].getSampleFloat(x, y);
+                                float transRdownValue = transRdown[b].getSampleFloat(x, y);
+                                float sphAlbValue = sphAlbR[b].getSampleFloat(x, y);
+                                aeRayRay = (transRupValue - Math
+                                        .exp(-tauRValue / muV))
+                                        * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
+                                        (1d - tmpRhoRayBracket * sphAlbValue));
 
                                 //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
                                 double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HR);
@@ -272,7 +269,7 @@ public class TmAeRayleighOp extends TmBasisOp {
 
                                 aeRayTiles[b].setSample(x, y, aeRay);
                                 //correct the top of aerosol reflectance for the AE_RAY effect
-                                rhoAeRcTiles[b].setSample(x, y, rhoAg[b].getSampleFloat(x, y) - aeRay);
+                                rhoAeRcTiles[b].setSample(x, y, rhoAgValue - aeRay);
                                 if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
                                     rhoAgBracket[b].setSample(x, y, tmpRhoRayBracket);
                                 }
@@ -290,8 +287,6 @@ public class TmAeRayleighOp extends TmBasisOp {
                     }
                 }
                 pm.worked(1);
-//                System.out.println("Accumulated convolve time (" + convolutionCount + "*'convolvePixel'): " +
-//                        this.convolutionTime);
             }
 
         } catch (Exception e) {
@@ -300,7 +295,6 @@ public class TmAeRayleighOp extends TmBasisOp {
             pm.done();
         }
     }
-
 
     public static class Spi extends OperatorSpi {
         public Spi() {
