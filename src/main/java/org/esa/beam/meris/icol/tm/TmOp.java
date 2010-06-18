@@ -379,6 +379,7 @@ public class TmOp extends TmBasisOp {
         aeTotalInput.put("aeRay", aeRayProduct);
         aeTotalInput.put("aeAer", aeAerProduct);
         Map<String, Object> aeTotalParams = new HashMap<String, Object>(9);
+        aeTotalParams.put("productType", productType);
         Product aeTotalProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeMergeOp.class), aeTotalParams, aeTotalInput);
 
         // Reverse radiance:
@@ -407,7 +408,7 @@ public class TmOp extends TmBasisOp {
             reflectanceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
             reflectanceCorrectionInput.put("gascor", gasProduct);
             reflectanceCorrectionInput.put("ae_ray", aeRayProduct);
-            reflectanceCorrectionInput.put("ae_aerosol", aeTotalProduct);
+            reflectanceCorrectionInput.put("ae_aerosol", aeAerProduct);
             Map<String, Object> reflectanceCorrectionParams = new HashMap<String, Object>(1);
             reflectanceCorrectionParams.put("exportRhoToa", exportRhoToa);
             reflectanceCorrectionParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
@@ -432,6 +433,7 @@ public class TmOp extends TmBasisOp {
             DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
             DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_1");
             DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_2");
+            DebugUtils.addSingleDebugBand(correctionProduct, cloudDistanceProduct, CloudDistanceOp.CLOUD_DISTANCE);
             DebugUtils.addAeRayleighProductDebugBands(correctionProduct, aeRayProduct);
             DebugUtils.addAeAerosolProductDebugBands(correctionProduct, aeAerProduct);
             DebugUtils.addAeTotalProductDebugBands(correctionProduct, aeTotalProduct);
@@ -441,12 +443,9 @@ public class TmOp extends TmBasisOp {
         if (upscaleToTMFR) {
             // AE Rayleigh/Aerosol upscale:
             Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
+            aeUpscaleInput.put("l1b", sourceProduct);
             aeUpscaleInput.put("aeTotal", aeTotalProduct);
             Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
-            int tmOrigProductWidth = 3026;  // todo: take from orig TM product, also write to geometry product metadata
-            int tmOrigProductHeight = 2531; // todo: take from orig TM product, also write to geometry product metadata
-            aeUpscaleParams.put("tmOrigProductWidth", tmOrigProductWidth);
-            aeUpscaleParams.put("tmOrigProductHeight", tmOrigProductHeight);
             Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
 
 //            Map<String, Product> upscaleInput = new HashMap<String, Product>(5);

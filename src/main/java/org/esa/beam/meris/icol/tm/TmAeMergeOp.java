@@ -9,6 +9,7 @@ import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
+import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
@@ -46,11 +47,23 @@ public class TmAeMergeOp extends TmBasisOp {
     @TargetProduct
     private Product targetProduct;
 
+    @Parameter
+    private int productType;
+
+    private int daysSince2000;
+    private double seasonalFactor;
+
+    public static final String AE_TOTAL = "ae_total";
+
     @Override
     public void initialize() throws OperatorException {
 
+        daysSince2000 = LandsatUtils.getDaysSince2000(sourceProduct.getStartTime().getElemString());
+        seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,
+                                                      TmConstants.SUN_EARTH_DISTANCE_SQUARE);
+
         targetProduct = createCompatibleProduct(sourceProduct, sourceProduct.getName() + "_AETOTAL", sourceProduct.getProductType());
-        Band[] aeTotalBands = addBandGroup("rho_ae_total", 0);
+        Band[] aeTotalBands = addBandGroup(AE_TOTAL, Float.NaN);
     }
 
     private Band[] addBandGroup(String prefix, double noDataValue) {
@@ -63,9 +76,11 @@ public class TmAeMergeOp extends TmBasisOp {
         Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height);
         try {
-            String bandName = band.getName();
+            final String bandName = band.getName();
             final int bandNumber = band.getSpectralBandIndex() + 1;
-            if (bandName.startsWith("rho_ae_total") &&
+            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
+
+            if (bandName.startsWith(TmAeMergeOp.AE_TOTAL) &&
                     !IcolUtils.isIndexToSkip(bandNumber - 1,
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
                 Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
@@ -75,7 +90,9 @@ public class TmAeMergeOp extends TmBasisOp {
 
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                        double corrected = 0.0001;
+                        double corrected = 0;
+                        final double sza = szaTile.getSampleFloat(x, y);
+                        final double cosSza = Math.cos(sza * MathUtils.DTOR);
                         if (aepRayleigh.getSampleInt(x, y) == 1) {
                             final double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                             corrected = aeRayleighValue;
@@ -84,7 +101,10 @@ public class TmAeMergeOp extends TmBasisOp {
                                 corrected += aeAerosolValue;
                             }
                         }
-                        // todo: correction term must be in radiance units for upscaling to final product
+                        // todo: if productType = 0, correction term must be in radiance units for upscaling to final product
+                        if (productType == 0) {
+                            corrected = LandsatUtils.convertReflToRad(corrected, cosSza, bandNumber-1, seasonalFactor);
+                        }
                         targetTile.setSample(x, y, corrected);
                     }
                     pm.worked(1);

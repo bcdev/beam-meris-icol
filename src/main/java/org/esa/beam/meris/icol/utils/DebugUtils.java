@@ -8,6 +8,7 @@ import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
+import org.esa.beam.meris.icol.tm.TmAeMergeOp;
 
 /**
  * @author Olaf Danne
@@ -127,7 +128,7 @@ public class DebugUtils {
     public static void addAeTotalProductDebugBands(Product targetProduct, Product aeTotalProduct) {
         // (v) rho_r_bracket from AE Rayleigh correction
         for (Band band : aeTotalProduct.getBands()) {
-            if (band.getName().startsWith("rho_ae_total")) {
+            if (band.getName().startsWith(TmAeMergeOp.AE_TOTAL)) {
                 targetProduct.addBand(band);
             }
         }

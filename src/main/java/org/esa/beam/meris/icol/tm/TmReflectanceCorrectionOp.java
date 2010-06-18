@@ -68,17 +68,17 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
     private Product targetProduct;
 
     @Parameter(defaultValue = "true")
-    private boolean exportRhoToa = true;
+    private boolean exportRhoToa;
     @Parameter(defaultValue = "true")
-    private boolean exportRhoToaRayleigh = true;
+    private boolean exportRhoToaRayleigh;
     @Parameter(defaultValue = "true")
-    private boolean exportRhoToaAerosol = true;
+    private boolean exportRhoToaAerosol;
     @Parameter(defaultValue = "true")
-    private boolean exportAeRayleigh = true;
+    private boolean exportAeRayleigh;
     @Parameter(defaultValue = "true")
-    private boolean exportAeAerosol = true;
+    private boolean exportAeAerosol;
     @Parameter(defaultValue = "true")
-    private boolean exportAlphaAot = true;
+    private boolean exportAlphaAot;
 
     private List<Band> rhoToaBands;
     private List<Band> rhoToaRayBands;
@@ -301,7 +301,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
         Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-        Tile rhoToaR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
+        Tile rhoToaR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber), rectangle, pm);
         Tile aeRayleigh = null;
 
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
@@ -332,7 +332,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
         Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
         Tile aepAerosol= getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
-        Tile rhoToaR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
+        Tile rhoToaR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber), rectangle, pm);
         Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);;
         Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);;
 
