@@ -17,11 +17,9 @@
 package org.esa.beam.meris.icol.meris;
 
 import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
@@ -66,12 +64,8 @@ public class MerisRadianceCorrectionOp extends Operator {
     private Product rhoToaProduct;
     @SourceProduct(alias="gascor")
     private Product gasCorProduct;
-    @SourceProduct(alias="ae_ray")
-    private Product aeRayProduct;
     @SourceProduct(alias="ae_aerosol")
     private Product aeAerosolProduct;
-    @SourceProduct(alias="aemaskRayleigh")
-    private Product aemaskRayleighProduct;
     @SourceProduct(alias="aemaskAerosol")
     private Product aemaskAerosolProduct;
 

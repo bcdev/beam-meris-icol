@@ -394,11 +394,8 @@ public class MerisOp extends Operator {
             Map<String, Product> reverseRadianceInput = new HashMap<String, Product>(7);
             reverseRadianceInput.put("l1b", sourceProduct);
             reverseRadianceInput.put("refl", finalRhoToaProduct);
-//            reverseRadianceInput.put("refl", rad2reflProduct);
             reverseRadianceInput.put("gascor", gasProduct);
-            reverseRadianceInput.put("ae_ray", aeRayProduct);
             reverseRadianceInput.put("ae_aerosol", aeAerProduct);
-            reverseRadianceInput.put("aemaskRayleigh", aemaskRayleighProduct);
             reverseRadianceInput.put("aemaskAerosol", aemaskAerosolProduct);
             Map<String, Object> reverseRadianceParams = new HashMap<String, Object>(1);
             Product reverseRadianceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), reverseRadianceParams, reverseRadianceInput);
