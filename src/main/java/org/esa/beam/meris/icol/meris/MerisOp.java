@@ -62,9 +62,15 @@ public class MerisOp extends Operator {
 
     @SourceProduct(description = "The source product.")
     Product sourceProduct;
+    @SourceProduct(optional = true, description = "The cloud product.")
+    Product cloudMaskProduct;
 
     @TargetProduct(description = "The target product.")
     Product targetProduct;
+
+    // Cloud
+    @Parameter(description = "An expression for the cloud mask.")
+    private String cloudMaskExpression;
 
     // CTP
     @Parameter(defaultValue = "false")
@@ -97,7 +103,6 @@ public class MerisOp extends Operator {
     private boolean exportAeAerosol = true;
     @Parameter(defaultValue="true")
     private boolean exportAlphaAot = true;
-
 
     // general
     @Parameter(defaultValue="0", valueSet= {"0","1"})
@@ -137,12 +142,21 @@ public class MerisOp extends Operator {
         cloudInput.put("l1b", sourceProduct);
         cloudInput.put("rhotoa", rad2reflProduct);
         cloudInput.put("ctp", ctpProduct);
-        Product cloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudClassificationOp.class), emptyParams, cloudInput);
+        Product cloudClassificationProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudClassificationOp.class), emptyParams, cloudInput);
+
+        if (cloudMaskProduct != null && cloudMaskExpression != null && !cloudMaskExpression.isEmpty()) {
+            Map<String, Object> userCloudParameters = new HashMap<String, Object>(2);
+            userCloudParameters.put("cloudMaskExpression", cloudMaskExpression);
+            Map<String, Product> userCloudInput = new HashMap<String, Product>(2);
+            userCloudInput.put("cloudClassification", cloudClassificationProduct);
+            userCloudInput.put("cloudMask", cloudMaskProduct);
+            cloudClassificationProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisUserCloudOp.class), userCloudParameters, userCloudInput);
+        }
 
         Map<String, Product> gasInput = new HashMap<String, Product>(3);
         gasInput.put("l1b", sourceProduct);
         gasInput.put("rhotoa", rad2reflProduct);
-        gasInput.put("cloud", cloudProduct);
+        gasInput.put("cloud", cloudClassificationProduct);
         Map<String, Object> gasParameters = new HashMap<String, Object>(2);
         gasParameters.put("correctWater", true);
         gasParameters.put("exportTg", true);
@@ -164,7 +178,7 @@ public class MerisOp extends Operator {
         rayleighInput.put("l1b", sourceProduct);
         rayleighInput.put("land", landProduct);
         rayleighInput.put("input", fresnelProduct);
-        rayleighInput.put("cloud", cloudProduct);
+        rayleighInput.put("cloud", cloudClassificationProduct);
         Map<String, Object> rayleighParameters = new HashMap<String, Object>(2);
         rayleighParameters.put("correctWater", true);
         rayleighParameters.put("exportRayCoeffs", true);
@@ -204,7 +218,7 @@ public class MerisOp extends Operator {
 
         Map<String, Product> cloudDistanceInput = new HashMap<String, Product>(2);
         cloudDistanceInput.put("source", sourceProduct);
-        cloudDistanceInput.put("cloud", cloudProduct);
+        cloudDistanceInput.put("cloud", cloudClassificationProduct);
         Map<String, Object> cloudDistanceParameters = new HashMap<String, Object>(1);
         Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudDistanceOp.class), cloudDistanceParameters, cloudDistanceInput);
 
@@ -241,7 +255,7 @@ public class MerisOp extends Operator {
         brrCloudInput.put("l1b", sourceProduct);
         brrCloudInput.put("brr", rayleighProduct);
         brrCloudInput.put("refl", rad2reflProduct);
-        brrCloudInput.put("cloud", cloudProduct);
+        brrCloudInput.put("cloud", cloudClassificationProduct);
         Product brrCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrCloudOp.class), emptyParams, brrCloudInput);
 
         // begin TEST JavaCL
@@ -271,7 +285,7 @@ public class MerisOp extends Operator {
 //        aeRayInput.put("ray1b", constProduct);  // test: use constant reflectance input
         aeRayInput.put("rhoNg", gasProduct);
         aeRayInput.put("zmax", zmaxProduct);
-        aeRayInput.put("cloud", cloudProduct);
+        aeRayInput.put("cloud", cloudClassificationProduct);
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(1);
         aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
@@ -324,7 +338,7 @@ public class MerisOp extends Operator {
             aeAerInput.put("rayaercconv", rayAercConvolveProduct);  // use brr pre-convolved with JavaCL
         }
 //      aeAerInput.put("ae_ray", constProductAer);  // test!!
-        aeAerInput.put("cloud", cloudProduct);
+        aeAerInput.put("cloud", cloudClassificationProduct);
         aeAerInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeAerosolParams = new HashMap<String, Object>(1);
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
@@ -348,7 +362,7 @@ public class MerisOp extends Operator {
         reverseRhoToaInput.put("l1b", sourceProduct);
         reverseRhoToaInput.put("rhotoa", rad2reflProduct);
         reverseRhoToaInput.put("land", landProduct);
-        reverseRhoToaInput.put("cloud", cloudProduct);
+        reverseRhoToaInput.put("cloud", cloudClassificationProduct);
         reverseRhoToaInput.put("aemaskRayleigh", aemaskRayleighProduct);
         reverseRhoToaInput.put("aemaskAerosol", aemaskAerosolProduct);
         reverseRhoToaInput.put("gascor", gasProduct);
@@ -398,7 +412,7 @@ public class MerisOp extends Operator {
                 // cloud classif flags
                 FlagCoding flagCodingCloud = CloudClassificationOp.createFlagCoding();
                 reverseRadianceProduct.getFlagCodingGroup().add(flagCodingCloud);
-                DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, cloudProduct, flagCodingCloud, CloudClassificationOp.CLOUD_FLAGS);
+                DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, cloudClassificationProduct, flagCodingCloud, CloudClassificationOp.CLOUD_FLAGS);
 
                  // land classif flags
                 FlagCoding flagCodingLand = LandClassificationOp.createFlagCoding();
