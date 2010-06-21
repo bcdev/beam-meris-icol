@@ -447,7 +447,8 @@ public class TmOp extends TmBasisOp {
             // AE Rayleigh/Aerosol upscale:
             Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
             aeUpscaleInput.put("l1b", sourceProduct);
-            aeUpscaleInput.put("aeTotal", aeTotalProduct);
+            aeUpscaleInput.put("geometry", geometryProduct);
+            aeUpscaleInput.put("corrected", correctionProduct);
             Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
             Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
 

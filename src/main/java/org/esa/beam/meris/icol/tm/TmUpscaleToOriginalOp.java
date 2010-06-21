@@ -1,18 +1,18 @@
 package org.esa.beam.meris.icol.tm;
 
+import com.bc.ceres.glevel.MultiLevelImage;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
-import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
-import org.esa.beam.util.ProductUtils;
 
 import javax.media.jai.Interpolation;
 import javax.media.jai.RenderedOp;
+import javax.media.jai.operator.AddDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.media.jai.operator.SubtractDescriptor;
 import java.awt.image.RenderedImage;
@@ -25,16 +25,18 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 
     @SourceProduct(alias = "l1b")
     private Product sourceProduct;
-    @SourceProduct(alias = "aeTotal")
-    private Product aeTotalProduct;
+    @SourceProduct(alias = "geometry")
+    private Product geometryProduct;
+    @SourceProduct(alias = "corrected")
+    private Product correctedProduct;
     @TargetProduct
     private Product targetProduct;
 
     @Override
     public void initialize() throws OperatorException {
-        float xScale = (float) sourceProduct.getSceneRasterWidth() / aeTotalProduct.getSceneRasterWidth();
-        float yScale = (float) sourceProduct.getSceneRasterHeight() / aeTotalProduct.getSceneRasterHeight();
-        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "upscale_" + aeTotalProduct.getName(), "UPSCALE");
+        float xScale = (float) sourceProduct.getSceneRasterWidth() / correctedProduct.getSceneRasterWidth();
+        float yScale = (float) sourceProduct.getSceneRasterHeight() / correctedProduct.getSceneRasterHeight();
+        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "upscale_" + correctedProduct.getName(), "UPSCALE");
 
         for (int i=0; i<sourceProduct.getNumBands(); i++) {
             Band sourceBand = sourceProduct.getBandAt(i);
@@ -51,13 +53,16 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
             }
             targetBand = targetProduct.addBand(srcBandName, dataType);
 
+            MultiLevelImage sourceImage = sourceBand.getSourceImage();
             if (radianceBandIndex != 6) {
-                Band aeTotalBand = aeTotalProduct.getBand(TmAeMergeOp.AE_TOTAL + "_" + radianceBandIndex);
+                Band correctedBand = correctedProduct.getBand(sourceBand.getName());
+                Band geometryBand = geometryProduct.getBand(sourceBand.getName());
 
-                RenderedImage sourceImage = sourceBand.getSourceImage();
-                RenderedImage aeTotalImage = aeTotalBand.getSourceImage();
+                RenderedImage geometryImage = geometryBand.getSourceImage();
+                RenderedImage correctedImage = correctedBand.getSourceImage();
+                RenderedOp diffImage = SubtractDescriptor.create(geometryImage, correctedImage, null);
 
-                RenderedOp upscaledAeTotalImage = ScaleDescriptor.create(aeTotalImage,
+                RenderedOp upscaledDiffImage = ScaleDescriptor.create(diffImage,
                                                                          xScale,
                                                                          yScale,
                                                                          0.0f, 0.0f,
@@ -65,11 +70,10 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                                                                                  Interpolation.INTERP_BILINEAR),
                                                                          null);
 
-                RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceImage, upscaledAeTotalImage, null);
+                RenderedOp finalAeCorrectedImage = AddDescriptor.create(sourceImage, upscaledDiffImage, null);
                 targetBand.setSourceImage(finalAeCorrectedImage);
-//                targetBand.setSourceImage(upscaledAeTotalImage);
             } else {
-                targetBand.setSourceImage(sourceBand.getSourceImage());
+                targetBand.setSourceImage(sourceImage);
             }
         }
     }
