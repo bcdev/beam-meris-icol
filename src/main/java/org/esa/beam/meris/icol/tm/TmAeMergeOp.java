@@ -4,7 +4,6 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
@@ -12,13 +11,11 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.icol.common.AeMaskOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Utils;
-import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
@@ -40,9 +37,9 @@ public class TmAeMergeOp extends TmBasisOp {
     @SourceProduct(alias="aeAer")
     private Product aeAerosolProduct;
     @SourceProduct(alias="aemaskRay")
-    private Product aemaskRayleighProduct;
+    private Product aeMaskRayleighProduct;
     @SourceProduct(alias="aemaskAer")
-    private Product aemaskAerosolProduct;
+    private Product aeMaskAerosolProduct;
 
     @TargetProduct
     private Product targetProduct;
@@ -85,18 +82,18 @@ public class TmAeMergeOp extends TmBasisOp {
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
                 Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
                 Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
-                Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-                Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile aeMaskRayleigh = getSourceTile(aeMaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
+                Tile aeMaskAerosol = getSourceTile(aeMaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
 
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         double corrected = 0;
                         final double sza = szaTile.getSampleFloat(x, y);
                         final double cosSza = Math.cos(sza * MathUtils.DTOR);
-                        if (aepRayleigh.getSampleInt(x, y) == 1) {
+                        if (aeMaskRayleigh.getSampleInt(x, y) == 1) {
                             final double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                             corrected = aeRayleighValue;
-                            if (aepAerosol.getSampleInt(x, y) == 1) {
+                            if (aeMaskAerosol.getSampleInt(x, y) == 1) {
                                 final double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
                                 corrected += aeAerosolValue;
                             }
