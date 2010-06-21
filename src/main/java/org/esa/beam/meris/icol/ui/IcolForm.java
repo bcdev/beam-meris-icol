@@ -1,19 +1,26 @@
 package org.esa.beam.meris.icol.ui;
 
 import com.bc.ceres.swing.TableLayout;
+import com.bc.ceres.swing.binding.Binding;
 import com.bc.ceres.swing.binding.BindingContext;
+import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
+import com.bc.ceres.swing.selection.SelectionChangeEvent;
+import com.bc.jexp.ParseException;
+import com.bc.jexp.Term;
 import org.esa.beam.dataio.envisat.EnvisatProductReader;
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.dataop.barithm.BandArithmetic;
 import org.esa.beam.framework.gpf.ui.SourceProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
+import org.esa.beam.framework.ui.ModalDialog;
+import org.esa.beam.framework.ui.product.ProductExpressionPane;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,6 +32,7 @@ import java.util.Map;
 class IcolForm extends JTabbedPane {
 
     private static final String N1 = "N1";
+
     private JCheckBox rhoToa;
     private JCheckBox rhoToaRayleigh;
     private JCheckBox rhoToaAerosol;
@@ -41,6 +49,7 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField aotValue;
     private TargetProductSelector targetProductSelector;
     private SourceProductSelector sourceProductSelector;
+    private SourceProductSelector cloudProductSelector;
     private ComboBoxModel comboBoxModelRhoToa;
     private ComboBoxModel comboBoxModelN1;
     private JRadioButton rhoToaProductTypeButton;
@@ -83,13 +92,18 @@ class IcolForm extends JTabbedPane {
     private JRadioButton landsatWinterButton;
     private JRadioButton landsatSummerButton;
 
+    private final AppContext appContext;
+    private final BindingContext bc;
+
     public IcolForm(AppContext appContext, IcolModel icolModel, TargetProductSelector targetProductSelector) {
+        this.appContext = appContext;
+        bc = new BindingContext(icolModel.getPropertyContainer());
         this.targetProductSelector = targetProductSelector;
         JComboBox targetFormatComboBox = targetProductSelector.getFormatNameComboBox();
 	    comboBoxModelRhoToa = targetFormatComboBox.getModel();
 	    comboBoxModelN1 = createN1ComboboxModel(targetFormatComboBox);
-	    sourceProductSelector = new SourceProductSelector
-                (appContext, "Input-Product (MERIS: L1b, Landsat 5 TM: L1G or 'Geometry'):");
+	    sourceProductSelector = new SourceProductSelector(appContext, "Input-Product (MERIS: L1b, Landsat 5 TM: L1G or 'Geometry'):");
+	    cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();
         sourceComboBox.addActionListener(new ActionListener() {
@@ -102,7 +116,7 @@ class IcolForm extends JTabbedPane {
                 updateProductFormatChange();
             }
         });
-        bindComponents(icolModel);
+        bindComponents();
         updateUIStates();
     }
 
@@ -118,15 +132,17 @@ class IcolForm extends JTabbedPane {
 	
 	public void prepareShow() {
 	    sourceProductSelector.initProducts();
+        cloudProductSelector.initProducts();
         updateProductTypeSettings();
     }
 	
 	public void prepareHide() {
 	    sourceProductSelector.releaseProducts();
+        cloudProductSelector.releaseProducts();
     }
 	
-    private void bindComponents(IcolModel icolModel) {
-        final BindingContext bc = new BindingContext(icolModel.getPropertyContainer());
+    private void bindComponents() {
+
         bc.bind("exportRhoToa", rhoToa);
         bc.bind("exportRhoToaRayleigh", rhoToaRayleigh);
         bc.bind("exportRhoToaAerosol", rhoToaAerosol);
@@ -152,6 +168,7 @@ class IcolForm extends JTabbedPane {
 
         bc.bind("productType", productTypeGroup);
         bc.bind("sourceProduct", sourceProductSelector.getProductNameComboBox());
+        bc.bind("cloudMaskProduct", cloudProductSelector.getProductNameComboBox());
 
         bc.bind("landsatTargetResolution", landsatResolutionGroup);
         bc.bind("landsatStartTime", landsatStartTimeValue);
@@ -200,7 +217,7 @@ class IcolForm extends JTabbedPane {
         merisParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         merisParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         merisParam.setTableWeightX(1);
-        merisParam.setCellWeightY(0, 0, 1);
+        merisParam.setCellWeightY(2, 0, 1);
         merisParam.setTablePadding(2, 2);
 
         TableLayout landsatParam = new TableLayout(1);
@@ -232,6 +249,9 @@ class IcolForm extends JTabbedPane {
 
         JPanel ctpPanel = createCTPPanel();
         merisParamTab.add(ctpPanel);
+
+        JPanel cloudPanel = createMerisCloudPanel();
+        merisParamTab.add(cloudPanel);
 
         JPanel aerosolPanel = createAerosolPanel();
         processingParamTab.add(aerosolPanel);
@@ -266,10 +286,7 @@ class IcolForm extends JTabbedPane {
         alphaAot = new JCheckBox("alpha + aot");
         
 		JPanel panel = new JPanel(layout);
-		panel.setBorder(BorderFactory.createTitledBorder(null,
-				"RhoToa Product", TitledBorder.DEFAULT_JUSTIFICATION,
-				TitledBorder.DEFAULT_POSITION, new Font("Tahoma", 0, 11),
-				new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("RhoToa Product"));
 
 		panel.add(new JLabel("Bands included in the RhoToa product:"));
         panel.add(rhoToa);
@@ -305,11 +322,7 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder(null, "Cloud Top Pressure",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("Cloud Top Pressure"));
 		ctpGroup = new ButtonGroup();
         icolCtp = new JRadioButton("Compute by algorithm");
         icolCtp.setSelected(true);
@@ -340,6 +353,57 @@ class IcolForm extends JTabbedPane {
 		return panel;
 	}
 
+    private JPanel createMerisCloudPanel() {
+        JPanel panel = cloudProductSelector.createDefaultPanel();
+        panel.setBorder(BorderFactory.createTitledBorder("Cloud Mask"));
+
+        final JTextField textField = new JTextField(30);
+        final Binding binding = bc.bind("cloudMaskExpression", textField);
+        final JPanel subPanel = new JPanel(new BorderLayout(2, 2));
+        subPanel.add(new JLabel("Mask expression:"), BorderLayout.NORTH);
+        subPanel.add(textField, BorderLayout.CENTER);
+        final JButton etcButton = new JButton("...");
+        etcButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                ProductExpressionPane expressionPane;
+                Product currentProduct = cloudProductSelector.getSelectedProduct();
+                expressionPane = ProductExpressionPane.createBooleanExpressionPane(new Product[]{currentProduct}, currentProduct, appContext.getPreferences());
+                expressionPane.setCode((String) binding.getPropertyValue());
+                if (expressionPane.showModalDialog(null, "Expression Editor") == ModalDialog.ID_OK) {
+                    binding.setPropertyValue(expressionPane.getCode());
+                }
+            }
+        });
+        cloudProductSelector.addSelectionChangeListener(new AbstractSelectionChangeListener(){
+
+            @Override
+            public void selectionChanged(SelectionChangeEvent event) {
+                  updateMerisCloudMaskExpressionEditor(textField, etcButton);
+            }
+        });
+        updateMerisCloudMaskExpressionEditor(textField, etcButton);
+        subPanel.add(etcButton, BorderLayout.EAST);
+        panel.add(subPanel);
+        return panel;
+    }
+
+    private void updateMerisCloudMaskExpressionEditor(JTextField textField, JComponent etcButton) {
+        Product selectedProduct = cloudProductSelector.getSelectedProduct();
+        boolean hasProduct = selectedProduct != null;
+        etcButton.setEnabled(hasProduct);
+        textField.setEnabled(hasProduct);
+        if (hasProduct) {
+            Term term = null;
+            try {
+                term = BandArithmetic.parseExpression(textField.getText(), new Product[]{selectedProduct}, 0);
+            } catch (ParseException ignore) {
+            }
+            if (term == null) {
+                textField.setText("");
+            }
+        }
+    }
+
     private void updateUIStates() {
         updateCtpUIstate();
     }
@@ -363,11 +427,7 @@ class IcolForm extends JTabbedPane {
         layout.setCellColspan(2, 0, 3);
         JPanel panel = new JPanel(layout);
 
-        panel.setBorder(BorderFactory.createTitledBorder(null, "Aerosol Type Determination",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+        panel.setBorder(BorderFactory.createTitledBorder("Aerosol Type Determination"));
 
         angstroemValue = new JFormattedTextField();
         aotValue = new JFormattedTextField();
@@ -395,47 +455,32 @@ class IcolForm extends JTabbedPane {
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 1);
         layout.setColumnWeightX(1, 0.1);
-//        layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
-//        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
-//        layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
-//        layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
-//        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-//        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
         layout.setCellColspan(0, 0, 2);
         layout.setCellColspan(1, 0, 2);
         layout.setCellColspan(4, 0, 2);
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder(null, "Processing",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
         openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
         openclConvolutionCheckBox.setSelected(false);
 		panel.add(openclConvolutionCheckBox);
-//        panel.add(new JLabel());
 
         nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
         nestedConvolutionCheckBox.setSelected(true);
 		panel.add(nestedConvolutionCheckBox);
-//        panel.add(new JLabel());
 
         aeAreaComboBox = new JComboBox();
         aeAreaComboBox.setRenderer(new AeAreaRenderer());
         panel.add(new JLabel("Where to apply the AE algorithm:"));
         panel.add(new JLabel());
-//        panel.add(new JLabel());
         panel.add(aeAreaComboBox);
         panel.add(new JLabel());
-//        panel.add(new JLabel());
 
         icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
         icolAerosolCase2CheckBox.setSelected(false);
 		panel.add(icolAerosolCase2CheckBox);
-//        panel.add(new JLabel());
 
 		return panel;
 	}
@@ -463,11 +508,7 @@ class IcolForm extends JTabbedPane {
 
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder(null, "Processing",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
         panel.add(new JLabel("Target product resolution:"));
         panel.add(new JLabel(""));
@@ -563,11 +604,7 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(7, 0, new Insets(0, 48, 0, 0));
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder(null, "Cloud Flag Settings",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("Cloud Flag Settings"));
 
         landsatCloudFlagApplyBrightnessFilterCheckBox =
                 new JCheckBox("Brightness flag (set if TM3 > BT)");
@@ -639,11 +676,7 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(6, 0, new Insets(0, 72, 0, 0));
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder(null, "Land Flag Settings",
-                                                                TitledBorder.DEFAULT_JUSTIFICATION,
-                                                                TitledBorder.DEFAULT_POSITION,
-                                                                new Font("Tahoma", 0, 11),
-                                                                new Color(0, 70, 213)));
+		panel.setBorder(BorderFactory.createTitledBorder("Land Flag Settings"));
 
         landsatLandFlagApplyNdviFilterCheckBox =
                 new JCheckBox("NDVI flag (set if NDVI < NDVIT, with NDVI = (TM4 - TM3)/(TM4 + TM3))");
@@ -730,11 +763,7 @@ class IcolForm extends JTabbedPane {
         layout.setTableWeightX(1);
         
         JPanel panel = new JPanel(layout);
-        panel.setBorder(BorderFactory.createTitledBorder(null, "Product Type Selection",
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                new Font("Tahoma", 0, 11),
-                new Color(0, 70, 213)));
+        panel.setBorder(BorderFactory.createTitledBorder("Product Type Selection"));
 
         reflectanceProductTypeButton = new JRadioButton("Compute Radiance Product");
         reflectanceProductTypeButton.setSelected(true);

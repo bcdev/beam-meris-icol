@@ -32,6 +32,7 @@ import org.esa.beam.meris.icol.tm.TmOp;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -129,11 +130,16 @@ public class IcolDialog extends SingleTargetProductDialog {
     }
     
     private Product createMerisOp() throws Exception {
-        final Product sourceProduct = model.getSourceProduct();
-        Map<String, Object> parameters = model.getN1Parameters();
+        Map<String, Product> sourceProducts = new HashMap<String, Product>(2);
+        Map<String, Object> parameters = model.getMerisParameters();
+        sourceProducts.put("sourceProduct", model.getSourceProduct());
+        final Product cloudProduct = model.getCloudMaskProduct();
+        if (cloudProduct != null && parameters.get("cloudMaskExpression") != null) {
+            sourceProducts.put("cloudMaskProduct", cloudProduct);
+        }
         addN1PathParamters(parameters);
         Product targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisOp.class)
-              ,parameters, sourceProduct);
+              ,parameters, sourceProducts);
         return targetProduct;
     }
     

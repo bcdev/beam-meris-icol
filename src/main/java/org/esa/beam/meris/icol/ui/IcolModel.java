@@ -25,6 +25,10 @@ public class IcolModel {
     @Parameter(defaultValue = "true")
     private boolean exportAlphaAot = true;
 
+    // Cloud
+    @Parameter
+    private String cloudMaskExpression;
+    
     // CTP
     @Parameter(defaultValue = "false")
     private boolean useUserCtp = false;
@@ -107,6 +111,7 @@ public class IcolModel {
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
     private int productType = 0;
     private Product sourceProduct;
+    private Product cloudMaskProduct;
     private PropertyContainer propertyContainer;
 
 
@@ -117,6 +122,10 @@ public class IcolModel {
 
     public Product getSourceProduct() {
         return sourceProduct;
+    }
+
+    public Product getCloudMaskProduct() {
+        return cloudMaskProduct;
     }
 
     private int getLandsatTargetResolution() {
@@ -133,18 +142,10 @@ public class IcolModel {
         return propertyContainer;
     }
 
-    public Map<String, Object> getRhoToaParameters() {
+    public Map<String, Object> getMerisParameters() {
         HashMap<String, Object> params = new HashMap<String, Object>();
         configCtp(params);
-        configAeAerosolOp(params);
-        configReverseRhoToaOp(params);
-        configGeneral(params);
-        return params;
-    }
-
-    public Map<String, Object> getN1Parameters() {
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        configCtp(params);
+        params.put("cloudMaskExpression", cloudMaskExpression);
         configAeAerosolOp(params);
         configReverseRhoToaOp(params);
         configGeneral(params);
