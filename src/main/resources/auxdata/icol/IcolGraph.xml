@@ -109,7 +109,7 @@
 
     <node>
         <id>ae_ray</id>
-        <operator>org.esa.beam.meris.icol.meris.MerisAeRayleighOp$Spi</operator>
+        <operator>org.esa.beam.meris.icol.common.AeRayleighOp$Spi</operator>
         <sources>
             <l1b>l1b</l1b>
             <aemask>aemask</aemask>

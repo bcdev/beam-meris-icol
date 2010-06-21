@@ -1,7 +1,6 @@
 package org.esa.beam.meris.icol.common;
 
 import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.PixelPos;
@@ -16,8 +15,6 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
-import org.esa.beam.meris.icol.meris.MerisAeAerosolOp;
-import org.esa.beam.meris.icol.meris.MerisAeRayleighOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.math.MathUtils;
 

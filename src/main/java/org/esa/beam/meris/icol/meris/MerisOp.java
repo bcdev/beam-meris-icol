@@ -35,7 +35,9 @@ import org.esa.beam.meris.brr.RayleighCorrectionOp;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AeRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
@@ -295,7 +297,8 @@ public class MerisOp extends Operator {
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
         aeRayParams.put("openclConvolution", openclConvolution);
-        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeRayleighOp.class), aeRayParams, aeRayInput);
+        aeRayParams.put("instrument", Instrument.MERIS);
+        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeRayleighOp.class), aeRayParams, aeRayInput);
 
              // test: create constant reflectance input
 //            Map<String, Product> compareConvolutionInput = new HashMap<String, Product>(1);

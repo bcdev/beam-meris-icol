@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.esa.beam.meris.icol.meris;
+package org.esa.beam.meris.icol.common;
 
 import com.bc.ceres.core.NullProgressMonitor;
 import com.bc.ceres.core.ProgressMonitor;
@@ -35,11 +35,10 @@ import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.RhoBracketAlgo;
 import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
-import org.esa.beam.meris.icol.common.AeMaskOp;
-import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ResourceInstaller;
@@ -59,17 +58,15 @@ import java.util.Map;
  * Operator for Rayleigh part of AE correction.
  *
  * @author Marco Zuehlke, Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Meris.AERayleigh",
+@OperatorMetadata(alias = "AERayleigh",
         version = "1.0",
         internal = true,
-        authors = "Marco Zuehlke",
-        copyright = "(c) 2007 by Brockmann Consult",
+        authors = "Marco Zuehlke, Olaf Danne",
+        copyright = "(c) 2010 by Brockmann Consult",
         description = "Contribution of rayleigh to the adjacency effect.")
-public class MerisAeRayleighOp extends Operator {
+public class AeRayleighOp extends Operator {
 
-    private static final int NUM_BANDS = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS - 2;
     private static final double NO_DATA_VALUE = -1.0;
     private static final double HR = 8000; // Rayleigh scale height
 
@@ -109,6 +106,8 @@ public class MerisAeRayleighOp extends Operator {
     private Product targetProduct;
 
     @Parameter
+    private Instrument instrument;
+    @Parameter
     private String landExpression;
     @Parameter(defaultValue="true")
     private boolean openclConvolution = true;
@@ -118,13 +117,8 @@ public class MerisAeRayleighOp extends Operator {
     private boolean exportSeparateDebugBands = false;
 
 
-    private int numSpectralBands;
-    private int[] bandsToSkip;
-
     @Override
     public void initialize() throws OperatorException {
-        numSpectralBands = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS;
-        bandsToSkip = new int[]{10, 14};
         try {
             loadFresnelReflectionCoefficient();
         } catch (IOException e) {
@@ -157,8 +151,8 @@ public class MerisAeRayleighOp extends Operator {
         String productType = l1bProduct.getProductType();
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
-                                                       numSpectralBands,
-                                                       bandsToSkip);
+                                                       instrument.numSpectralBands,
+                                                       instrument.bandsToSkip);
         } else {
             rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
@@ -175,23 +169,8 @@ public class MerisAeRayleighOp extends Operator {
     }
 
     private Band[] addBandGroup(String prefix) {
-        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip,
-                targetProduct, prefix, NO_DATA_VALUE, true);
-    }
-
-    private Tile[] getSourceTiles(final Product inProduct, String bandPrefix, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
-        final Tile[] bandData = new Tile[NUM_BANDS];
-        int j = 0;
-        for (int i = 0; i < numSpectralBands; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
-            }
-            String bandIdentifier = bandPrefix + "_" + (i + 1);
-            Band inBand = inProduct.getBand(bandIdentifier);
-            bandData[j] = getSourceTile(inBand, rectangle, pm);
-            j++;
-        }
-        return bandData;
+        return OperatorUtils.addBandGroup(l1bProduct, instrument.numSpectralBands, instrument.bandsToSkip,
+                targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     @Override
@@ -210,16 +189,16 @@ public class MerisAeRayleighOp extends Operator {
             Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
 
-            Tile[] rhoNg = getSourceTiles(gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, targetRect, pm);
-            Tile[] transRup = getSourceTiles(ray1bProduct, "transRv", targetRect, pm); //up
-            Tile[] transRdown = getSourceTiles(ray1bProduct, "transRs", targetRect, pm); //down
-            Tile[] tauR = getSourceTiles(ray1bProduct, "tauR", targetRect, pm);
-            Tile[] sphAlbR = getSourceTiles(ray1bProduct, "sphAlbR", targetRect, pm);
+            Tile[] rhoNg = OperatorUtils.getSourceTiles(this, gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, instrument, targetRect, pm);
+            Tile[] transRup = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRv", instrument, targetRect, pm); //up
+            Tile[] transRdown = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRs", instrument, targetRect, pm); //down
+            Tile[] tauR = OperatorUtils.getSourceTiles(this, ray1bProduct, "tauR", instrument, targetRect, pm);
+            Tile[] sphAlbR = OperatorUtils.getSourceTiles(this, ray1bProduct, "sphAlbR", instrument, targetRect, pm);
 
-            Tile[] rhoAg = getSourceTiles(ray1bProduct, "brr", sourceRect, pm);
+            Tile[] rhoAg = OperatorUtils.getSourceTiles(this, ray1bProduct, "brr", instrument, sourceRect, pm);
             Tile[] rhoAgConv = null;
             if (openclConvolution && ray1bconvProduct != null) {
-                rhoAgConv = getSourceTiles(ray1bconvProduct, "brr_conv", sourceRect, pm);
+                rhoAgConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "brr_conv", instrument, sourceRect, pm);
             }
             final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoAg, targetRect, pm);
 
@@ -238,83 +217,88 @@ public class MerisAeRayleighOp extends Operator {
                 fresnelDebug = OperatorUtils.getTargetTiles(targetTiles, fresnelDebugBands);
             }
 
-//            final int numBands = rhoNg.length;
-            final int numBands = rhoNg.length-1;
+            final int numBands = rhoNg.length;
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
                 for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
                     for (int b = 0; b < numBands; b++) {
-                        if (exportSeparateDebugBands) {
-                            fresnelDebug[b].setSample(x, y, -1);
-                            rayleighDebug[b].setSample(x, y, -1);
+                        if (!IcolUtils.isIndexToSkip(b, instrument.bandsToSkip)) {
+                            if (exportSeparateDebugBands) {
+                                fresnelDebug[b].setSample(x, y, -1);
+                                rayleighDebug[b].setSample(x, y, -1);
+                            }
                         }
                     }
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                     if (aep.getSampleInt(x, y) == 1 && !isCloud && rhoAg[0].getSampleFloat(x, y) != -1) {
                         double[] means = new double [numBands];
-                        if (!openclConvolution) {
+                        if (rhoAgConv == null) {
                             means = convolver.convolvePixel(x, y, 1);
                         }
 
                         final double muV = Math.cos(vza.getSampleFloat(x, y) * MathUtils.DTOR);
                         for (int b = 0; b < numBands; b++) {
-                            double tmpRhoRayBracket = 0.0;
-                            if (openclConvolution && ray1bconvProduct != null) {
-                                tmpRhoRayBracket = rhoAgConv[b].getSampleFloat(x, y);
-                            } else {
-                                tmpRhoRayBracket = means[b];
-                            }
-
-                            // rayleigh contribution without AE (tmpRhoRayBracket)
-                            double aeRayRay = 0.0;
-
-                            // over water, compute the rayleigh contribution to the AE
-                            float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
-                            float transRupValue = transRup[b].getSampleFloat(x, y);
-                            float tauRValue = tauR[b].getSampleFloat(x, y);
-                            float transRdownValue = transRdown[b].getSampleFloat(x, y);
-                            float sphAlbValue = sphAlbR[b].getSampleFloat(x, y);
-                            aeRayRay = (transRupValue - Math
-                                .exp(-tauRValue / muV))
-                                * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
-                                (1d - tmpRhoRayBracket * sphAlbValue));
-
-                            //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
-                            double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HR);
-                            double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HR);
-
-                            final double r1v = fresnelCoefficient.getCoeffFor(sza.getSampleFloat(x, y));
-                            double aeRayFresnelLand = 0.0d;
-                            if (zmaxPart != 0) {
-                                aeRayFresnelLand = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxPart;
-                                if (isLand.getSampleBoolean(x, y)) {
-                                   // contribution must be subtracted over land - ICOL+ ATBD section 4.2 
-                                   aeRayFresnelLand *= -1.0;
+                            if (!IcolUtils.isIndexToSkip(b, instrument.bandsToSkip)) {
+                                final double tmpRhoRayBracket;
+                                if (rhoAgConv != null) {
+                                    tmpRhoRayBracket = rhoAgConv[b].getSampleFloat(x, y);
+                                } else {
+                                    tmpRhoRayBracket = means[b];
                                 }
-                            }
-                            double aeRayFresnelCloud = 0.0d;
-                            if (zmaxCloudPart != 0) {
-                                aeRayFresnelCloud = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxCloudPart;
-                            }
 
-                            if (exportSeparateDebugBands) {
-                                fresnelDebug[b].setSample(x, y, aeRayFresnelLand+aeRayFresnelCloud);
-                                rayleighDebug[b].setSample(x, y, aeRayRay);
-                            }
+                                // rayleigh contribution without AE (tmpRhoRayBracket)
+                                double aeRayRay = 0.0;
 
-                            final double aeRay = aeRayRay - aeRayFresnelLand - aeRayFresnelCloud;
+                                // over water, compute the rayleigh contribution to the AE
+                                float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
+                                float transRupValue = transRup[b].getSampleFloat(x, y);
+                                float tauRValue = tauR[b].getSampleFloat(x, y);
+                                float transRdownValue = transRdown[b].getSampleFloat(x, y);
+                                float sphAlbValue = sphAlbR[b].getSampleFloat(x, y);
+                                aeRayRay = (transRupValue - Math
+                                        .exp(-tauRValue / muV))
+                                        * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
+                                        (1d - tmpRhoRayBracket * sphAlbValue));
 
-                            aeRayTiles[b].setSample(x, y, aeRay);
-                            //correct the top of aerosol reflectance for the AE_RAY effect
+                                //compute the additional molecular contribution from the LFM  - ICOL+ ATBD eq. (10)
+                                double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HR);
+                                double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HR);
+
+                                final double r1v = fresnelCoefficient.getCoeffFor(sza.getSampleFloat(x, y));
+                                double aeRayFresnelLand = 0.0d;
+                                if (zmaxPart != 0) {
+                                    aeRayFresnelLand = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxPart;
+                                    if (isLand.getSampleBoolean(x, y)) {
+                                        // contribution must be subtracted over land - ICOL+ ATBD section 4.2
+                                        aeRayFresnelLand *= -1.0;
+                                    }
+                                }
+                                double aeRayFresnelCloud = 0.0d;
+                                if (zmaxCloudPart != 0) {
+                                    aeRayFresnelCloud = rhoNg[b].getSampleFloat(x, y) * r1v * zmaxCloudPart;
+                                }
+
+                                if (exportSeparateDebugBands) {
+                                    fresnelDebug[b].setSample(x, y, aeRayFresnelLand + aeRayFresnelCloud);
+                                    rayleighDebug[b].setSample(x, y, aeRayRay);
+                                }
+
+                                final double aeRay = aeRayRay - aeRayFresnelLand - aeRayFresnelCloud;
+
+                                aeRayTiles[b].setSample(x, y, aeRay);
+                                //correct the top of aerosol reflectance for the AE_RAY effect
                                 rhoAeRcTiles[b].setSample(x, y, rhoAgValue - aeRay);
-                            if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-                                rhoAgBracket[b].setSample(x, y, tmpRhoRayBracket);
+                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                    rhoAgBracket[b].setSample(x, y, tmpRhoRayBracket);
+                                }
                             }
                         }
                     } else {
                         for (int b = 0; b < numBands; b++) {
-                            rhoAeRcTiles[b].setSample(x, y, rhoAg[b].getSampleFloat(x, y));
-                            if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
-                                rhoAgBracket[b].setSample(x, y, -1f);
+                            if (!IcolUtils.isIndexToSkip(b, instrument.bandsToSkip)) {
+                                rhoAeRcTiles[b].setSample(x, y, rhoAg[b].getSampleFloat(x, y));
+                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                    rhoAgBracket[b].setSample(x, y, -1f);
+                                }
                             }
                         }
                     }
@@ -331,7 +315,7 @@ public class MerisAeRayleighOp extends Operator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(MerisAeRayleighOp.class);
+            super(AeRayleighOp.class);
         }
     }
 }

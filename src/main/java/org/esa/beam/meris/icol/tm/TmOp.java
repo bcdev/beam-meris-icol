@@ -13,7 +13,9 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AeRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
@@ -335,6 +337,7 @@ public class TmOp extends TmBasisOp {
         aeRayInput.put("aemask", aemaskRayleighProduct);
         aeRayInput.put("ray1b", rayleighProduct);
         aeRayInput.put("rhoNg", gasProduct);
+        aeRayInput.put("cloud", cloudProduct);
         aeRayInput.put("zmax", zmaxProduct);
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(5);
@@ -344,8 +347,8 @@ public class TmOp extends TmBasisOp {
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
-        aeRayParams.put("instrument", "LANDSAT5 TM");
-        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeRayleighOp.class), aeRayParams, aeRayInput);
+        aeRayParams.put("instrument", Instrument.TM5);
+        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeRayleighOp.class), aeRayParams, aeRayInput);
 
         // AE Aerosol:
         // --> same operator as for MERIS, distinguish Meris/Landsat case

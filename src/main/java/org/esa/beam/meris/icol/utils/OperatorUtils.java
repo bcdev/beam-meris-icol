@@ -9,6 +9,7 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.tm.TmGaseousCorrectionOp;
 import org.esa.beam.util.ProductUtils;
@@ -90,14 +91,17 @@ public class OperatorUtils {
         }
         return targetBands;
     }
-
-    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands, int[] bandsToSkip, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
+    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, Instrument instrument , Rectangle rect, ProgressMonitor pm) throws OperatorException {
+        return getSourceTiles(op, srcProduct, bandPrefix,instrument.numSpectralBands, instrument.bandsToSkip, rect, pm);
+    }
+    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands, int[] bandsToSkip, Rectangle rect, ProgressMonitor pm) throws OperatorException {
         Tile[] tiles = new Tile[numBands];
         for (int i = 0; i < tiles.length; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
-                continue;
+            if (!IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+                String bandName = bandPrefix + "_" + (i + 1);
+                Band srcBand = srcProduct.getBand(bandName);
+                tiles[i] = op.getSourceTile(srcBand, rect, pm);
             }
-            tiles[i] = op.getSourceTile(srcProduct.getBand(bandPrefix + "_" + (i+1)), rectangle, pm);
         }
         return tiles;
     }
