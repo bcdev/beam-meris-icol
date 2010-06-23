@@ -67,6 +67,7 @@ public class TmGeometryOp extends TmBasisOp {
     private Product targetProduct;
     @Parameter
     private int landsatTargetResolution;
+    // TODO: remove parameters, set both start and stop time to SCENE_CENTER_SCAN_TIME (get from PRODUCT_METADATA)
     @Parameter
     private String startTime;
     @Parameter

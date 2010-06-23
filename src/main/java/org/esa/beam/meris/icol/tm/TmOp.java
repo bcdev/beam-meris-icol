@@ -277,7 +277,7 @@ public class TmOp extends TmBasisOp {
         aemaskAerosolInput.put("land", landProduct);
         Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
         aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aemaskRayleighParameters.put("aeArea", aeArea);
+        aemaskAerosolParameters.put("aeArea", aeArea);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);

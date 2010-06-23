@@ -9,6 +9,7 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
+import org.esa.beam.util.ProductUtils;
 
 import javax.media.jai.Interpolation;
 import javax.media.jai.RenderedOp;
@@ -44,36 +45,44 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
             Band targetBand;
             int dataType = sourceBand.getDataType();
             final String srcBandName = sourceBand.getName();
-            final int length = srcBandName.length();
-            final String radianceBandSuffix = srcBandName.substring(length - 1, length);
-            final int radianceBandIndex = Integer.parseInt(radianceBandSuffix);
+            if (srcBandName.startsWith("radiance")) {
+                final int length = srcBandName.length();
+                final String radianceBandSuffix = srcBandName.substring(length - 1, length);
+                final int radianceBandIndex = Integer.parseInt(radianceBandSuffix);
 
-            if (radianceBandIndex != 6) {
-                dataType = ProductData.TYPE_FLOAT32;
-            }
-            targetBand = targetProduct.addBand(srcBandName, dataType);
+                Band diffBand = null;
+                Band origBand = null;
+                if (radianceBandIndex != 6) {
+                    dataType = ProductData.TYPE_FLOAT32;
+                    diffBand = targetProduct.addBand(srcBandName + "_diff", dataType);
+                    origBand = targetProduct.addBand(srcBandName + "_orig", sourceBand.getDataType());
+                    ProductUtils.copyRasterDataNodeProperties(sourceBand, origBand);
+                }
+                targetBand = targetProduct.addBand(srcBandName, dataType);
 
-            MultiLevelImage sourceImage = sourceBand.getSourceImage();
-            if (radianceBandIndex != 6) {
-                Band correctedBand = correctedProduct.getBand(sourceBand.getName());
-                Band geometryBand = geometryProduct.getBand(sourceBand.getName());
+                MultiLevelImage sourceImage = sourceBand.getSourceImage();
+                if (radianceBandIndex != 6) {
+                    Band correctedBand = correctedProduct.getBand(sourceBand.getName());
+                    Band geometryBand = geometryProduct.getBand(sourceBand.getName());
 
-                RenderedImage geometryImage = geometryBand.getSourceImage();
-                RenderedImage correctedImage = correctedBand.getSourceImage();
-                RenderedOp diffImage = SubtractDescriptor.create(geometryImage, correctedImage, null);
+                    RenderedImage geometryImage = geometryBand.getSourceImage();
+                    RenderedImage correctedImage = correctedBand.getSourceImage();
+                    RenderedOp diffImage = SubtractDescriptor.create(geometryImage, correctedImage, null);
 
-                RenderedOp upscaledDiffImage = ScaleDescriptor.create(diffImage,
-                                                                         xScale,
-                                                                         yScale,
-                                                                         0.0f, 0.0f,
-                                                                         Interpolation.getInstance(
-                                                                                 Interpolation.INTERP_BILINEAR),
-                                                                         null);
-
-                RenderedOp finalAeCorrectedImage = AddDescriptor.create(sourceImage, upscaledDiffImage, null);
-                targetBand.setSourceImage(finalAeCorrectedImage);
-            } else {
-                targetBand.setSourceImage(sourceImage);
+                    RenderedOp upscaledDiffImage = ScaleDescriptor.create(diffImage,
+                                                                             xScale,
+                                                                             yScale,
+                                                                             0.0f, 0.0f,
+                                                                             Interpolation.getInstance(
+                                                                                     Interpolation.INTERP_BILINEAR),
+                                                                             null);
+                    origBand.setSourceImage(sourceImage);
+                    diffBand.setSourceImage(upscaledDiffImage);
+                    RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceBand.getGeophysicalImage(), upscaledDiffImage, null);
+                    targetBand.setSourceImage(finalAeCorrectedImage);
+                } else {
+                    targetBand.setSourceImage(sourceImage);
+                }
             }
         }
     }
