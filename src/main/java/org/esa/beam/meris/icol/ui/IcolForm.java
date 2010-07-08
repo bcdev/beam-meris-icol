@@ -65,8 +65,8 @@ class IcolForm extends JTabbedPane {
     private JRadioButton landsatResolution1200Button;
     private JLabel userCtpLabel;
     private boolean userCtpSelected;
-    private JFormattedTextField landsatStartTimeValue;
-    private JFormattedTextField landsatStopTimeValue;
+//    private JFormattedTextField landsatStartTimeValue;
+//    private JFormattedTextField landsatStopTimeValue;
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
@@ -171,8 +171,8 @@ class IcolForm extends JTabbedPane {
         bc.bind("cloudMaskProduct", cloudProductSelector.getProductNameComboBox());
 
         bc.bind("landsatTargetResolution", landsatResolutionGroup);
-        bc.bind("landsatStartTime", landsatStartTimeValue);
-        bc.bind("landsatStopTime", landsatStopTimeValue);
+//        bc.bind("landsatStartTime", landsatStartTimeValue);
+//        bc.bind("landsatStopTime", landsatStopTimeValue);
         bc.bind("landsatUserOzoneContent", landsatOzoneContentValue);
         bc.bind("landsatUserPSurf", landsatPSurfValue);
         bc.bind("landsatUserTm60", landsatTM60Value);
@@ -210,7 +210,7 @@ class IcolForm extends JTabbedPane {
         processingParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         processingParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         processingParam.setTableWeightX(1);
-        processingParam.setCellWeightY(2, 0, 1);
+        processingParam.setCellWeightY(3, 0, 1);
         processingParam.setTablePadding(2, 2);
 
         TableLayout merisParam = new TableLayout(1);
@@ -258,6 +258,9 @@ class IcolForm extends JTabbedPane {
 
         JPanel rhoToaPanel = createRhoToaBandSelectionPanel();
         processingParamTab.add(rhoToaPanel);
+
+        JPanel advancedOptionsPanel = createAdvancedOptionsPanel();
+        processingParamTab.add(advancedOptionsPanel);
         
         JPanel landsatProcessingPanel = createLandsatProcessingPanel();
 		landsatParamTab.add(landsatProcessingPanel);
@@ -449,7 +452,6 @@ class IcolForm extends JTabbedPane {
 
     private JPanel createProcessingPanel() {
         // table layout with a third 'empty' column
-        // todo: this is not nice! use GridBagLayout for more complex panels
 		TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
@@ -458,18 +460,9 @@ class IcolForm extends JTabbedPane {
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
         layout.setCellColspan(1, 0, 2);
-        layout.setCellColspan(4, 0, 2);
 		JPanel panel = new JPanel(layout);
 
 		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
-
-        openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
-        openclConvolutionCheckBox.setSelected(false);
-		panel.add(openclConvolutionCheckBox);
-
-        nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
-        nestedConvolutionCheckBox.setSelected(true);
-		panel.add(nestedConvolutionCheckBox);
 
         aeAreaComboBox = new JComboBox();
         aeAreaComboBox.setRenderer(new AeAreaRenderer());
@@ -484,6 +477,32 @@ class IcolForm extends JTabbedPane {
 
 		return panel;
 	}
+
+    private JPanel createAdvancedOptionsPanel() {
+        // table layout with a third 'empty' column
+		TableLayout layout = new TableLayout(2);
+        layout.setTableAnchor(TableLayout.Anchor.WEST);
+        layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+        layout.setColumnWeightX(0, 1);
+        layout.setColumnWeightX(1, 0.1);
+        layout.setTablePadding(2, 2);
+        layout.setCellColspan(0, 0, 2);
+        layout.setCellColspan(1, 0, 2);
+		JPanel panel = new JPanel(layout);
+
+		panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+
+        openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
+        openclConvolutionCheckBox.setSelected(false);
+		panel.add(openclConvolutionCheckBox);
+
+        nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
+        nestedConvolutionCheckBox.setSelected(true);
+		panel.add(nestedConvolutionCheckBox);
+
+		return panel;
+	}
+
 
     private JPanel createLandsatProcessingPanel() {
         TableLayout layout = new TableLayout(3);
@@ -510,7 +529,7 @@ class IcolForm extends JTabbedPane {
 
 		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
-        panel.add(new JLabel("Target product resolution:"));
+        panel.add(new JLabel("AE correction grid resolution:"));
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
@@ -537,15 +556,15 @@ class IcolForm extends JTabbedPane {
         landsatResolution300Button.addActionListener(landsatResolutionListener);
         landsatResolution1200Button.addActionListener(landsatResolutionListener);
 
-        panel.add(new JLabel("Start Time (dd-MMM-yyyy hh:mm:ss): "));
-        landsatStartTimeValue = new JFormattedTextField();
-        panel.add(landsatStartTimeValue);
-        panel.add(new JLabel(""));
-
-        panel.add(new JLabel("Stop Time (dd-MMM-yyyy hh:mm:ss): "));
-        landsatStopTimeValue = new JFormattedTextField();
-        panel.add(landsatStopTimeValue);
-        panel.add(new JLabel(""));
+//        panel.add(new JLabel("Start Time (dd-MMM-yyyy hh:mm:ss): "));
+//        landsatStartTimeValue = new JFormattedTextField();
+//        panel.add(landsatStartTimeValue);
+//        panel.add(new JLabel(""));
+//
+//        panel.add(new JLabel("Stop Time (dd-MMM-yyyy hh:mm:ss): "));
+//        landsatStopTimeValue = new JFormattedTextField();
+//        panel.add(landsatStopTimeValue);
+//        panel.add(new JLabel(""));
 
         panel.add(new JLabel("Ozone content (cm atm): "));
         landsatOzoneContentValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_OZONE_CONTENT));
@@ -562,7 +581,7 @@ class IcolForm extends JTabbedPane {
         panel.add(landsatTM60Value);
         panel.add(new JLabel(""));
 
-        landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (scale to target grid)");
+        landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (input downscaled to AE correction grid)");
         landsatComputeToTargetGridOnly.setSelected(false);
 		panel.add(landsatComputeToTargetGridOnly);
         panel.add(new JLabel(""));

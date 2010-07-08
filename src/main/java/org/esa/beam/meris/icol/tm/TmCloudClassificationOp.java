@@ -51,7 +51,7 @@ public class TmCloudClassificationOp extends TmBasisOp {
     private boolean landsatCloudFlagApplyNdsiFilter;
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyTemperatureFilter;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.08")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3")
     private double cloudBrightnessThreshold;
     @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
     private double cloudNdviThreshold;

@@ -58,11 +58,11 @@ public class IcolModel {
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
     private int landsatTargetResolution = 0; // 300m
-    @Parameter(defaultValue = "")
-    // test values:
-    private String landsatStartTime = "06-AUG-2007 09:30:00";
-    @Parameter(defaultValue = "")
-    private String landsatStopTime = "06-AUG-2007 09:40:00";
+//    @Parameter(defaultValue = "")
+//    // test values:
+//    private String landsatStartTime = "06-AUG-2007 09:30:00";
+//    @Parameter(defaultValue = "")
+//    private String landsatStopTime = "06-AUG-2007 09:40:00";
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.32")
     private double landsatUserOzoneContent = TmConstants.DEFAULT_OZONE_CONTENT;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.0")
@@ -85,7 +85,7 @@ public class IcolModel {
     private boolean landsatCloudFlagApplyNdsiFilter = true;
     @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.08")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.3")
     private double cloudBrightnessThreshold = TmConstants.DEFAULT_BRIGHTNESS_THRESHOLD;
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
     private double cloudNdviThreshold = TmConstants.DEFAULT_NDVI_CLOUD_THRESHOLD;
@@ -184,8 +184,8 @@ public class IcolModel {
 
     private void configLandsatOp(HashMap<String, Object> params) {
         params.put("landsatTargetResolution", getLandsatTargetResolution());
-        params.put("landsatStartTime", landsatStartTime);
-        params.put("landsatStopTime", landsatStopTime);
+//        params.put("landsatStartTime", landsatStartTime);
+//        params.put("landsatStopTime", landsatStopTime);
         params.put("landsatUserOzoneContent", landsatUserOzoneContent);
         params.put("landsatUserPSurf", landsatUserPSurf);
         params.put("landsatUserTm60", landsatUserTm60);

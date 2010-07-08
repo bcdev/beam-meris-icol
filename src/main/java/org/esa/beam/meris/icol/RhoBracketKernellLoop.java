@@ -22,23 +22,14 @@ public class RhoBracketKernellLoop implements RhoBracketAlgo {
     public RhoBracketKernellLoop(Product l1bProduct, CoeffW coeffW, int correctionMode) {
         final String productType = l1bProduct.getProductType();
         double sourceExtendReduction = 1.0;
-//        if (correctionMode == 0) {
-//            // Rayleigh
-//            sourceExtendReduction = IcolConstants.DEFAULT_AE_DISTANCE/IcolConstants.RAYLEIGH_AE_DISTANCE;
-//        } else if (correctionMode == 1) {
-//            // aerosol
-//            sourceExtendReduction = IcolConstants.DEFAULT_AE_DISTANCE/IcolConstants.AEROSOL_AE_DISTANCE;
-//        }
 
         if (productType.indexOf("_RR") > -1) {
-//            w = coeffW.getCoeffForRRTest();
             w = coeffW.getCoeffForRR();
             this.sourceExtend = (int) (CoeffW.RR_KERNEL_SIZE/sourceExtendReduction);
         } else {
             w = coeffW.getCoeffForFR();
             this.sourceExtend = (int) (CoeffW.FR_KERNEL_SIZE/sourceExtendReduction);
         }
-//        this.sourceExtend = w[0].length - 1;
         this.rectCalculator = new RectangleExtender(new Rectangle(l1bProduct.getSceneRasterWidth(), l1bProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
     }
 
@@ -61,11 +52,11 @@ public class RhoBracketKernellLoop implements RhoBracketAlgo {
         }
 
         public double convolveSample(int x, int y, int iaer, int b) {
-            return meanCalculator.compute(x, y, srcTiles[b], w[iaer - 1]);
+            return meanCalculator.compute(x, y, srcTiles[b], w[iaer-1]);
         }
 
         public double[] convolvePixel(int x, int y, int iaer) {
-            return meanCalculator.computeAll(x, y, srcTiles, w[iaer - 1]);
+            return meanCalculator.computeAll(x, y, srcTiles, w[iaer]);
         }
     }
 }

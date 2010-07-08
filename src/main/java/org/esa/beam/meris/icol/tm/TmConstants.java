@@ -30,8 +30,8 @@ public interface TmConstants {
     int LANDSAT5_RADIANCE_7_BAND_INDEX = 6;
 
     int LANDSAT5_FR_ORIG = 30;
-    int LANDSAT5_RR = 300;
-    int LANDSAT5_FR = 1200;
+    int LANDSAT5_GEOM_FR = 300;
+    int LANDSAT5_GEOM_RR = 1200;
 
     String LANDSAT5_GASEOUS_TRANSMITTANCE_BAND_NAME = "gas_transmittance";
     String LANDSAT5_RAYLEIGH_SCATTERING_BAND_NAME = "rayleigh_scatt";
@@ -182,7 +182,7 @@ public interface TmConstants {
     double DEFAULT_OZONE_CONTENT = 0.32;
     double DEFAULT_SURFACE_PRESSURE = 1013.25;
     double DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE = 300.0;
-    double DEFAULT_BRIGHTNESS_THRESHOLD = 0.08;
+    double DEFAULT_BRIGHTNESS_THRESHOLD = 0.3;
     double DEFAULT_NDVI_CLOUD_THRESHOLD = 0.2;
     double DEFAULT_NDVI_LAND_THRESHOLD = 0.1;
     double DEFAULT_NDSI_THRESHOLD = 3.0;

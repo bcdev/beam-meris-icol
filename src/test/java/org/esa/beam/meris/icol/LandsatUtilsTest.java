@@ -65,25 +65,25 @@ public class LandsatUtilsTest extends TestCase {
 
     public void testGetDayOfYear() {
 //        String date = "20090215";
-        String date = "15-FEB-2009";
+        String date = "15-Feb-2009";
         int doy = LandsatUtils.getDayOfYear(date);
         assertEquals(46, doy);
-        date = "31-DEC-2000";
+        date = "31-Dec-2000";
         doy = LandsatUtils.getDayOfYear(date);
         assertEquals(366, doy);
-        date = "31-DEC-2004";
+        date = "31-Dec-2004";
         doy = LandsatUtils.getDayOfYear(date);
         assertEquals(366, doy);
-        date = "31-DEC-2009";
+        date = "31-Dec-2009";
         doy = LandsatUtils.getDayOfYear(date);
         assertEquals(365, doy);
     }
 
     public void testGetDaysSince2000() {
-        String date = "15-FEB-2009";
+        String date = "15-Feb-2009";
         int daysSince2000 = LandsatUtils.getDaysSince2000(date);
         assertEquals(3334, daysSince2000);
-        date = "01-JAN-2001";
+        date = "01-Jan-2001";
         daysSince2000 = LandsatUtils.getDaysSince2000(date);
         assertEquals(367, daysSince2000);
     }

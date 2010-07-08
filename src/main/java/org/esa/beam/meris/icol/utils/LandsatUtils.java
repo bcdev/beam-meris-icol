@@ -8,7 +8,10 @@ import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.util.math.MathUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -20,18 +23,18 @@ public class LandsatUtils {
     public static HashMap<String, String> months = new HashMap<String, String>(12);
 
     static {
-        months.put("JAN","01");
-        months.put("FEB","02");
-        months.put("MAR","03");
-        months.put("APR","04");
-        months.put("MAY","05");
-        months.put("JUN","06");
-        months.put("JUL","07");
-        months.put("AUG","08");
-        months.put("SEP","09");
-        months.put("OCT","10");
-        months.put("NOV","11");
-        months.put("DEC","12");
+        months.put("Jan","01");
+        months.put("Feb","02");
+        months.put("Mar","03");
+        months.put("Apr","04");
+        months.put("May","05");
+        months.put("Jun","06");
+        months.put("Jul","07");
+        months.put("Aug","08");
+        months.put("Sep","09");
+        months.put("Oct","10");
+        months.put("Nov","11");
+        months.put("Dec","12");
     }
 
     public static SunAngles getSunAngles(GeoPos geoPos, int doy, double gmt) {
@@ -106,23 +109,6 @@ public class LandsatUtils {
 
         return sa;
     }
-
-//    public static int getDayOfYear(String yyyymmdd) {
-//        Calendar cal = Calendar.getInstance();
-//        int doy = -1;
-//        try {
-//            final int year = Integer.parseInt(yyyymmdd.substring(0, 4));
-//            final int month = Integer.parseInt(yyyymmdd.substring(4, 6)) - 1;
-//            final int day = Integer.parseInt(yyyymmdd.substring(6, 8));
-//            cal.set(year, month, day);
-//            doy = cal.get(Calendar.DAY_OF_YEAR);
-//        } catch (StringIndexOutOfBoundsException e) {
-//            e.printStackTrace();
-//        }  catch (NumberFormatException e) {
-//            e.printStackTrace();
-//        }
-//        return doy;
-//    }
 
      public static int getDayOfYear(String dd_MMM_yyyy) {
         Calendar cal = Calendar.getInstance();
@@ -229,5 +215,35 @@ public class LandsatUtils {
         int ty2 = tile.getRectangle().y + tile.getRectangle().height - 1;
                           
         return (x < tx1 || x > tx2 || y < ty1 || y > ty2);
+    }
+
+    /**
+     * Converts a date string from yyyy-mm-dd to dd-MMM-yyyy
+     *
+     * @param  input
+     * @return converted
+     */
+    public static String convertDate(String input) {
+        String converted = "";
+
+        try {
+            //create SimpleDateFormat object with source string date format
+            SimpleDateFormat sdfSource = new SimpleDateFormat("yyyy-MM-dd");
+
+            //parse the string into Date object
+            Date date = sdfSource.parse(input);
+
+            //create SimpleDateFormat object with desired date format
+            SimpleDateFormat sdfDestination = new SimpleDateFormat("dd-MMM-yyyy");
+
+            //parse the date into another format
+            converted = sdfDestination.format(date);
+
+            System.out.println("Converted date is : " + converted);
+        }
+        catch (ParseException pe) {
+            System.out.println("Parse Exception : " + pe.getMessage());
+        }
+        return converted;
     }
 }

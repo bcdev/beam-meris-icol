@@ -197,6 +197,9 @@ public class AeMaskOp extends Operator {
             // even if land pixel is far away from water
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
                 for (int x = relevantTragetRect.x; x < relevantTragetRect.x + relevantTragetRect.width; x++) {
+                    if (x == 60 && y == 120) {
+                        System.out.println("");
+                    }
                     if (Math.abs(sza.getSampleFloat(x, y)) > 80.0) {
                         // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
                         // functions (PM4, 2010/03/04)

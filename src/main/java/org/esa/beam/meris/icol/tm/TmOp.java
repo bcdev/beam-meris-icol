@@ -20,6 +20,8 @@ import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
+import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.util.ProductUtils;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -59,10 +61,10 @@ public class TmOp extends TmBasisOp {
     private double landsatUserOzoneContent;
     @Parameter(defaultValue="300", valueSet= {"300","1200"})
     private int landsatTargetResolution;
-    @Parameter(defaultValue="06-AUG-2007 09:30:00")       // test!
-    private String landsatStartTime;
-    @Parameter(defaultValue="06-AUG-2007 09:40:00")
-    private String landsatStopTime;
+//    @Parameter(defaultValue="06-AUG-2007 09:30:00")       // test!
+//    private String landsatStartTime;
+//    @Parameter(defaultValue="06-AUG-2007 09:40:00")
+//    private String landsatStopTime;
     @Parameter(defaultValue = "false")
     private boolean landsatComputeFlagSettingsOnly = false;
     @Parameter(defaultValue = "false")
@@ -78,7 +80,7 @@ public class TmOp extends TmBasisOp {
     private boolean landsatCloudFlagApplyNdsiFilter = true;
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.08")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3")
     private double cloudBrightnessThreshold;
     @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
     private double cloudNdviThreshold;
@@ -127,6 +129,9 @@ public class TmOp extends TmBasisOp {
     @Parameter(defaultValue="true")
     private boolean exportAlphaAot = true;
 
+    
+    private String landsatStartTime;
+    private String landsatStopTime;
 
     @Override
     public void initialize() throws OperatorException {
@@ -480,13 +485,35 @@ public class TmOp extends TmBasisOp {
 
         Product targetProduct = new Product(name, type, sceneWidth, sceneHeight);
         copyBaseGeoInfo(sourceProduct, targetProduct);
+
         return targetProduct;
     }
 
      private void setStartStopTime() {
         try {
-            sourceProduct.setStartTime(ProductData.UTC.parse(landsatStartTime));
-            sourceProduct.setEndTime(ProductData.UTC.parse(landsatStopTime));
+            // finally we need dd-MM-yyyy hh:mm:ss
+            if (sourceProduct.getStartTime() != null && sourceProduct.getEndTime() != null) {
+                // this is the case for geometry product
+                landsatStartTime = sourceProduct.getStartTime().toString().substring(0,20);
+                landsatStopTime = sourceProduct.getEndTime().toString().substring(0,20);
+            } else {
+                // this is the case for original input product (GeoTIFF)
+                // here we get yyyy-mm-dd:
+                 String acquisitionDate = sourceProduct.getMetadataRoot()
+                    .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("ACQUISITION_DATE").getData().getElemString();
+
+                String centerTime = sourceProduct.getMetadataRoot()
+                    .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("SCENE_CENTER_SCAN_TIME").getData().getElemString().substring(0, 8);
+
+                String landsatCenterTime = LandsatUtils.convertDate(acquisitionDate) + " " + centerTime;
+                landsatStartTime = landsatCenterTime;
+                landsatStopTime = landsatCenterTime;
+                sourceProduct.setStartTime(ProductData.UTC.parse(landsatCenterTime));
+                sourceProduct.setEndTime(ProductData.UTC.parse(landsatCenterTime));
+            }
+
+//            sourceProduct.setStartTime(ProductData.UTC.parse(landsatStartTime));
+//            sourceProduct.setEndTime(ProductData.UTC.parse(landsatStopTime));
         } catch (ParseException e) {
             throw new OperatorException("Start or stop time invalid or has wrong format - must be 'yyyymmdd hh:mm:ss'.");
         }

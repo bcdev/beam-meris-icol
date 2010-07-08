@@ -98,10 +98,10 @@ public class TmGeometryOp extends TmBasisOp {
         sceneHeight = sourceProduct.getSceneRasterHeight()/(2*aveBlock+1) + 1;
 
         final String productType;
-        if (landsatTargetResolution == TmConstants.LANDSAT5_RR) {
-            productType = "L1G_RR_";
-        } else {
+        if (landsatTargetResolution == TmConstants.LANDSAT5_GEOM_FR) {
             productType = "L1G_FR_";
+        } else {
+            productType = "L1G_RR_";
         }
         targetProduct = new Product(sourceProduct.getName() + "_ICOL", productType, sceneWidth, sceneHeight);
         GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
