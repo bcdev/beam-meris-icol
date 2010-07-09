@@ -35,6 +35,18 @@ public class LandsatUtils {
         months.put("Oct","10");
         months.put("Nov","11");
         months.put("Dec","12");
+        months.put("JAN","01");
+        months.put("FEB","02");
+        months.put("MAR","03");
+        months.put("APR","04");
+        months.put("MAY","05");
+        months.put("JUN","06");
+        months.put("JUL","07");
+        months.put("AUG","08");
+        months.put("SEP","09");
+        months.put("OCT","10");
+        months.put("NOV","11");
+        months.put("DEC","12");
     }
 
     public static SunAngles getSunAngles(GeoPos geoPos, int doy, double gmt) {

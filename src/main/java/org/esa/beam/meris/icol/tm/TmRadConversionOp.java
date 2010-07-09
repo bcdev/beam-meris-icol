@@ -61,7 +61,8 @@ public class TmRadConversionOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
 
-        daysSince2000 = LandsatUtils.getDaysSince2000(sourceProduct.getStartTime().getElemString());
+        final String startTimeString = sourceProduct.getStartTime().toString().substring(0,20);
+        daysSince2000 = LandsatUtils.getDaysSince2000(startTimeString);
         seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,
                                                       TmConstants.SUN_EARTH_DISTANCE_SQUARE);
 
