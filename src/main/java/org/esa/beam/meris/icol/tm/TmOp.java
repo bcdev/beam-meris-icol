@@ -69,8 +69,8 @@ public class TmOp extends TmBasisOp {
     private boolean landsatComputeFlagSettingsOnly = false;
     @Parameter(defaultValue = "false")
     private boolean landsatComputeToTargetGridOnly = false;
-    @Parameter(defaultValue = "false")
-    private boolean upscaleToTMFR = false;
+//    @Parameter(defaultValue = "false")
+//    private boolean upscaleToTMFR = false;
 
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -447,8 +447,8 @@ public class TmOp extends TmBasisOp {
             DebugUtils.addAeTotalProductDebugBands(correctionProduct, aeTotalProduct);
         }
 
-        // if desired, upscale all bands to Tm full resolution
-        if (upscaleToTMFR) {
+        // upscale all bands to Tm full resolution
+//        if (upscaleToTMFR) {
             // AE Rayleigh/Aerosol upscale:
             Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
             aeUpscaleInput.put("l1b", sourceProduct);
@@ -457,18 +457,10 @@ public class TmOp extends TmBasisOp {
             Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
             Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
 
-//            Map<String, Product> upscaleInput = new HashMap<String, Product>(5);
-//            upscaleInput.put("refl", correctionProduct);
-//            Map<String, Object> upscaleParameters = new HashMap<String, Object>();
-//            tmOrigProductWidth = 8201;  // todo: take from orig TM product, also write to geometry product metadata
-//            tmOrigProductHeight = 7181; // todo: take from orig TM product, also write to geometry product metadata
-//            upscaleParameters.put("tmOrigProductWidth", tmOrigProductWidth);
-//            upscaleParameters.put("tmOrigProductHeight", tmOrigProductHeight);
-//            Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleOp.class), upscaleParameters, upscaleInput);
             targetProduct = upscaleProduct;
-        } else {
-            targetProduct = correctionProduct;
-        }
+//        } else {
+//            targetProduct = correctionProduct;
+//        }
     }
 
     /**
@@ -512,8 +504,6 @@ public class TmOp extends TmBasisOp {
                 sourceProduct.setEndTime(ProductData.UTC.parse(landsatCenterTime));
             }
 
-//            sourceProduct.setStartTime(ProductData.UTC.parse(landsatStartTime));
-//            sourceProduct.setEndTime(ProductData.UTC.parse(landsatStopTime));
         } catch (ParseException e) {
             throw new OperatorException("Start or stop time invalid or has wrong format - must be 'yyyymmdd hh:mm:ss'.");
         }

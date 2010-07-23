@@ -73,8 +73,8 @@ public class IcolModel {
     private boolean landsatComputeFlagSettingsOnly = false;
     @Parameter(defaultValue = "false")
     private boolean landsatComputeToTargetGridOnly = false;
-    @Parameter(defaultValue = "false")
-    private boolean upscaleToTMFR = false;
+//    @Parameter(defaultValue = "false")
+//    private boolean upscaleToTMFR = false;
 
 
     @Parameter(defaultValue = "true")
@@ -191,7 +191,7 @@ public class IcolModel {
         params.put("landsatUserTm60", landsatUserTm60);
         params.put("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
         params.put("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
-        params.put("upscaleToTMFR", upscaleToTMFR);
+//        params.put("upscaleToTMFR", upscaleToTMFR);
         params.put("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilter);
         params.put("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilter);
         params.put("landsatCloudFlagApplyNdsiFilter", landsatCloudFlagApplyNdsiFilter);

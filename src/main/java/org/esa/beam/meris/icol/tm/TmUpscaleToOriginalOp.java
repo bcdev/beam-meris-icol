@@ -19,6 +19,8 @@ import javax.media.jai.operator.SubtractDescriptor;
 import java.awt.image.RenderedImage;
 
 /**
+ * Operator for upscaling of TM product from geometry to original resolution after AE correction
+ *
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
@@ -50,14 +52,15 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                 final String radianceBandSuffix = srcBandName.substring(length - 1, length);
                 final int radianceBandIndex = Integer.parseInt(radianceBandSuffix);
 
-                Band diffBand = null;
-                Band origBand = null;
-                if (radianceBandIndex != 6) {
-                    dataType = ProductData.TYPE_FLOAT32;
-                    diffBand = targetProduct.addBand(srcBandName + "_diff", dataType);
-                    origBand = targetProduct.addBand(srcBandName + "_orig", sourceBand.getDataType());
-                    ProductUtils.copyRasterDataNodeProperties(sourceBand, origBand);
-                }
+//                this was for debugging only:
+//                Band diffBand = null;
+//                Band origBand = null;
+//                if (radianceBandIndex != 6) {
+//                    dataType = ProductData.TYPE_FLOAT32;
+//                    diffBand = targetProduct.addBand(srcBandName + "_diff", dataType);
+//                    origBand = targetProduct.addBand(srcBandName + "_orig", sourceBand.getDataType());
+//                    ProductUtils.copyRasterDataNodeProperties(sourceBand, origBand);
+//                }
                 targetBand = targetProduct.addBand(srcBandName, dataType);
 
                 MultiLevelImage sourceImage = sourceBand.getSourceImage();
@@ -69,6 +72,8 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                     RenderedImage correctedImage = correctedBand.getSourceImage();
                     RenderedOp diffImage = SubtractDescriptor.create(geometryImage, correctedImage, null);
 
+                    // here we upscale the difference image (i.e., the AE correction)
+                    // note that xscale, yscale may be 1 (in fact no upscaling) if source is a geometry product
                     RenderedOp upscaledDiffImage = ScaleDescriptor.create(diffImage,
                                                                              xScale,
                                                                              yScale,
@@ -76,8 +81,10 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                                                                              Interpolation.getInstance(
                                                                                      Interpolation.INTERP_BILINEAR),
                                                                              null);
-                    origBand.setSourceImage(sourceImage);
-                    diffBand.setSourceImage(upscaledDiffImage);
+//                    origBand.setSourceImage(sourceImage);
+//                    diffBand.setSourceImage(upscaledDiffImage);
+
+                    // here we subtract the AE correction on original resolution
                     RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceBand.getGeophysicalImage(), upscaledDiffImage, null);
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {

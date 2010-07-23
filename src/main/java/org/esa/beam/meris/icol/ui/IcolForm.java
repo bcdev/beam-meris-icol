@@ -72,7 +72,7 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField landsatTM60Value;
     private JCheckBox landsatComputeFlagSettingsOnly;
     private JCheckBox landsatComputeToTargetGridOnly;
-    private JCheckBox upscaleToTMFR;
+//    private JCheckBox upscaleToTMFR;
 
     private JCheckBox landsatCloudFlagApplyBrightnessFilterCheckBox;
     private JCheckBox landsatCloudFlagApplyNdsiFilterCheckBox;
@@ -102,7 +102,7 @@ class IcolForm extends JTabbedPane {
         JComboBox targetFormatComboBox = targetProductSelector.getFormatNameComboBox();
 	    comboBoxModelRhoToa = targetFormatComboBox.getModel();
 	    comboBoxModelN1 = createN1ComboboxModel(targetFormatComboBox);
-	    sourceProductSelector = new SourceProductSelector(appContext, "Input-Product (MERIS: L1b, Landsat 5 TM: L1G or 'Geometry'):");
+	    sourceProductSelector = new SourceProductSelector(appContext, "Input-Product (MERIS L1b or Landsat 5 TM L1G GeoTIFF):");
 	    cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();
@@ -178,7 +178,7 @@ class IcolForm extends JTabbedPane {
         bc.bind("landsatUserTm60", landsatTM60Value);
         bc.bind("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
         bc.bind("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
-        bc.bind("upscaleToTMFR", upscaleToTMFR);
+//        bc.bind("upscaleToTMFR", upscaleToTMFR);
 
         bc.bind("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilterCheckBox);
         bc.bind("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilterCheckBox);
@@ -224,7 +224,7 @@ class IcolForm extends JTabbedPane {
         landsatParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         landsatParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         landsatParam.setTableWeightX(1);
-        landsatParam.setCellWeightY(3, 0, 1);
+        landsatParam.setCellWeightY(4, 0, 1);
         landsatParam.setTablePadding(2, 2);
 
         JPanel ioTab = new JPanel(layoutIO);
@@ -270,6 +270,9 @@ class IcolForm extends JTabbedPane {
 
         JPanel landsatLandFlagSettingPanel = createLandsatLandFlagSettingPanel();
 		landsatParamTab.add(landsatLandFlagSettingPanel);
+
+        JPanel landsatAdvancedOptionsPanel = createLandsatAdvancedOptionsPanel();
+		landsatParamTab.add(landsatAdvancedOptionsPanel);
 
 		merisParamTab.add(new JLabel(""));
     }
@@ -358,7 +361,7 @@ class IcolForm extends JTabbedPane {
 
     private JPanel createMerisCloudPanel() {
         JPanel panel = cloudProductSelector.createDefaultPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Cloud Mask"));
+        panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
 
         final JTextField textField = new JTextField(30);
         final Binding binding = bc.bind("cloudMaskExpression", textField);
@@ -513,58 +516,12 @@ class IcolForm extends JTabbedPane {
         layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(5, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(6, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(7, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(8, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(9, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(10, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(11, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
 
 		JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
-
-        panel.add(new JLabel("AE correction grid resolution:"));
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        landsatResolution300Button = new JRadioButton("300 m");
-        landsatResolution300Button.setSelected(true);
-        panel.add(landsatResolution300Button);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-        landsatResolution1200Button = new JRadioButton("1200 m");
-        landsatResolution1200Button.setSelected(false);
-        panel.add(landsatResolution1200Button);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        landsatResolutionGroup = new ButtonGroup();
-        landsatResolutionGroup.add(landsatResolution300Button);
-        landsatResolutionGroup.add(landsatResolution1200Button);
-
-         ActionListener landsatResolutionListener = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                updateLandsatResolutionSettings();
-            }
-        };
-        landsatResolution300Button.addActionListener(landsatResolutionListener);
-        landsatResolution1200Button.addActionListener(landsatResolutionListener);
-
-//        panel.add(new JLabel("Start Time (dd-MMM-yyyy hh:mm:ss): "));
-//        landsatStartTimeValue = new JFormattedTextField();
-//        panel.add(landsatStartTimeValue);
-//        panel.add(new JLabel(""));
-//
-//        panel.add(new JLabel("Stop Time (dd-MMM-yyyy hh:mm:ss): "));
-//        landsatStopTimeValue = new JFormattedTextField();
-//        panel.add(landsatStopTimeValue);
-//        panel.add(new JLabel(""));
+		panel.setBorder(BorderFactory.createTitledBorder("Atmospheric Parameters"));
 
         panel.add(new JLabel("Ozone content (cm atm): "));
         landsatOzoneContentValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_OZONE_CONTENT));
@@ -576,26 +533,9 @@ class IcolForm extends JTabbedPane {
         panel.add(landsatPSurfValue);
         panel.add(new JLabel(""));
 
-        panel.add(new JLabel("Surface TM apparent remperature (K): "));
+        panel.add(new JLabel("Surface TM apparent temperature (K): "));
         landsatTM60Value = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
         panel.add(landsatTM60Value);
-        panel.add(new JLabel(""));
-
-        landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (input downscaled to AE correction grid)");
-        landsatComputeToTargetGridOnly.setSelected(false);
-		panel.add(landsatComputeToTargetGridOnly);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        landsatComputeFlagSettingsOnly = new JCheckBox("Compute flag settings product only");
-        landsatComputeFlagSettingsOnly.setSelected(false);
-		panel.add(landsatComputeFlagSettingsOnly);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        upscaleToTMFR = new JCheckBox("Upscale Radiance/RhoToa product to TM FR (30m)");
-        upscaleToTMFR.setSelected(false);
-		panel.add(upscaleToTMFR);
         panel.add(new JLabel(""));
 
 		panel.add(new JPanel());
@@ -751,6 +691,72 @@ class IcolForm extends JTabbedPane {
 		return panel;
 	}
 
+    private JPanel createLandsatAdvancedOptionsPanel() {
+            TableLayout layout = new TableLayout(3);
+            layout.setTableAnchor(TableLayout.Anchor.WEST);
+            layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+            layout.setColumnWeightX(0, 0.1);
+            layout.setColumnWeightX(1, 0.5);
+            layout.setColumnWeightX(2, 1);
+            layout.setTablePadding(2, 2);
+            layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+            layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
+            layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
+            layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
+            layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
+
+            JPanel panel = new JPanel(layout);
+
+            panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+
+            panel.add(new JLabel("AE correction grid resolution:"));
+            panel.add(new JLabel(""));
+            panel.add(new JLabel(""));
+
+            landsatResolution300Button = new JRadioButton("300 m");
+            landsatResolution300Button.setSelected(true);
+            panel.add(landsatResolution300Button);
+            panel.add(new JLabel(""));
+            panel.add(new JLabel(""));
+            landsatResolution1200Button = new JRadioButton("1200 m");
+            landsatResolution1200Button.setSelected(false);
+            panel.add(landsatResolution1200Button);
+            panel.add(new JLabel(""));
+            panel.add(new JLabel(""));
+
+            landsatResolutionGroup = new ButtonGroup();
+            landsatResolutionGroup.add(landsatResolution300Button);
+            landsatResolutionGroup.add(landsatResolution1200Button);
+
+             ActionListener landsatResolutionListener = new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    updateLandsatResolutionSettings();
+                }
+            };
+            landsatResolution300Button.addActionListener(landsatResolutionListener);
+            landsatResolution1200Button.addActionListener(landsatResolutionListener);
+
+            landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (input downscaled to AE correction grid)");
+            landsatComputeToTargetGridOnly.setSelected(false);
+            panel.add(landsatComputeToTargetGridOnly);
+            panel.add(new JLabel(""));
+            panel.add(new JLabel(""));
+
+            landsatComputeFlagSettingsOnly = new JCheckBox("Compute flag settings product only");
+            landsatComputeFlagSettingsOnly.setSelected(false);
+            panel.add(landsatComputeFlagSettingsOnly);
+            panel.add(new JLabel(""));
+            panel.add(new JLabel(""));
+
+//            upscaleToTMFR = new JCheckBox("Upscale Radiance/RhoToa product to TM FR (30m)");
+//            upscaleToTMFR.setSelected(false);
+//            panel.add(upscaleToTMFR);
+//            panel.add(new JLabel(""));
+
+            panel.add(new JPanel());
+
+            return panel;
+        }
 
 
     private void updateLandsatResolutionSettings() {
