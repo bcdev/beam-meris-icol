@@ -132,7 +132,7 @@ public class CoeffW {
     /**
      * Creates an array of the specified size, containing some random data
      */
-    private static double[] createRandomDoubleData(int x, double stdev) {
+    public static double[] createRandomDoubleData(int x, double stdev) {
         Random random = new Random(0);
         double a[] = new double[x];
         for (int i = 0; i < x; i++) {

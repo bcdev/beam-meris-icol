@@ -69,9 +69,7 @@ public class CoeffWTest extends TestCase {
     public void testKernelJai() {
         final double[] inputArray1D = new double[]{1.0d, 0.72d, 0.48d, 0.32d, 0.08d};
         final int N = inputArray1D.length;
-//        int N = 60;
-//        final double[] inputArray1D = new double[N];
-        
+
         KernelJAI kernel = CoeffW.createKernelByRotation(inputArray1D);
         assertNotNull(kernel);
 
@@ -83,28 +81,12 @@ public class CoeffWTest extends TestCase {
         float[] kernelData = kernel.getKernelData();
         assertEquals((2 * N - 1) * (2 * N - 1), kernelData.length);
 
-//        assertEquals(1.0f, kernel.getElement(N - 1, N - 1), 0.0f);
-
         assertEquals(0.0f, kernel.getElement(0, 0), 0.0f);
         assertEquals(0.0f, kernel.getElement(0, 2 * N - 2), 0.0f);
         assertEquals(0.0f, kernel.getElement(2 * N - 2, 0), 0.0f);
         assertEquals(0.0f, kernel.getElement(2 * N - 2, 2 * N - 2), 0.0f);
 
-//        assertEquals(0.08f, kernel.getElement(2 * N - 2, N), 0.0f);
-//        assertEquals(0.08f, kernel.getElement(N, 2 * N - 2), 0.0f);
     }
 
-//    public void testSetReshapedCoeffs() {
-//        String auxdataSrcPath = "auxdata/icol";
-//        final String auxdataDestPath = ".beam/beam-meris-icol/" + auxdataSrcPath;
-//        File auxdataTargetDir = new File(SystemUtils.getUserHomeDir(), auxdataDestPath);
-//        try {
-//            coeffW = new CoeffW(auxdataTargetDir, true, true, 0);
-//            assertNotNull(coeffW.getReshapedCoeffForRR());
-//            assertNotNull(coeffW.getReshapedCoeffForFR());
-//
-//        } catch (IOException e) {
-//            fail(e.getMessage());
-//        }
-//    }
+   
 }
