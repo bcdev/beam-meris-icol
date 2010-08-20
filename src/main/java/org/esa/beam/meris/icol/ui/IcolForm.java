@@ -210,14 +210,14 @@ class IcolForm extends JTabbedPane {
         processingParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         processingParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         processingParam.setTableWeightX(1);
-        processingParam.setCellWeightY(3, 0, 1);
+        processingParam.setCellWeightY(2, 0, 1);
         processingParam.setTablePadding(2, 2);
 
         TableLayout merisParam = new TableLayout(1);
         merisParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         merisParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         merisParam.setTableWeightX(1);
-        merisParam.setCellWeightY(2, 0, 1);
+        merisParam.setCellWeightY(3, 0, 1);
         merisParam.setTablePadding(2, 2);
 
         TableLayout landsatParam = new TableLayout(1);
@@ -238,14 +238,18 @@ class IcolForm extends JTabbedPane {
 
         JPanel inputPanel = sourceProductSelector.createDefaultPanel();
         ioTab.add(inputPanel);
-        JPanel productTypePanel = createProductTypePanel();
-        ioTab.add(productTypePanel);
 		ioTab.add(targetProductSelector.createDefaultPanel());
 		ioTab.add(new JLabel(""));
 
         JPanel processingPanel = createProcessingPanel();
         processingParamTab.add(processingPanel);
         ioTab.add(new JLabel(""));
+
+        JPanel productTypePanel = createProductTypePanel();
+        merisParamTab.add(productTypePanel);
+
+        JPanel rhoToaPanel = createRhoToaBandSelectionPanel();
+        merisParamTab.add(rhoToaPanel);
 
         JPanel ctpPanel = createCTPPanel();
         merisParamTab.add(ctpPanel);
@@ -255,9 +259,6 @@ class IcolForm extends JTabbedPane {
 
         JPanel aerosolPanel = createAerosolPanel();
         processingParamTab.add(aerosolPanel);
-
-        JPanel rhoToaPanel = createRhoToaBandSelectionPanel();
-        processingParamTab.add(rhoToaPanel);
 
         JPanel advancedOptionsPanel = createAdvancedOptionsPanel();
         processingParamTab.add(advancedOptionsPanel);

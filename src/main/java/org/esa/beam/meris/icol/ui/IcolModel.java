@@ -146,6 +146,7 @@ public class IcolModel {
         HashMap<String, Object> params = new HashMap<String, Object>();
         configCtp(params);
         params.put("cloudMaskExpression", cloudMaskExpression);
+        params.put("productType", productType);
         configAeAerosolOp(params);
         configReverseRhoToaOp(params);
         configGeneral(params);
@@ -208,7 +209,6 @@ public class IcolModel {
     }
 
     private void configGeneral(HashMap<String, Object> params) {
-        params.put("productType", productType);
         params.put("tileSize", tileSize);
         params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);

@@ -15,6 +15,7 @@ import org.esa.beam.meris.icol.ReshapedConvolutionOp;
 
 import javax.media.jai.KernelJAI;
 import javax.media.jai.PlanarImage;
+import javax.swing.JOptionPane;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferFloat;
 import java.awt.image.RenderedImage;
@@ -50,8 +51,13 @@ public class Convoluter {
                     kernel = program.createKernel("Convolve");
                 }
                 return convolveOpenCL(sourceImage);
-            } catch (CLBuildException e) {
-                throw new IOException("OpenCL-Error: " + e.getMessage(), e);
+            } catch (Exception e) {
+//                throw new IOException("OpenCL-Error: " + e.getMessage(), e);
+                final String msg = "Warning: OpenCl cannot be used for convolution - going back to standard mode.\n\n" +
+                                                 "Reason: " + e.getMessage();
+                JOptionPane.showOptionDialog(null, msg, "ICOL - Info Message", JOptionPane.DEFAULT_OPTION,
+                                             JOptionPane.INFORMATION_MESSAGE, null, null, null);
+                return ReshapedConvolutionOp.convolve(sourceImage, kernelJAI);
             }
         } else {
             return ReshapedConvolutionOp.convolve(sourceImage, kernelJAI);
@@ -99,9 +105,9 @@ public class Convoluter {
 
 //        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{32, 4});
 //        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{width, 1});
-        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{16, 16});
+//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{16, 16});
 //        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{width, 1});
-//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, null); // this works, but is it ok???
+        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, null); // this works, but is it ok???
 
         FloatBuffer floatBuffer = clOutput.read(queue, clEvent);
         WritableRaster raster = WritableRaster.createWritableRaster(bufferedInputImage.getSampleModel(), null);

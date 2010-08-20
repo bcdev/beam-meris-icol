@@ -102,7 +102,8 @@ public class TmOp extends TmBasisOp {
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 
     // general
-    @Parameter(defaultValue="0", valueSet= {"0","1"})
+//    @Parameter(defaultValue="0", valueSet= {"0","1"})
+//    private int productType = 0;
     private int productType = 0;
     @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;
@@ -458,6 +459,7 @@ public class TmOp extends TmBasisOp {
             Product upscaleProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
 
             targetProduct = upscaleProduct;
+//            targetProduct = correctionProduct;
 //        } else {
 //            targetProduct = correctionProduct;
 //        }

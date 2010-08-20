@@ -119,7 +119,7 @@ public class ZmaxOp extends Operator {
     public static double computeZmaxPart(Tile[] zmaxTiles, int x, int y, double scaleHeight) {
         double zmaxPart = computeZmaxPart(zmaxTiles[0], x, y, scaleHeight);
         for (int i = 1; i < zmaxTiles.length; i++) {
-            zmaxPart = computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
+            zmaxPart += computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
         }
         return zmaxPart;
     }

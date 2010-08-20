@@ -61,10 +61,11 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 //                    origBand = targetProduct.addBand(srcBandName + "_orig", sourceBand.getDataType());
 //                    ProductUtils.copyRasterDataNodeProperties(sourceBand, origBand);
 //                }
-                targetBand = targetProduct.addBand(srcBandName, dataType);
+//                targetBand = targetProduct.addBand(srcBandName, dataType);
 
                 MultiLevelImage sourceImage = sourceBand.getSourceImage();
                 if (radianceBandIndex != 6) {
+                    targetBand = targetProduct.addBand(srcBandName, ProductData.TYPE_FLOAT32);
                     Band correctedBand = correctedProduct.getBand(sourceBand.getName());
                     Band geometryBand = geometryProduct.getBand(sourceBand.getName());
 
@@ -81,6 +82,7 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                                                                              Interpolation.getInstance(
                                                                                      Interpolation.INTERP_BILINEAR),
                                                                              null);
+//                    this was for debugging only:
 //                    origBand.setSourceImage(sourceImage);
 //                    diffBand.setSourceImage(upscaledDiffImage);
 
@@ -88,6 +90,8 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                     RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceBand.getGeophysicalImage(), upscaledDiffImage, null);
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {
+                    targetBand = targetProduct.addBand(srcBandName, dataType);
+                    ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
                     targetBand.setSourceImage(sourceImage);
                 }
             }
