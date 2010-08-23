@@ -271,6 +271,7 @@ public class MerisOp extends Operator {
         brrCloudInput.put("brr", rayleighProduct);
         brrCloudInput.put("refl", rad2reflProduct);
         brrCloudInput.put("cloud", cloudClassificationProduct);
+        brrCloudInput.put("land", landProduct);
         Product brrCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrCloudOp.class), emptyParams,
                                                     brrCloudInput);
 

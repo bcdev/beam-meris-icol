@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
+import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
@@ -39,6 +40,8 @@ public class MerisBrrCloudOp extends Operator {
     private Product rad2reflProduct;
     @SourceProduct(alias="cloud")
     private Product cloudProduct;
+    @SourceProduct(alias="land")
+    private Product landProduct;
 
     @TargetProduct
     private Product targetProduct;
@@ -79,6 +82,7 @@ public class MerisBrrCloudOp extends Operator {
             Tile surfacePressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), rectangle, subPm1(pm));
             Tile cloudTopPressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), rectangle, subPm1(pm));
             Tile cloudFlagsTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle, subPm1(pm));
+            Tile landFlagsTile = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle, subPm1(pm));
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
@@ -87,11 +91,16 @@ public class MerisBrrCloudOp extends Operator {
                     } else {
                         final float brr = brrTile.getSampleFloat(x, y);
                         boolean isCloud = cloudFlagsTile.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
+                        boolean isIce = landFlagsTile.getSampleBit(x, y, LandClassificationOp.F_ICE);
                         if (isCloud) {
                             final float surfacePressure = surfacePressureTile.getSampleFloat(x, y);
                             final float cloudTopPressure = cloudTopPressureTile.getSampleFloat(x, y);
                             final float rad2refl = rad2reflTile.getSampleFloat(x, y);
                             final float brrCorr = rad2refl * cloudTopPressure / surfacePressure;
+                            targetTile.setSample(x, y, brrCorr);
+                        } else if (isIce) {
+                            final float rad2refl = rad2reflTile.getSampleFloat(x, y);
+                            final float brrCorr = rad2refl;
                             targetTile.setSample(x, y, brrCorr);
                         } else {
                             // leave original value
