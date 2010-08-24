@@ -75,9 +75,8 @@ public class TmGaseousTransmittanceOp extends Operator {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                     final float airMass = airMassTile.getSampleFloat(x, y);
                     for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-                        final double gaseousTransmittance = 0.8883;
-//                        final double gaseousTransmittance =
-//                                Math.exp(-airMass*ozoneContent* TmConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
+                        final double gaseousTransmittance =
+                                Math.exp(-airMass*ozoneContent* TmConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
                         gaseousTransmittanceTile[bandId].setSample(x, y, gaseousTransmittance);
                     }
 
