@@ -32,6 +32,7 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
+import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
 import org.esa.beam.meris.icol.IcolConstants;
@@ -188,6 +189,7 @@ public class AeRayleighOp extends Operator {
             Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
             Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
+            Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect, pm);
 
             Tile[] rhoNg = OperatorUtils.getSourceTiles(this, gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX, instrument, targetRect, pm);
             Tile[] transRup = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRv", instrument, targetRect, pm); //up
@@ -229,7 +231,9 @@ public class AeRayleighOp extends Operator {
                         }
                     }
                     boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
-                    if (aep.getSampleInt(x, y) == 1 && !isCloud && rhoAg[0].getSampleFloat(x, y) != -1) {
+                    boolean isIce = landFlags.getSampleBit(x, y, LandClassificationOp.F_ICE);
+                    final boolean cloudfreeOrIce = !isCloud || isIce;
+                    if (aep.getSampleInt(x, y) == 1 && cloudfreeOrIce && rhoAg[0].getSampleFloat(x, y) != -1) {
                         double[] means = new double [numBands];
                         if (rhoAgConv == null) {
                             means = convolver.convolvePixel(x, y, 1);

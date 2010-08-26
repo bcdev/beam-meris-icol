@@ -119,7 +119,10 @@ public class ZmaxOp extends Operator {
     public static double computeZmaxPart(Tile[] zmaxTiles, int x, int y, double scaleHeight) {
         double zmaxPart = computeZmaxPart(zmaxTiles[0], x, y, scaleHeight);
         for (int i = 1; i < zmaxTiles.length; i++) {
-            zmaxPart += computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
+            // the current ICOL only has one additional Zmax, but in principle we need to
+            // switch between addition and subtraction of additional term:
+            // transition land-->water: add, water-->land: subtract
+            zmaxPart += Math.pow(-1.0, i*1.0)*computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
         }
         return zmaxPart;
     }

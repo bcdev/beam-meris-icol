@@ -35,6 +35,7 @@ public class TmLandClassificationOp extends TmBasisOp {
     public static final int F_LOINLD = 1;
     public static final int F_NDVI = 2;
     public static final int F_TEMP = 3;
+    public static final int F_ICE = 4;
 
     private transient Band[] reflectanceBands;
 
@@ -85,6 +86,7 @@ public class TmLandClassificationOp extends TmBasisOp {
         flagCoding.addFlag("F_LOINLD", BitSetter.setFlag(0, F_LOINLD), null);
         flagCoding.addFlag("F_NDVI", BitSetter.setFlag(0, F_NDVI), null);
         flagCoding.addFlag("F_TEMP", BitSetter.setFlag(0, F_TEMP), null);
+        flagCoding.addFlag("F_ICE", BitSetter.setFlag(0, F_ICE), null);
 
         return flagCoding;
     }
@@ -127,6 +129,10 @@ public class TmLandClassificationOp extends TmBasisOp {
                     } else {
                         targetTile.setSample(x, y, F_TEMP, false);
                     }
+
+                    boolean is_ice = false;
+                    // todo: define and implement ice criterion
+                    targetTile.setSample(x, y, F_ICE, is_ice);
 
                     boolean isLand = isLand(x, y, targetTile);
                     targetTile.setSample(x, y, F_LANDCONS, isLand);
