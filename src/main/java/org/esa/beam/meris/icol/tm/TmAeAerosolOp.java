@@ -84,10 +84,12 @@ public class TmAeAerosolOp extends TmBasisOp {
     private boolean exportSeparateDebugBands = false;
     @Parameter(defaultValue = "true")
     private boolean icolAerosolForWater = true;
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
-    private double userAot550;
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength")
+    private double userAot;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
@@ -127,7 +129,7 @@ public class TmAeAerosolOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-        userAot865 = IcolUtils.convertAOT(userAot550, userAlpha, 550.0, 865.0);
+        userAot865 = IcolUtils.convertAOT(userAot, userAlpha, userAerosolReferenceWavelength, 865.0);
         targetProduct = createCompatibleProduct(aeRayProduct, "ae_" + aeRayProduct.getName(), "AE");
 
         // this separation can be useful for an instrument-independent usage later
@@ -429,7 +431,7 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, 550.0));
+                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, userAerosolReferenceWavelength));
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < numSpectralBands; iwvl++) {

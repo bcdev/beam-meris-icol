@@ -87,10 +87,12 @@ public class MerisOp extends Operator {
     private boolean icolAerosolForWater = false;
     @Parameter(defaultValue = "false")
     private boolean icolAerosolCase2 = false;
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
-    private double userAot550;
+    private double userAot;
 
     // MerisReflectanceCorrectionOp
     @Parameter(defaultValue = "true")
@@ -369,8 +371,9 @@ public class MerisOp extends Operator {
         }
         aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
+        aeAerosolParams.put("userAerosolReferenceWavelength", userAerosolReferenceWavelength);
         aeAerosolParams.put("userAlpha", userAlpha);
-        aeAerosolParams.put("userAot550", userAot550);
+        aeAerosolParams.put("userAot", userAot);
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         Product aeAerProduct;

@@ -21,7 +21,6 @@ import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
-import org.esa.beam.util.ProductUtils;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -45,10 +44,12 @@ public class TmOp extends TmBasisOp {
     @TargetProduct(description = "The target product.")
     Product targetProduct;
 
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
-    private double userAot550;
+    private double userAot;
     @Parameter(defaultValue = "false")
     private boolean icolAerosolCase2 = false;
     @Parameter(defaultValue = "true")
@@ -372,8 +373,9 @@ public class TmOp extends TmBasisOp {
             exportSeparateDebugBands = true;
         aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
+        aeAerosolParams.put("userAerosolReferenceWavelength", userAerosolReferenceWavelength);
         aeAerosolParams.put("userAlpha", userAlpha);
-        aeAerosolParams.put("userAot550", userAot550);
+        aeAerosolParams.put("userAot", userAot);
         aeAerosolParams.put("userPSurf", landsatUserPSurf);
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");

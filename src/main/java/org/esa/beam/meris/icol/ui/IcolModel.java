@@ -40,10 +40,12 @@ public class IcolModel {
     boolean icolAerosolForWater = false;
     @Parameter(defaultValue = "false")
     boolean icolAerosolCase2 = false;
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    private double userAerosolReferenceWavelength = 550.0;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha = -1.0;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2")
-    private double userAot550 = 0.2;
+    private double userAot = 0.2;
 
     // General
     @Parameter(defaultValue = "true")
@@ -179,8 +181,9 @@ public class IcolModel {
     private void configAeAerosolOp(HashMap<String, Object> params) {
         params.put("icolAerosolForWater", icolAerosolForWater);
         params.put("icolAerosolCase2", icolAerosolCase2);
+        params.put("userAerosolReferenceWavelength", userAerosolReferenceWavelength);
         params.put("userAlpha", userAlpha);
-        params.put("userAot550", userAot550);
+        params.put("userAot", userAot);
     }
 
     private void configLandsatOp(HashMap<String, Object> params) {

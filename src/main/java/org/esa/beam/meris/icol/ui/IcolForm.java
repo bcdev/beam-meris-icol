@@ -20,8 +20,27 @@ import org.esa.beam.framework.ui.product.ProductExpressionPane;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -39,12 +58,13 @@ class IcolForm extends JTabbedPane {
     private JCheckBox aeRayleigh;
     private JCheckBox aeAerosol;
     private JCheckBox alphaAot;
-    
+
     private JCheckBox icolAerosolForWaterCheckBox;
     private JCheckBox icolAerosolCase2CheckBox;
     private JRadioButton icolCtp;
     private JRadioButton userCtp;
     private JFormattedTextField ctpValue;
+    private JFormattedTextField aerosolReferenceWavelengthValue;
     private JFormattedTextField angstroemValue;
     private JFormattedTextField aotValue;
     private TargetProductSelector targetProductSelector;
@@ -66,7 +86,7 @@ class IcolForm extends JTabbedPane {
     private JLabel userCtpLabel;
     private boolean userCtpSelected;
 //    private JFormattedTextField landsatStartTimeValue;
-//    private JFormattedTextField landsatStopTimeValue;
+    //    private JFormattedTextField landsatStopTimeValue;
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
@@ -100,10 +120,11 @@ class IcolForm extends JTabbedPane {
         bc = new BindingContext(icolModel.getPropertyContainer());
         this.targetProductSelector = targetProductSelector;
         JComboBox targetFormatComboBox = targetProductSelector.getFormatNameComboBox();
-	    comboBoxModelRhoToa = targetFormatComboBox.getModel();
-	    comboBoxModelN1 = createN1ComboboxModel(targetFormatComboBox);
-	    sourceProductSelector = new SourceProductSelector(appContext, "Input-Product (MERIS L1b or Landsat 5 TM L1G GeoTIFF):");
-	    cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
+        comboBoxModelRhoToa = targetFormatComboBox.getModel();
+        comboBoxModelN1 = createN1ComboboxModel(targetFormatComboBox);
+        sourceProductSelector = new SourceProductSelector(appContext,
+                                                          "Input-Product (MERIS L1b or Landsat 5 TM L1G GeoTIFF):");
+        cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();
         sourceComboBox.addActionListener(new ActionListener() {
@@ -120,27 +141,27 @@ class IcolForm extends JTabbedPane {
         updateUIStates();
     }
 
-	private ComboBoxModel createN1ComboboxModel(JComboBox targetFormatComboBox) {
-	    DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-	    comboBoxModel.addElement(N1);
-	    int itemCount = targetFormatComboBox.getItemCount();
-	    for (int i = 0; i < itemCount; i++) {       
-	        comboBoxModel.addElement(targetFormatComboBox.getItemAt(i));
+    private ComboBoxModel createN1ComboboxModel(JComboBox targetFormatComboBox) {
+        DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+        comboBoxModel.addElement(N1);
+        int itemCount = targetFormatComboBox.getItemCount();
+        for (int i = 0; i < itemCount; i++) {
+            comboBoxModel.addElement(targetFormatComboBox.getItemAt(i));
         }
         return comboBoxModel;
-	}
-	
-	public void prepareShow() {
-	    sourceProductSelector.initProducts();
+    }
+
+    public void prepareShow() {
+        sourceProductSelector.initProducts();
         cloudProductSelector.initProducts();
         updateProductTypeSettings();
     }
-	
-	public void prepareHide() {
-	    sourceProductSelector.releaseProducts();
+
+    public void prepareHide() {
+        sourceProductSelector.releaseProducts();
         cloudProductSelector.releaseProducts();
     }
-	
+
     private void bindComponents() {
 
         bc.bind("exportRhoToa", rhoToa);
@@ -149,7 +170,7 @@ class IcolForm extends JTabbedPane {
         bc.bind("exportAeRayleigh", aeRayleigh);
         bc.bind("exportAeAerosol", aeAerosol);
         bc.bind("exportAlphaAot", alphaAot);
-		
+
         Map<AbstractButton, Object> ctpGroupValueSet = new HashMap<AbstractButton, Object>(4);
         ctpGroupValueSet.put(icolCtp, false);
         ctpGroupValueSet.put(userCtp, true);
@@ -158,8 +179,9 @@ class IcolForm extends JTabbedPane {
 
         bc.bind("icolAerosolForWater", icolAerosolForWaterCheckBox);
         bc.bind("icolAerosolCase2", icolAerosolCase2CheckBox);
+        bc.bind("userAerosolReferenceWavelength", aerosolReferenceWavelengthValue);
         bc.bind("userAlpha", angstroemValue);
-        bc.bind("userAot550", aotValue);
+        bc.bind("userAot", aotValue);
 
         bc.bind("aeArea", aeAreaComboBox);
 
@@ -217,14 +239,14 @@ class IcolForm extends JTabbedPane {
         merisParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         merisParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         merisParam.setTableWeightX(1);
-        merisParam.setCellWeightY(3, 0, 1);
+        merisParam.setCellWeightY(4, 0, 1);
         merisParam.setTablePadding(2, 2);
 
         TableLayout landsatParam = new TableLayout(1);
         landsatParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         landsatParam.setTableFill(TableLayout.Fill.HORIZONTAL);
         landsatParam.setTableWeightX(1);
-        landsatParam.setCellWeightY(4, 0, 1);
+        landsatParam.setCellWeightY(3, 0, 1);
         landsatParam.setTablePadding(2, 2);
 
         JPanel ioTab = new JPanel(layoutIO);
@@ -238,18 +260,20 @@ class IcolForm extends JTabbedPane {
 
         JPanel inputPanel = sourceProductSelector.createDefaultPanel();
         ioTab.add(inputPanel);
-		ioTab.add(targetProductSelector.createDefaultPanel());
-		ioTab.add(new JLabel(""));
-
-        JPanel processingPanel = createProcessingPanel();
-        processingParamTab.add(processingPanel);
+        ioTab.add(targetProductSelector.createDefaultPanel());
         ioTab.add(new JLabel(""));
+
+        JPanel generalProcessingPanel = createGeneralProcessingPanel();
+        processingParamTab.add(generalProcessingPanel);
 
         JPanel productTypePanel = createProductTypePanel();
         merisParamTab.add(productTypePanel);
 
         JPanel rhoToaPanel = createRhoToaBandSelectionPanel();
         merisParamTab.add(rhoToaPanel);
+
+        JPanel merisProcessingPanel = createMerisProcessingPanel();
+        merisParamTab.add(merisProcessingPanel);
 
         JPanel ctpPanel = createCTPPanel();
         merisParamTab.add(ctpPanel);
@@ -262,40 +286,40 @@ class IcolForm extends JTabbedPane {
 
         JPanel advancedOptionsPanel = createAdvancedOptionsPanel();
         processingParamTab.add(advancedOptionsPanel);
-        
+
         JPanel landsatProcessingPanel = createLandsatProcessingPanel();
-		landsatParamTab.add(landsatProcessingPanel);
+        landsatParamTab.add(landsatProcessingPanel);
 
         JPanel landsatCloudFlagSettingPanel = createLandsatCloudFlagSettingPanel();
-		landsatParamTab.add(landsatCloudFlagSettingPanel);
+        landsatParamTab.add(landsatCloudFlagSettingPanel);
 
         JPanel landsatLandFlagSettingPanel = createLandsatLandFlagSettingPanel();
-		landsatParamTab.add(landsatLandFlagSettingPanel);
+        landsatParamTab.add(landsatLandFlagSettingPanel);
 
         JPanel landsatAdvancedOptionsPanel = createLandsatAdvancedOptionsPanel();
-		landsatParamTab.add(landsatAdvancedOptionsPanel);
+        landsatParamTab.add(landsatAdvancedOptionsPanel);
 
-		merisParamTab.add(new JLabel(""));
+        merisParamTab.add(new JLabel(""));
     }
 
-	private JPanel createRhoToaBandSelectionPanel() {
-		TableLayout layout = new TableLayout(1);
-		layout.setTableAnchor(TableLayout.Anchor.WEST);
-		layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-		layout.setTableWeightX(1);
-		layout.setTablePadding(2, 2);
-		
-		rhoToa = new JCheckBox("TOA reflectances (rho_toa)");
+    private JPanel createRhoToaBandSelectionPanel() {
+        TableLayout layout = new TableLayout(1);
+        layout.setTableAnchor(TableLayout.Anchor.WEST);
+        layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+        layout.setTableWeightX(1);
+        layout.setTablePadding(2, 2);
+
+        rhoToa = new JCheckBox("TOA reflectances (rho_toa)");
         rhoToaRayleigh = new JCheckBox("TOA reflectances corrected for AE rayleigh (rho_toa_AERC)");
         rhoToaAerosol = new JCheckBox("TOA reflectances corrected for AE rayleigh and AE aerosol (rho_toa_AEAC)");
         aeRayleigh = new JCheckBox("AE rayleigh correction term (rho_aeRay)");
         aeAerosol = new JCheckBox("AE aerosol correction term (rho_aeAer)");
         alphaAot = new JCheckBox("alpha + aot");
-        
-		JPanel panel = new JPanel(layout);
-		panel.setBorder(BorderFactory.createTitledBorder("RhoToa Product"));
 
-		panel.add(new JLabel("Bands included in the RhoToa product:"));
+        JPanel panel = new JPanel(layout);
+        panel.setBorder(BorderFactory.createTitledBorder("RhoToa Product"));
+
+        panel.add(new JLabel("Bands included in the RhoToa product:"));
         panel.add(rhoToa);
         panel.add(rhoToaRayleigh);
         panel.add(rhoToaAerosol);
@@ -303,20 +327,20 @@ class IcolForm extends JTabbedPane {
         panel.add(aeAerosol);
         panel.add(alphaAot);
 
-		return panel;
-	}
-	
-	private void setRhoToaBandSelectionPanelEnabled(boolean enabled) {
-	    rhoToa.setEnabled(enabled);
-	    rhoToaRayleigh.setEnabled(enabled);
-	    rhoToaAerosol.setEnabled(enabled);
-	    aeRayleigh.setEnabled(enabled);
-	    aeAerosol.setEnabled(enabled);
-	    alphaAot.setEnabled(enabled);
-	}
+        return panel;
+    }
+
+    private void setRhoToaBandSelectionPanelEnabled(boolean enabled) {
+        rhoToa.setEnabled(enabled);
+        rhoToaRayleigh.setEnabled(enabled);
+        rhoToaAerosol.setEnabled(enabled);
+        aeRayleigh.setEnabled(enabled);
+        aeAerosol.setEnabled(enabled);
+        alphaAot.setEnabled(enabled);
+    }
 
     private JPanel createCTPPanel() {
-		TableLayout layout = new TableLayout(3);
+        TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
@@ -327,42 +351,42 @@ class IcolForm extends JTabbedPane {
         layout.setTablePadding(2, 2);
         layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Cloud Top Pressure"));
-		ctpGroup = new ButtonGroup();
+        panel.setBorder(BorderFactory.createTitledBorder("Cloud Top Pressure"));
+        ctpGroup = new ButtonGroup();
         icolCtp = new JRadioButton("Compute by algorithm");
         icolCtp.setSelected(true);
-		panel.add(icolCtp);
-		ctpGroup.add(icolCtp);
+        panel.add(icolCtp);
+        ctpGroup.add(icolCtp);
 
-		userCtp = new JRadioButton("Use constant value");
+        userCtp = new JRadioButton("Use constant value");
         userCtp.setSelected(false);
 
         panel.add(userCtp);
-		ctpGroup.add(userCtp);
+        ctpGroup.add(userCtp);
 
-		ctpValue = new JFormattedTextField("1013.0");
+        ctpValue = new JFormattedTextField("1013.0");
 
         userCtpLabel = new JLabel("CTP: ");
         panel.add(userCtpLabel);
         panel.add(ctpValue);
-		panel.add(new JPanel());
+        panel.add(new JPanel());
 
-		ActionListener ctpActionListener = new ActionListener() {
+        ActionListener ctpActionListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 updateCtpUIstate();
             }
-		};
+        };
         icolCtp.addActionListener(ctpActionListener);
         userCtp.addActionListener(ctpActionListener);
 
-		return panel;
-	}
+        return panel;
+    }
 
     private JPanel createMerisCloudPanel() {
         JPanel panel = cloudProductSelector.createDefaultPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+        panel.setBorder(BorderFactory.createTitledBorder("Cloud Mask"));
 
         final JTextField textField = new JTextField(30);
         final Binding binding = bc.bind("cloudMaskExpression", textField);
@@ -374,18 +398,20 @@ class IcolForm extends JTabbedPane {
             public void actionPerformed(ActionEvent e) {
                 ProductExpressionPane expressionPane;
                 Product currentProduct = cloudProductSelector.getSelectedProduct();
-                expressionPane = ProductExpressionPane.createBooleanExpressionPane(new Product[]{currentProduct}, currentProduct, appContext.getPreferences());
+                expressionPane = ProductExpressionPane.createBooleanExpressionPane(new Product[]{currentProduct},
+                                                                                   currentProduct,
+                                                                                   appContext.getPreferences());
                 expressionPane.setCode((String) binding.getPropertyValue());
                 if (expressionPane.showModalDialog(null, "Expression Editor") == ModalDialog.ID_OK) {
                     binding.setPropertyValue(expressionPane.getCode());
                 }
             }
         });
-        cloudProductSelector.addSelectionChangeListener(new AbstractSelectionChangeListener(){
+        cloudProductSelector.addSelectionChangeListener(new AbstractSelectionChangeListener() {
 
             @Override
             public void selectionChanged(SelectionChangeEvent event) {
-                  updateMerisCloudMaskExpressionEditor(textField, etcButton);
+                updateMerisCloudMaskExpressionEditor(textField, etcButton);
             }
         });
         updateMerisCloudMaskExpressionEditor(textField, etcButton);
@@ -425,38 +451,47 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+//        layout.setColumnWeightX(0, 0.1);
+//        layout.setColumnWeightX(1, 1);
+//        layout.setColumnWeightX(2, 0.1);
         layout.setColumnWeightX(0, 0.1);
-        layout.setColumnWeightX(1, 1);
-        layout.setColumnWeightX(2, 0.1);
+        layout.setColumnWeightX(1, 0.1);
+        layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
-        layout.setCellColspan(2, 0, 3);
+        layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
+        layout.setCellColspan(3, 0, 3);
         JPanel panel = new JPanel(layout);
 
         panel.setBorder(BorderFactory.createTitledBorder("Aerosol Type Determination"));
 
+        aerosolReferenceWavelengthValue = new JFormattedTextField();
         angstroemValue = new JFormattedTextField();
         aotValue = new JFormattedTextField();
 
-		panel.add(new JLabel("Angstroem: "));
+        panel.add(new JLabel("Reference wavelength (nm): "));
+        panel.add(aerosolReferenceWavelengthValue);
+        panel.add(new JPanel());
+
+        panel.add(new JLabel("Angstroem: "));
         panel.add(angstroemValue);
-		panel.add(new JPanel());
+        panel.add(new JPanel());
 
         panel.add(new JLabel("AOT: "));
         panel.add(aotValue);
-		panel.add(new JLabel("(550nm)"));
+        panel.add(new JLabel(""));
 
         icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
         icolAerosolForWaterCheckBox.setSelected(false);
-		panel.add(icolAerosolForWaterCheckBox);
+        panel.add(icolAerosolForWaterCheckBox);
 
         return panel;
     }
 
-    private JPanel createProcessingPanel() {
+    private JPanel createGeneralProcessingPanel() {
         // table layout with a third 'empty' column
-		TableLayout layout = new TableLayout(2);
+        TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 1);
@@ -464,9 +499,9 @@ class IcolForm extends JTabbedPane {
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
         layout.setCellColspan(1, 0, 2);
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Processing"));
+        panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
         aeAreaComboBox = new JComboBox();
         aeAreaComboBox.setRenderer(new AeAreaRenderer());
@@ -475,16 +510,16 @@ class IcolForm extends JTabbedPane {
         panel.add(aeAreaComboBox);
         panel.add(new JLabel());
 
-        icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
-        icolAerosolCase2CheckBox.setSelected(false);
-		panel.add(icolAerosolCase2CheckBox);
+//        icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
+//        icolAerosolCase2CheckBox.setSelected(false);
+//		panel.add(icolAerosolCase2CheckBox);
 
-		return panel;
-	}
+        return panel;
+    }
 
-    private JPanel createAdvancedOptionsPanel() {
+    private JPanel createMerisProcessingPanel() {
         // table layout with a third 'empty' column
-		TableLayout layout = new TableLayout(2);
+        TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 1);
@@ -492,20 +527,50 @@ class IcolForm extends JTabbedPane {
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
         layout.setCellColspan(1, 0, 2);
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+        panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
-        openclConvolutionCheckBox = new JCheckBox("Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
+//        aeAreaComboBox = new JComboBox();
+//        aeAreaComboBox.setRenderer(new AeAreaRenderer());
+//        panel.add(new JLabel("Where to apply the AE algorithm:"));
+//        panel.add(new JLabel());
+//        panel.add(aeAreaComboBox);
+//        panel.add(new JLabel());
+
+        icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
+        icolAerosolCase2CheckBox.setSelected(false);
+        panel.add(icolAerosolCase2CheckBox);
+
+        return panel;
+    }
+
+
+    private JPanel createAdvancedOptionsPanel() {
+        // table layout with a third 'empty' column
+        TableLayout layout = new TableLayout(2);
+        layout.setTableAnchor(TableLayout.Anchor.WEST);
+        layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+        layout.setColumnWeightX(0, 1);
+        layout.setColumnWeightX(1, 0.1);
+        layout.setTablePadding(2, 2);
+        layout.setCellColspan(0, 0, 2);
+        layout.setCellColspan(1, 0, 2);
+        JPanel panel = new JPanel(layout);
+
+        panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+
+        openclConvolutionCheckBox = new JCheckBox(
+                "Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
         openclConvolutionCheckBox.setSelected(false);
-		panel.add(openclConvolutionCheckBox);
+        panel.add(openclConvolutionCheckBox);
 
         nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
         nestedConvolutionCheckBox.setSelected(true);
-		panel.add(nestedConvolutionCheckBox);
+        panel.add(nestedConvolutionCheckBox);
 
-		return panel;
-	}
+        return panel;
+    }
 
 
     private JPanel createLandsatProcessingPanel() {
@@ -513,16 +578,17 @@ class IcolForm extends JTabbedPane {
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
-        layout.setColumnWeightX(1, 0.5);
+//        layout.setColumnWeightX(1, 0.5);
+        layout.setColumnWeightX(1, 0.1);
         layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
 
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Atmospheric Parameters"));
+        panel.setBorder(BorderFactory.createTitledBorder("Atmospheric Parameters"));
 
         panel.add(new JLabel("Ozone content (cm atm): "));
         landsatOzoneContentValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_OZONE_CONTENT));
@@ -535,19 +601,20 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel(""));
 
         panel.add(new JLabel("Surface TM apparent temperature (K): "));
-        landsatTM60Value = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
+        landsatTM60Value = new JFormattedTextField(
+                Double.toString(TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
         panel.add(landsatTM60Value);
         panel.add(new JLabel(""));
 
-		panel.add(new JPanel());
+        panel.add(new JPanel());
 
-		return panel;
-	}
+        return panel;
+    }
 
     private JPanel createLandsatCloudFlagSettingPanel() {
         // table layout with a third 'empty' column
         // todo: this is not nice! use GridBagLayout for more complex panels
-		TableLayout layout = new TableLayout(3);
+        TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
@@ -562,9 +629,9 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(5, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(6, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(7, 0, new Insets(0, 48, 0, 0));
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Cloud Flag Settings"));
+        panel.setBorder(BorderFactory.createTitledBorder("Cloud Flag Settings"));
 
         landsatCloudFlagApplyBrightnessFilterCheckBox =
                 new JCheckBox("Brightness flag (set if TM3 > BT)");
@@ -573,10 +640,11 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        cloudBrightnessThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_BRIGHTNESS_THRESHOLD));
+        cloudBrightnessThresholdValue = new JFormattedTextField(
+                Double.toString(TmConstants.DEFAULT_BRIGHTNESS_THRESHOLD));
         panel.add(new JLabel("Brightness threshold BT: "));
         panel.add(cloudBrightnessThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
         landsatCloudFlagApplyNdviFilterCheckBox =
                 new JCheckBox("NDVI flag (set if NDVI < NDVIT, with NDVI = (TM4 - TM3)/(TM4 + TM3))");
@@ -588,7 +656,7 @@ class IcolForm extends JTabbedPane {
         cloudNdviThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDVI_CLOUD_THRESHOLD));
         panel.add(new JLabel("NDVI threshold NDVIT: "));
         panel.add(cloudNdviThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
         landsatCloudFlagApplyNdsiFilterCheckBox =
                 new JCheckBox("NDSI flag (set if NDSI < NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))");
@@ -600,7 +668,7 @@ class IcolForm extends JTabbedPane {
         cloudNdsiThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDSI_THRESHOLD));
         panel.add(new JLabel("NDSI threshold NDSIT: "));
         panel.add(cloudNdsiThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
         landsatCloudFlagApplyTemperatureFilterCheckBox =
                 new JCheckBox("Temperature flag (set if TM6 < TM6T)");
@@ -612,15 +680,15 @@ class IcolForm extends JTabbedPane {
         cloudTM6ThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_TM6_CLOUD_THRESHOLD));
         panel.add(new JLabel("Temperature threshold TM6T (K): "));
         panel.add(cloudTM6ThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
-		return panel;
-	}
+        return panel;
+    }
 
     private JPanel createLandsatLandFlagSettingPanel() {
         // table layout with a third 'empty' column
         // todo: this is not nice! use GridBagLayout for more complex panels
-		TableLayout layout = new TableLayout(3);
+        TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
@@ -634,9 +702,9 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(5, 0, new Insets(0, 72, 0, 0));
         layout.setCellPadding(6, 0, new Insets(0, 72, 0, 0));
-		JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Land Flag Settings"));
+        panel.setBorder(BorderFactory.createTitledBorder("Land Flag Settings"));
 
         landsatLandFlagApplyNdviFilterCheckBox =
                 new JCheckBox("NDVI flag (set if NDVI < NDVIT, with NDVI = (TM4 - TM3)/(TM4 + TM3))");
@@ -648,7 +716,7 @@ class IcolForm extends JTabbedPane {
         landNdviThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDVI_LAND_THRESHOLD));
         panel.add(new JLabel("NDVI threshold: "));
         panel.add(landNdviThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
         landsatLandFlagApplyTemperatureFilterCheckBox =
                 new JCheckBox("Temperature flag (set if TM6 > TM6T (summer), TM6 < TM6T (winter))");
@@ -660,7 +728,7 @@ class IcolForm extends JTabbedPane {
         landTM6ThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_TM6_LAND_THRESHOLD));
         panel.add(new JLabel("Temperature threshold TM6T (K): "));
         panel.add(landTM6ThresholdValue);
-		panel.add(new JLabel());
+        panel.add(new JLabel());
 
         panel.add(new JLabel("Season:"));
         panel.add(new JLabel(""));
@@ -681,7 +749,7 @@ class IcolForm extends JTabbedPane {
         landsatSeasonGroup.add(landsatSummerButton);
         landsatSeasonGroup.add(landsatWinterButton);
 
-         ActionListener landsatSeasonListener = new ActionListener() {
+        ActionListener landsatSeasonListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 updateLandsatSeasonSettings();
             }
@@ -689,80 +757,80 @@ class IcolForm extends JTabbedPane {
         landsatSummerButton.addActionListener(landsatSeasonListener);
         landsatWinterButton.addActionListener(landsatSeasonListener);
 
-		return panel;
-	}
+        return panel;
+    }
 
     private JPanel createLandsatAdvancedOptionsPanel() {
-            TableLayout layout = new TableLayout(3);
-            layout.setTableAnchor(TableLayout.Anchor.WEST);
-            layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-            layout.setColumnWeightX(0, 0.1);
-            layout.setColumnWeightX(1, 0.5);
-            layout.setColumnWeightX(2, 1);
-            layout.setTablePadding(2, 2);
-            layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
-            layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
-            layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
-            layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-            layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
+        TableLayout layout = new TableLayout(3);
+        layout.setTableAnchor(TableLayout.Anchor.WEST);
+        layout.setTableFill(TableLayout.Fill.HORIZONTAL);
+        layout.setColumnWeightX(0, 0.1);
+        layout.setColumnWeightX(1, 0.5);
+        layout.setColumnWeightX(2, 1);
+        layout.setTablePadding(2, 2);
+        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
 
-            JPanel panel = new JPanel(layout);
+        JPanel panel = new JPanel(layout);
 
-            panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+        panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
 
-            panel.add(new JLabel("AE correction grid resolution:"));
-            panel.add(new JLabel(""));
-            panel.add(new JLabel(""));
+        panel.add(new JLabel("AE correction grid resolution:"));
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
 
-            landsatResolution300Button = new JRadioButton("300 m");
-            landsatResolution300Button.setSelected(true);
-            panel.add(landsatResolution300Button);
-            panel.add(new JLabel(""));
-            panel.add(new JLabel(""));
-            landsatResolution1200Button = new JRadioButton("1200 m");
-            landsatResolution1200Button.setSelected(false);
-            panel.add(landsatResolution1200Button);
-            panel.add(new JLabel(""));
-            panel.add(new JLabel(""));
+        landsatResolution300Button = new JRadioButton("300 m");
+        landsatResolution300Button.setSelected(true);
+        panel.add(landsatResolution300Button);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatResolution1200Button = new JRadioButton("1200 m");
+        landsatResolution1200Button.setSelected(false);
+        panel.add(landsatResolution1200Button);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
 
-            landsatResolutionGroup = new ButtonGroup();
-            landsatResolutionGroup.add(landsatResolution300Button);
-            landsatResolutionGroup.add(landsatResolution1200Button);
+        landsatResolutionGroup = new ButtonGroup();
+        landsatResolutionGroup.add(landsatResolution300Button);
+        landsatResolutionGroup.add(landsatResolution1200Button);
 
-             ActionListener landsatResolutionListener = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    updateLandsatResolutionSettings();
-                }
-            };
-            landsatResolution300Button.addActionListener(landsatResolutionListener);
-            landsatResolution1200Button.addActionListener(landsatResolutionListener);
+        ActionListener landsatResolutionListener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateLandsatResolutionSettings();
+            }
+        };
+        landsatResolution300Button.addActionListener(landsatResolutionListener);
+        landsatResolution1200Button.addActionListener(landsatResolutionListener);
 
-            landsatComputeToTargetGridOnly = new JCheckBox("Compute 'Geometry' product only (input downscaled to AE correction grid)");
-            landsatComputeToTargetGridOnly.setSelected(false);
-            panel.add(landsatComputeToTargetGridOnly);
-            panel.add(new JLabel(""));
-            panel.add(new JLabel(""));
+        landsatComputeToTargetGridOnly = new JCheckBox(
+                "Compute 'Geometry' product only (input downscaled to AE correction grid)");
+        landsatComputeToTargetGridOnly.setSelected(false);
+        panel.add(landsatComputeToTargetGridOnly);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
 
-            landsatComputeFlagSettingsOnly = new JCheckBox("Compute flag settings product only");
-            landsatComputeFlagSettingsOnly.setSelected(false);
-            panel.add(landsatComputeFlagSettingsOnly);
-            panel.add(new JLabel(""));
-            panel.add(new JLabel(""));
+        landsatComputeFlagSettingsOnly = new JCheckBox("Compute flag settings product only");
+        landsatComputeFlagSettingsOnly.setSelected(false);
+        panel.add(landsatComputeFlagSettingsOnly);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
 
 //            upscaleToTMFR = new JCheckBox("Upscale Radiance/RhoToa product to TM FR (30m)");
 //            upscaleToTMFR.setSelected(false);
 //            panel.add(upscaleToTMFR);
 //            panel.add(new JLabel(""));
 
-            panel.add(new JPanel());
+        panel.add(new JPanel());
 
-            return panel;
-        }
+        return panel;
+    }
 
 
     private void updateLandsatResolutionSettings() {
-        if (landsatResolution300Button.isSelected())
-        {
+        if (landsatResolution300Button.isSelected()) {
             landsatResolutionValue = 300;
             landsatResolution1200Button.setSelected(false);
         } else {
@@ -772,8 +840,7 @@ class IcolForm extends JTabbedPane {
     }
 
     private void updateLandsatSeasonSettings() {
-        if (landsatWinterButton.isSelected())
-        {
+        if (landsatWinterButton.isSelected()) {
             landsatSeasonValue = TmConstants.LAND_FLAGS_WINTER;
             landsatSummerButton.setSelected(false);
         } else {
@@ -782,12 +849,12 @@ class IcolForm extends JTabbedPane {
         }
     }
 
-	private JPanel createProductTypePanel() {
-	    TableLayout layout = new TableLayout(1);
+    private JPanel createProductTypePanel() {
+        TableLayout layout = new TableLayout(1);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setTableWeightX(1);
-        
+
         JPanel panel = new JPanel(layout);
         panel.setBorder(BorderFactory.createTitledBorder("Product Type Selection"));
 
@@ -809,25 +876,25 @@ class IcolForm extends JTabbedPane {
         };
         rhoToaProductTypeButton.addActionListener(productTypeListener);
         reflectanceProductTypeButton.addActionListener(productTypeListener);
-        
+
         return panel;
-	}
-	
-	private void updateProductTypeSettings() {
-	    JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
+    }
+
+    private void updateProductTypeSettings() {
+        JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
         if (rhoToaProductTypeButton.isSelected()) {
-	        formatNameComboBox.setModel(comboBoxModelRhoToa);
-	        setRhoToaBandSelectionPanelEnabled(true);
-	    } else {
-	        // Radiance product
-	        boolean n1 = false;
+            formatNameComboBox.setModel(comboBoxModelRhoToa);
+            setRhoToaBandSelectionPanelEnabled(true);
+        } else {
+            // Radiance product
+            boolean n1 = false;
             Product sourceProduct = sourceProductSelector.getSelectedProduct();
             if (sourceProduct != null) {
                 File fileLocation = sourceProduct.getFileLocation();
                 ProductReader productReader = sourceProduct.getProductReader();
                 if (fileLocation != null &&
-                        fileLocation.getName().endsWith("N1") &&
-                        productReader instanceof EnvisatProductReader) {
+                    fileLocation.getName().endsWith("N1") &&
+                    productReader instanceof EnvisatProductReader) {
                     n1 = true;
                 }
             }
@@ -837,7 +904,7 @@ class IcolForm extends JTabbedPane {
                 formatNameComboBox.setModel(comboBoxModelRhoToa);
             }
             setRhoToaBandSelectionPanelEnabled(false);
-	    }
+        }
         Product sourceProduct = sourceProductSelector.getSelectedProduct();
         final TargetProductSelectorModel selectorModel = targetProductSelector.getModel();
         if (sourceProduct != null) {
@@ -854,28 +921,29 @@ class IcolForm extends JTabbedPane {
             selectorModel.setProductName("icol");
         }
     }
-	
-	private void updateProductFormatChange() {
-	    JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
-	    String selectedItem = (String) formatNameComboBox.getSelectedItem();
-	    if (selectedItem.equals(N1)) {
-	        JCheckBox saveToFileCheckBox = targetProductSelector.getSaveToFileCheckBox();
+
+    private void updateProductFormatChange() {
+        JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
+        String selectedItem = (String) formatNameComboBox.getSelectedItem();
+        if (selectedItem.equals(N1)) {
+            JCheckBox saveToFileCheckBox = targetProductSelector.getSaveToFileCheckBox();
             saveToFileCheckBox.setSelected(true);
             saveToFileCheckBox.setEnabled(false);
-            
+
             reflectanceProductTypeButton.setSelected(true);
             rhoToaProductTypeButton.setEnabled(false);
-	    } else {
-	        targetProductSelector.setEnabled(true);
-	        
-	        rhoToaProductTypeButton.setEnabled(true);
-	    }
-	}
+        } else {
+            targetProductSelector.setEnabled(true);
 
-    private static class AeAreaRenderer extends DefaultListCellRenderer  {
+            rhoToaProductTypeButton.setEnabled(true);
+        }
+    }
+
+    private static class AeAreaRenderer extends DefaultListCellRenderer {
 
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                      boolean cellHasFocus) {
             final Component cellRendererComponent =
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
