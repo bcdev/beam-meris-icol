@@ -20,6 +20,7 @@ import org.esa.beam.util.io.CsvReader;
 
 import javax.media.jai.KernelJAI;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -203,6 +204,17 @@ public class CoeffW {
         return kernel;
     }
 
+    public KernelJAI getReshapedConvolutionKernelForRROffNadir(int iaer) {
+        // test
+        KernelJAI kernel = null;
+        if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
+           kernel = createKernelOffNadir(createFilterOffNadir("W_ray30.txt"));
+        }  else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
+           kernel = createKernelOffNadir(createFilterOffNadir("W_aer30.txt"));
+        }
+        return kernel;
+    }
+
     public KernelJAI getReshapedConvolutionKernelForFR(int iaer) {
         KernelJAI kernel = null;
         if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
@@ -222,6 +234,18 @@ public class CoeffW {
 
         int m = 2 * array.length - 1;
         return new KernelJAI(m, m, kernelData);
+    }
+
+    public static KernelJAI createKernelOffNadir(float[] array) {
+        int m = (int) (Math.sqrt(array.length));
+        return new KernelJAI(m, m, array);
+    }
+
+    public static float[] createFilterOffNadir(String fileName) {
+        KernelOffNadir kernelOffNadir = new KernelOffNadir(fileName);
+        float[] kernelData = kernelOffNadir.getKernel();
+        normalize(kernelData);
+        return kernelData;
     }
 
     public static float[] createFilterByRotation(double[] array) {
@@ -261,6 +285,11 @@ public class CoeffW {
             }
         }
 
+        normalize(kernelData);
+        return kernelData;
+    }
+
+    private static void normalize(float[] kernelData) {
         float sum = 0;
         for (int i = 0; i < kernelData.length; i++) {
             sum += kernelData[i];
@@ -269,9 +298,7 @@ public class CoeffW {
         for (int i = 0; i < kernelData.length; i++) {
             kernelData[i] /= sum;
         }
-        return kernelData;
     }
-
 
     static int computeIndex(int x, int y, int n) {
         int dx = x - (n - 1);

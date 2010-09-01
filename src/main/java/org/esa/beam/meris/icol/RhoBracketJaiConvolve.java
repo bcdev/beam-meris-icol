@@ -31,6 +31,8 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
         double reshapedScalingFactor = 1.0;
         if (productType.indexOf("_RR") > -1) {
             convolveKernel = coeffW.getReshapedConvolutionKernelForRR(iaerConv);
+            // test!!!
+//            convolveKernel = coeffW.getReshapedConvolutionKernelForRROffNadir(iaerConv);
             reshapedScalingFactor = 2.0 * (CoeffW.RR_KERNEL_SIZE ) / (convolveKernel.getWidth() - 1);
         } else {
             convolveKernel = coeffW.getReshapedConvolutionKernelForFR(iaerConv);

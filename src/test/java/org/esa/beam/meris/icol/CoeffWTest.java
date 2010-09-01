@@ -16,14 +16,10 @@
  */
 package org.esa.beam.meris.icol;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.File;
-import java.io.IOException;
-
-import org.esa.beam.meris.icol.CoeffW;
-import org.esa.beam.util.SystemUtils;
 
 import junit.framework.TestCase;
 
@@ -88,5 +84,20 @@ public class CoeffWTest extends TestCase {
 
     }
 
+    public void testReadKernelOffNadir() {
+        // Rayleigh:
+        float[] kernel = CoeffW.createFilterOffNadir("W_ray0.txt");
+        assertEquals(289, kernel.length);
+        // todo: consider normalization
+//        assertEquals(0.0f, kernel[0]);
+//        assertEquals(0.000137f, kernel[7], 1.E-5);
+//        assertEquals(0.000296f,
+//                     kernel[144] , 1.E-5);
+//        assertEquals(0.0f, kernel[288]);
+
+        // aerosol:
+        kernel = CoeffW.createFilterOffNadir("W_aer0.txt");
+        assertEquals(2601, kernel.length);
+    }
    
 }
