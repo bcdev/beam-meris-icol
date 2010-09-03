@@ -20,7 +20,6 @@ import org.esa.beam.util.io.CsvReader;
 
 import javax.media.jai.KernelJAI;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -243,7 +242,7 @@ public class CoeffW {
 
     public static float[] createFilterOffNadir(String fileName) {
         KernelOffNadir kernelOffNadir = new KernelOffNadir(fileName);
-        float[] kernelData = kernelOffNadir.getKernel();
+        float[] kernelData = kernelOffNadir.getKernelAsArray();
         normalize(kernelData);
         return kernelData;
     }

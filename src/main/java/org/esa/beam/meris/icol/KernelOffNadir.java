@@ -3,19 +3,17 @@ package org.esa.beam.meris.icol;
 import org.esa.beam.framework.gpf.OperatorException;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
 /**
+ * Class for reading off-nadir kernels provided by RS.
+ * (This is more or less a test class at this point. Check if it will be needed finally.)
+ *
  * @author Olaf Danne
  * @version $Revision: $ $Date:  $
  */
@@ -24,7 +22,6 @@ public class KernelOffNadir {
     public static final int KERNEL_MATRIX_WIDTH_RR = 51;
 
     private String fileName;
-    private FileReader reader;
 
     private List<Float> kernelList;
 
@@ -42,9 +39,17 @@ public class KernelOffNadir {
         }
     }
 
+    public float[] getKernelAsArray() {
+        float[] result = new float[kernelList.size()];
+        for (int i = 0; i < kernelList.size(); i++) {
+            result[i] = kernelList.get(i);
+        }
+        return result;
+    }
+
     private void readKernelMatrixRayleigh() throws IOException {
         BufferedReader bufferedReader;
-        InputStream inputStream = null;
+        InputStream inputStream;
         inputStream = CoeffW.class.getResourceAsStream(fileName);
         bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -84,7 +89,7 @@ public class KernelOffNadir {
 
     private void readKernelMatrixAerosol() throws IOException {
         BufferedReader bufferedReader;
-        InputStream inputStream = null;
+        InputStream inputStream;
         inputStream = CoeffW.class.getResourceAsStream(fileName);
         bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -93,7 +98,6 @@ public class KernelOffNadir {
             kernelList = new ArrayList<Float>();
             int i = 0;
             String line;
-            int kernelIndex = 0;
             while ((line = bufferedReader.readLine()) != null && i < KERNEL_MATRIX_WIDTH_RR) {
                 line = line.trim();
                 st = new StringTokenizer(line, ", ", false);
@@ -116,11 +120,4 @@ public class KernelOffNadir {
         }
     }
 
-    public float[] getKernel() {
-        float[] result = new float[kernelList.size()];
-        for (int i = 0; i < kernelList.size(); i++) {
-            result[i] = kernelList.get(i);
-        }
-        return result;
-    }
 }
