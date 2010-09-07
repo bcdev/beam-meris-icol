@@ -219,7 +219,7 @@ class IcolForm extends JTabbedPane {
     }
 
     private void initComponents() {
-        setPreferredSize(new Dimension(600, 740));
+        setPreferredSize(new Dimension(600, 760));
 
         TableLayout layoutIO = new TableLayout(1);
         layoutIO.setTableAnchor(TableLayout.Anchor.NORTHWEST);
