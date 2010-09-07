@@ -47,7 +47,7 @@ public class KernelOffNadir {
         return result;
     }
 
-    private void readKernelMatrixRayleigh() throws IOException {
+    private void readKernelMatrixRayleighOld() throws IOException {
         BufferedReader bufferedReader;
         InputStream inputStream;
         inputStream = CoeffW.class.getResourceAsStream(fileName);
@@ -61,12 +61,12 @@ public class KernelOffNadir {
             while ((line = bufferedReader.readLine()) != null && i < KERNEL_MATRIX_WIDTH_RR) {
                 line = line.trim();
                 st = new StringTokenizer(line, ", ", false);
-                 // reduced resulution, take every 3rd value catching the center...
-                if ((i-1) % 3 == 0) {
+                // reduced resulution, take every 3rd value catching the center...
+                if ((i - 1) % 3 == 0) {
                     int j = 0;
                     while (st.hasMoreTokens() && j < KERNEL_MATRIX_WIDTH_RR) {
                         // W matrix element
-                        if ((j-1) % 3 == 0) {
+                        if ((j - 1) % 3 == 0) {
                             kernelList.add(Float.parseFloat(st.nextToken()));
                         } else {
                             st.nextToken();
@@ -87,7 +87,58 @@ public class KernelOffNadir {
         }
     }
 
-    private void readKernelMatrixAerosol() throws IOException {
+    private void readKernelMatrixRayleigh() throws IOException {
+        BufferedReader bufferedReader;
+        InputStream inputStream;
+        inputStream = CoeffW.class.getResourceAsStream(fileName);
+        bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+        StringTokenizer st;
+        try {
+            // read and save all lines in file (half matrix)
+            String[] line = new String[KERNEL_MATRIX_WIDTH_RR];
+            int lineIndex = 25;
+            while (lineIndex < KERNEL_MATRIX_WIDTH_RR && (line[lineIndex] = bufferedReader.readLine()) != null) {
+                line[lineIndex] = line[lineIndex].trim();
+                lineIndex++;
+            }
+
+            // W(i,j) --> W (i,-j) (mirror)
+            for (int j = 0; j < 25; j++) {
+                line[24 - j] = new String(line[26 + j]);
+            }
+
+            kernelList = new ArrayList<Float>();
+            for (int i = 0; i < KERNEL_MATRIX_WIDTH_RR; i++) {
+                st = new StringTokenizer(line[i], ", ", false);
+                // reduced resolution, take every 3rd value catching the center...
+                if ((i - 1) % 3 == 0) {
+                    int k = 0;
+                    while (st.hasMoreTokens() && k < KERNEL_MATRIX_WIDTH_RR) {
+                        // W matrix element
+                        if ((k - 1) % 3 == 0) {
+                            kernelList.add(Float.parseFloat(st.nextToken()));
+                        } else {
+                            st.nextToken();
+                        }
+                        k++;
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            throw new OperatorException("Failed to load W matrix: \n" + e.getMessage(), e);
+        } catch (NumberFormatException e) {
+            throw new OperatorException("Failed to load W matrix: \n" + e.getMessage(), e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+    }
+
+
+    private void readKernelMatrixAerosolOld() throws IOException {
         BufferedReader bufferedReader;
         InputStream inputStream;
         inputStream = CoeffW.class.getResourceAsStream(fileName);
@@ -119,5 +170,48 @@ public class KernelOffNadir {
             }
         }
     }
+
+    private void readKernelMatrixAerosol() throws IOException {
+        BufferedReader bufferedReader;
+        InputStream inputStream;
+        inputStream = CoeffW.class.getResourceAsStream(fileName);
+        bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+        StringTokenizer st;
+        try {
+            // read and save all lines in file (half matrix)
+            String[] line = new String[KERNEL_MATRIX_WIDTH_RR];
+            int lineIndex = 25;
+            while (lineIndex < KERNEL_MATRIX_WIDTH_RR && (line[lineIndex] = bufferedReader.readLine()) != null) {
+                line[lineIndex] = line[lineIndex].trim();
+                lineIndex++;
+            }
+
+            // W(i,j) --> W (i,-j) (mirror)
+            for (int j = 0; j < 25; j++) {
+                line[24 - j] = new String(line[26 + j]);
+            }
+
+            kernelList = new ArrayList<Float>();
+            for (int i = 0; i < KERNEL_MATRIX_WIDTH_RR; i++) {
+                st = new StringTokenizer(line[i], ", ", false);
+                int k = 0;
+                while (st.hasMoreTokens() && k < KERNEL_MATRIX_WIDTH_RR) {
+                    // W matrix element
+                    kernelList.add(Float.parseFloat(st.nextToken()));
+                    k++;
+                }
+            }
+        } catch (IOException e) {
+            throw new OperatorException("Failed to load W matrix: \n" + e.getMessage(), e);
+        } catch (NumberFormatException e) {
+            throw new OperatorException("Failed to load W matrix: \n" + e.getMessage(), e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+    }
+
 
 }

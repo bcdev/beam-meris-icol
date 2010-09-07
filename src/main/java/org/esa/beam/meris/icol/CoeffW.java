@@ -207,9 +207,9 @@ public class CoeffW {
         // test
         KernelJAI kernel = null;
         if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {
-           kernel = createKernelOffNadir(createFilterOffNadir("W_ray30.txt"));
+           kernel = createKernelOffNadir(createFilterOffNadir("W_ray0_new.txt"));
         }  else if (correctionMode == IcolConstants.AE_CORRECTION_MODE_AEROSOL) {
-           kernel = createKernelOffNadir(createFilterOffNadir("W_aer30.txt"));
+           kernel = createKernelOffNadir(createFilterOffNadir("W_aer0_new.txt"));
         }
         return kernel;
     }

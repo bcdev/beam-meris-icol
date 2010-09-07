@@ -86,18 +86,28 @@ public class CoeffWTest extends TestCase {
 
     public void testReadKernelOffNadir() {
         // Rayleigh:
-        float[] kernel = CoeffW.createFilterOffNadir("W_ray0.txt");
+        float[] kernel = CoeffW.createFilterOffNadir("W_ray0_new.txt");
         assertEquals(289, kernel.length);
-        // todo: consider normalization
-//        assertEquals(0.0f, kernel[0]);
-//        assertEquals(0.000137f, kernel[7], 1.E-5);
-//        assertEquals(0.000296f,
-//                     kernel[144] , 1.E-5);
-//        assertEquals(0.0f, kernel[288]);
+        assertEquals(1.0f, sumKernel(kernel), 1.E-4);
+        kernel = CoeffW.createFilterOffNadir("W_ray30_new.txt");
+        assertEquals(289, kernel.length);
+        assertEquals(1.0f, sumKernel(kernel), 1.E-4);
 
         // aerosol:
-        kernel = CoeffW.createFilterOffNadir("W_aer0.txt");
+        kernel = CoeffW.createFilterOffNadir("W_aer0_new.txt");
         assertEquals(2601, kernel.length);
+        assertEquals(1.0f, sumKernel(kernel), 1.E-4);
+        kernel = CoeffW.createFilterOffNadir("W_aer30_new.txt");
+        assertEquals(2601, kernel.length);
+        assertEquals(1.0f, sumKernel(kernel), 1.E-4);
+    }
+
+    private float sumKernel(float[] kernel) {
+        float result = 0.0f;
+        for (int i = 0; i < kernel.length; i++) {
+            result += kernel[i];
+        }
+        return result;
     }
    
 }
