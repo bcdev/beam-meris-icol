@@ -1,0 +1,94 @@
+<chapter id="sum.introduction">
+    <title>Introduction</title>
+
+    <sect1 id="sum.introduction.scope">
+        <title>Scope</title>
+        <para>This document is the software user manual (SUM) for the ICOL+ processor.</para>
+    </sect1>
+
+    <sect1 id="sum.introduction.objectives">
+        <title>Objectives</title>
+        <para>In MERIS images an increase in the radiances, especially in the near infrared bands, can often be
+            observed over water and in the vicinity of vegetated coasts. The affected area can extend over
+            10km or even more. This increase is not (always) related to an increase in the aerosol optical
+            depth but is caused by the so-called adjacency effect. This effect results when photons are reflected
+            and scattered towards the sensor and where a substantial contrast exits between the target
+            and its surrounding. During processing of such measurements the correction schemes need to take
+            this effect into account, otherwise the increased radiance is erroneously associated with other
+            physical processes, and the derived geophysical quantities have an increased error.
+        </para>
+
+        <para>Observations over waters near to land surfaces, both for coastal and inland waters, are affected
+            because of the large contrast in the red and infrared part of the spectrum, where water is almost
+            black and vegetated areas are very bright. The effect is easier to illustrate in coastal waters because
+            it decreases from coastline to off-shore. This effect can best be studied in MERIS Full Resolution
+            images, but even in reduced resolution the adjacency effect can also clearly be seen.
+        </para>
+
+    </sect1>
+
+    <sect1 id="sum.introduction.readerLevel">
+        <title>Reader Level</title>
+
+        <para>
+            This specification is mainly written for the following audiences:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    MERIS QWG members
+                </listitem>
+                <listitem>
+                    Any other scientists interested in MERIS or Landsat TM image analysis
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            The ICOL user manual specifications assumes that the reader is familiar with basic concepts in
+            using the BEAM software and its integrated processors.
+        </para>
+        <para>
+            NOTE: This help manual may not always reflect the latest state during the processor development.
+        </para>
+    </sect1>
+
+    <sect1 id="sum.introduction.acronymsAndNomenclature">
+        <title>Acronyms and Nomenclature</title>
+        <sect2 id="sum.introduction.acronyms">
+            <title>Acronyms</title>
+
+            <para>
+                <itemizedlist mark='bullet'>
+                    <listitem>
+                        BC - Brockmann Consult
+                    </listitem>
+                    <listitem>
+                        ESA - European Space Agency
+                    </listitem>
+                    <listitem>
+                        ESTEC - European Space Technology and Research Centre
+                    </listitem>
+                    <listitem>
+                        SUM - Software User Manual
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </sect2>
+        <sect2 id="sum.introduction.nomenclature">
+            <title>Nomenclature</title>
+        </sect2>
+    </sect1>
+
+    <sect1 id="sum.introduction.referenceDocuments">
+        <title>Reference Documents</title>
+
+        <para>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    [1] SoW
+                </listitem>
+                <listitem>
+                    [2] ...
+                </listitem>
+            </itemizedlist>
+        </para>
+    </sect1>
+</chapter>

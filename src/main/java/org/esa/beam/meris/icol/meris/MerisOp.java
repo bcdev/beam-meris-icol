@@ -26,7 +26,6 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -40,6 +39,7 @@ import org.esa.beam.meris.icol.common.AeMaskOp;
 import org.esa.beam.meris.icol.common.AeRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
+import org.esa.beam.meris.icol.common.IcolN1PatcherOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
@@ -497,7 +497,7 @@ public class MerisOp extends Operator {
                 n1PatcherInput.put("input", reverseRadianceProduct);
                 Map<String, Object> n1Params = new HashMap<String, Object>(1);
                 n1Params.put("patchedFile", patchedFile);
-                Product n1Product = GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
+                Product n1Product = GPF.createProduct(OperatorSpi.getOperatorAlias(IcolN1PatcherOp.class), n1Params,
                                                       n1PatcherInput);
                 targetProduct = n1Product;
             } else {
