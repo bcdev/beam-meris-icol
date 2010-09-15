@@ -37,3 +37,4 @@ org.esa.beam.meris.icol.common.CloudDistanceOp$Spi
 org.esa.beam.meris.icol.common.ZmaxOp$Spi
 org.esa.beam.meris.icol.common.AeRayleighOp$Spi
 org.esa.beam.meris.icol.common.IcolN1PatcherOp$Spi
+org.esa.beam.meris.icol.meris.MerisPrefilterOp$Spi

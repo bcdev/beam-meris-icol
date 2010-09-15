@@ -26,6 +26,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -129,9 +130,14 @@ public class MerisOp extends Operator {
         System.out.println("Tile size: " + tileSize);
         System.out.println("Apply AE over: " + aeArea);
 
+        // todo: why this??
         if (tileSize > 0) {
             sourceProduct.setPreferredTileSize(tileSize, tileSize);
         }
+
+        // todo: we need to think about how to handle the left and right stripes in Meris N1 files which
+        // consist of invalid pixels (detector_index = -1). It seems that they are somehow introduced in the
+        // AE correction (see email from MB, 10.09.2010). Do a kind of a priori "edge correction"?
 
         Map<String, Object> emptyParams = new HashMap<String, Object>();
         Product rad2reflProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), emptyParams,
@@ -497,7 +503,7 @@ public class MerisOp extends Operator {
                 n1PatcherInput.put("input", reverseRadianceProduct);
                 Map<String, Object> n1Params = new HashMap<String, Object>(1);
                 n1Params.put("patchedFile", patchedFile);
-                Product n1Product = GPF.createProduct(OperatorSpi.getOperatorAlias(IcolN1PatcherOp.class), n1Params,
+                Product n1Product = GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
                                                       n1PatcherInput);
                 targetProduct = n1Product;
             } else {
