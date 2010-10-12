@@ -65,7 +65,6 @@ public class FresnelReflectionCoefficient {
     public double getCoeffFor(double angle) {
         double[] tab = frCoeff.getTab(0);
 		Interp.interpCoord(angle, tab, fractIndex[0]);
-        final double result = Interp.interpolate(frCoeff.getJavaArray(), fractIndex);
-        return result;
+        return Interp.interpolate(frCoeff.getJavaArray(), fractIndex);
     }
 }

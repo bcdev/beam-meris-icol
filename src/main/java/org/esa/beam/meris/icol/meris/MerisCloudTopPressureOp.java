@@ -17,8 +17,6 @@ import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.cloud.CloudTopPressureOp;
 
 import java.awt.Rectangle;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
@@ -29,16 +27,16 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Icol.CloudTopPressure",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Operator for cloud top pressure computation for AE correction..")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Operator for cloud top pressure computation for AE correction..")
 public class MerisCloudTopPressureOp extends MerisBasisOp {
 
     private static final String INVALID_EXPRESSION = "l1_flags.INVALID";
 
-    @SourceProduct(alias="input")
+    @SourceProduct(alias = "input")
     private Product sourceProduct;
 
     @TargetProduct
@@ -50,7 +48,7 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
     private double userCtp;
 
     private Band invalidBand;
-    
+
     @Override
     public void initialize() throws OperatorException {
         if (useUserCtp) {
@@ -59,9 +57,9 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
 
             BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(INVALID_EXPRESSION, sourceProduct);
             invalidBand = baOp.getTargetProduct().getBandAt(0);
-        }  else {
-            Map<String, Object> emptyParams = new HashMap<String, Object>();
-            targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudTopPressureOp.class), emptyParams, sourceProduct);
+        } else {
+            targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudTopPressureOp.class), GPF.NO_PARAMS,
+                                              sourceProduct);
         }
     }
 
@@ -72,22 +70,23 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
         try {
             Tile isInvalid = getSourceTile(invalidBand, rect, subPm1(pm));
             for (int y = rect.y; y < rect.y + rect.height; y++) {
-				for (int x = rect.x; x < rect.x + rect.width; x++) {
+                for (int x = rect.x; x < rect.x + rect.width; x++) {
                     if (isInvalid.getSampleBoolean(x, y)) {
-						targetTile.setSample(x, y, 0);
-					} else {
-				       targetTile.setSample(x, y, userCtp);
+                        targetTile.setSample(x, y, 0);
+                    } else {
+                        targetTile.setSample(x, y, userCtp);
                     }
-				}
-                checkForCancelation(pm);
-				pm.worked(1);
-			}
+                }
+                checkForCancellation(pm);
+                pm.worked(1);
+            }
         } finally {
             pm.done();
         }
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(MerisCloudTopPressureOp.class);
         }

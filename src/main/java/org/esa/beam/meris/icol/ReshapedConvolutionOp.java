@@ -102,9 +102,8 @@ public class ReshapedConvolutionOp extends Operator {
 //        final BorderExtender borderExtender = BorderExtender.createInstance(BorderExtender.BORDER_ZERO);
         RenderingHints renderingHints = new RenderingHints(JAI.KEY_BORDER_EXTENDER, borderExtender);
         // The ConvolveDescriptor performs a kernel-based convolution in SPATIAL domain.
-        final RenderedOp image = ConvolveDescriptor.create(src, kernel, renderingHints);
-//        System.out.printf("Convolved, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
-        return image;
+        //        System.out.printf("Convolved, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
+        return ConvolveDescriptor.create(src, kernel, renderingHints);
    }
 
    private static RenderedOp convolveDownscaled(RenderedImage src,
@@ -132,18 +131,6 @@ public class ReshapedConvolutionOp extends Operator {
 //       System.out.printf("Downscaled 3, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
        return image;
    }
-
-    // CURRENTLY NOT USED. MAY BE STILL NEEDED LATER?
-//   private static RenderedOp combine(RenderedImage src1, double w1, RenderedImage src2, double w2) {
-//       RenderedOp wimg1 = MultiplyConstDescriptor.create(src1, new double[]{w1}, null);
-//       RenderedOp wimg2 = MultiplyConstDescriptor.create(src2, new double[]{w2}, null);
-//       System.out.printf("Combined 1, size: %d x %d x %d\n", wimg1.getWidth(), wimg1.getHeight(), wimg1.getNumBands());
-//       System.out.printf("Combined 2, size: %d x %d x %d\n", wimg2.getWidth(), wimg2.getHeight(), wimg2.getNumBands());
-//
-//       return AddDescriptor.create(wimg1, wimg2, null);
-//   }
-
-
 
     public static class Spi extends OperatorSpi {
 
