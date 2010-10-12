@@ -82,7 +82,7 @@ public class AeMaskOp extends Operator {
     @Parameter
     private String coastlineExpression;
 
-    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
     private AeArea aeArea;
     @Parameter
     private boolean reshapedConvolution;
@@ -125,13 +125,15 @@ public class AeMaskOp extends Operator {
         maskBand.setSampleCoding(flagCoding);
         targetProduct.getFlagCodingGroup().add(flagCoding);
 
-        BandMathsOp bandArithmeticOp1 =
-            BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
+        if (sourceProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
+        }
+
+        BandMathsOp bandArithmeticOp1 = BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandArithmeticOp1.getTargetProduct().getBandAt(0);
 
         if (coastlineExpression != null && !coastlineExpression.isEmpty()) {
-            BandMathsOp bandArithmeticOp2 =
-                BandMathsOp.createBooleanExpressionBand(coastlineExpression, sourceProduct);
+            BandMathsOp bandArithmeticOp2 = BandMathsOp.createBooleanExpressionBand(coastlineExpression, sourceProduct);
             isCoastlineBand = bandArithmeticOp2.getTargetProduct().getBandAt(0);
         }
 
@@ -238,20 +240,39 @@ public class AeMaskOp extends Operator {
             LandsatUtils.isCoordinatesOutOfBounds(x+1, y+1, isLandTile)) {
             return false;
         }
-         // use this: isLandTile.getRectangle() !!!
-        boolean check1 = (isLandTile.getSampleBoolean(x-1, y) && !isLandTile.getSampleBoolean(x+1, y)) ||
-                (isLandTile.getSampleBoolean(x+1, y) && !isLandTile.getSampleBoolean(x-1, y));
+        return isCoastline(isLandTile, x, y);
+    }
 
-        boolean check2 = (isLandTile.getSampleBoolean(x, y-1) && !isLandTile.getSampleBoolean(x, y+1)) ||
-                (isLandTile.getSampleBoolean(x, y+1) && !isLandTile.getSampleBoolean(x, y-1));
+    private boolean isCoastline(Tile isLandTile, int x, int y) {
+        // use this: isLandTile.getRectangle() !!!
+        final boolean isLandMiddleLeft = isLandTile.getSampleBoolean(x - 1, y);
+        final boolean isLandMiddleRight = isLandTile.getSampleBoolean(x + 1, y);
 
-        boolean check3 = (isLandTile.getSampleBoolean(x-1, y-1) && !isLandTile.getSampleBoolean(x+1, y+1)) ||
-                (isLandTile.getSampleBoolean(x+1, y+1) && !isLandTile.getSampleBoolean(x-1, y-1));
+        if((isLandMiddleLeft && !isLandMiddleRight) || (isLandMiddleRight && !isLandMiddleLeft)) {
+            return true;
+        }
 
-        boolean check4 = (isLandTile.getSampleBoolean(x+1, y-1) && !isLandTile.getSampleBoolean(x-1, y+1)) ||
-                (isLandTile.getSampleBoolean(x-1, y+1) && !isLandTile.getSampleBoolean(x+1, y-1));
+        final boolean isLandBottomMiddle = isLandTile.getSampleBoolean(x, y - 1);
+        final boolean isLandTopMiddle = isLandTile.getSampleBoolean(x, y + 1);
 
-        return (check1 || check2 || check3 || check4);
+        if((isLandBottomMiddle && !isLandTopMiddle) || (isLandTopMiddle && !isLandBottomMiddle) ) {
+            return true;
+        }
+
+        final boolean isLandBottomLeft = isLandTile.getSampleBoolean(x - 1, y - 1);
+        final boolean isLandTopRight = isLandTile.getSampleBoolean(x + 1, y + 1);
+
+        if((isLandBottomLeft && !isLandTopRight) || (isLandTopRight && !isLandBottomLeft)) {
+            return true;
+        }
+
+        final boolean isLandLowerRight = isLandTile.getSampleBoolean(x + 1, y - 1);
+        final boolean isLandUpperLeft = isLandTile.getSampleBoolean(x - 1, y + 1);
+        if( (isLandLowerRight && !isLandUpperLeft) || (isLandUpperLeft && !isLandLowerRight) ) {
+            return true;
+        }
+
+        return false;
     }
 
     public static class Spi extends OperatorSpi {

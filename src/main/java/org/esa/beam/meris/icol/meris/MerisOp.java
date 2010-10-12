@@ -40,7 +40,6 @@ import org.esa.beam.meris.icol.common.AeMaskOp;
 import org.esa.beam.meris.icol.common.AeRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
-import org.esa.beam.meris.icol.common.IcolN1PatcherOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
@@ -56,6 +55,7 @@ import java.util.Map;
  * @author Marco Zuehlke, Olaf Danne
  * @version $Revision: 8083 $ $Date: 2010-01-25 19:08:29 +0100 (Mo, 25 Jan 2010) $
  */
+@SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "IcolMeris",
                   version = "1.1",
                   authors = "Marco Zuehlke, Olaf Danne",
@@ -118,12 +118,12 @@ public class MerisOp extends Operator {
     private boolean openclConvolution = false;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
-    private AeArea aeArea = AeArea.COSTAL_OCEAN;
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea;
 
     // N1PatcherOp
     @Parameter(description = "The file to which the patched L1b product is written.")
-    private File patchedFile = null;
+    private File patchedFile;
 
     @Override
     public void initialize() throws OperatorException {
@@ -139,198 +139,42 @@ public class MerisOp extends Operator {
         // consist of invalid pixels (detector_index = -1). It seems that they are somehow introduced in the
         // AE correction (see email from MB, 10.09.2010). Do a kind of a priori "edge correction"?
 
-        Map<String, Object> emptyParams = new HashMap<String, Object>();
-        Product rad2reflProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), emptyParams,
-                                                    sourceProduct);
-
-        // Cloud Top Pressure
-        Map<String, Object> ctpParameters = new HashMap<String, Object>(2);
-        ctpParameters.put("useUserCtp", useUserCtp);
-        ctpParameters.put("userCtp", userCtp);
-        Product ctpProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCloudTopPressureOp.class),
-                                               ctpParameters, sourceProduct);
-
-        Map<String, Product> cloudInput = new HashMap<String, Product>(2);
-        cloudInput.put("l1b", sourceProduct);
-        cloudInput.put("rhotoa", rad2reflProduct);
-        cloudInput.put("ctp", ctpProduct);
-        Product cloudClassificationProduct = GPF.createProduct(
-                OperatorSpi.getOperatorAlias(CloudClassificationOp.class), emptyParams, cloudInput);
-
-        if (cloudMaskProduct != null && cloudMaskExpression != null && !cloudMaskExpression.isEmpty()) {
-            Map<String, Object> userCloudParameters = new HashMap<String, Object>(2);
-            userCloudParameters.put("cloudMaskExpression", cloudMaskExpression);
-            Map<String, Product> userCloudInput = new HashMap<String, Product>(2);
-            userCloudInput.put("cloudClassification", cloudClassificationProduct);
-            userCloudInput.put("cloudMask", cloudMaskProduct);
-            cloudClassificationProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisUserCloudOp.class),
-                                                           userCloudParameters, userCloudInput);
-        }
-
-        Map<String, Product> gasInput = new HashMap<String, Product>(3);
-        gasInput.put("l1b", sourceProduct);
-        gasInput.put("rhotoa", rad2reflProduct);
-        gasInput.put("cloud", cloudClassificationProduct);
-        Map<String, Object> gasParameters = new HashMap<String, Object>(2);
-        gasParameters.put("correctWater", true);
-        gasParameters.put("exportTg", true);
-        Product gasProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(GaseousCorrectionOp.class), gasParameters,
-                                               gasInput);
-
-        Map<String, Product> landInput = new HashMap<String, Product>(2);
-        landInput.put("l1b", sourceProduct);
-        landInput.put("rhotoa", rad2reflProduct);
-        landInput.put("gascor", gasProduct);
-        Product landProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(LandClassificationOp.class), emptyParams,
-                                                landInput);
-
-        Map<String, Product> fresnelInput = new HashMap<String, Product>(3);
-        fresnelInput.put("l1b", sourceProduct);
-        fresnelInput.put("land", landProduct);
-        fresnelInput.put("input", gasProduct);
-        Product fresnelProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(FresnelCoefficientOp.class),
-                                                   emptyParams, fresnelInput);
-
-        Map<String, Product> rayleighInput = new HashMap<String, Product>(3);
-        rayleighInput.put("l1b", sourceProduct);
-        rayleighInput.put("land", landProduct);
-        rayleighInput.put("input", fresnelProduct);
-        rayleighInput.put("cloud", cloudClassificationProduct);
-        Map<String, Object> rayleighParameters = new HashMap<String, Object>(2);
-        rayleighParameters.put("correctWater", true);
-        rayleighParameters.put("exportRayCoeffs", true);
-        Product rayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(RayleighCorrectionOp.class),
-                                                    rayleighParameters, rayleighInput);
-
-        Map<String, Product> aemaskRayleighInput = new HashMap<String, Product>(2);
-        aemaskRayleighInput.put("source", sourceProduct);
-        aemaskRayleighInput.put("land", landProduct);
-        Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
-        aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-        aemaskRayleighParameters.put("coastlineExpression", "l1_flags.COASTLINE");
-        aemaskRayleighParameters.put("aeArea", aeArea);
-        aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
-        aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
-        Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class),
-                                                          aemaskRayleighParameters, aemaskRayleighInput);
-
-        Map<String, Product> aemaskAerosolInput = new HashMap<String, Product>(2);
-        aemaskAerosolInput.put("source", sourceProduct);
-        aemaskAerosolInput.put("land", landProduct);
-        Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
-        aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-        aemaskAerosolParameters.put("coastlineExpression", "l1_flags.COASTLINE");
-        aemaskAerosolParameters.put("aeArea", aeArea);
-        aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
-        aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
-        Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class),
-                                                         aemaskAerosolParameters, aemaskAerosolInput);
-
-        Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
-        coastDistanceInput.put("source", sourceProduct);
-        coastDistanceInput.put("land", landProduct);
-        Map<String, Object> distanceParameters = new HashMap<String, Object>(3);
-        distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-        distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
-        distanceParameters.put("correctOverLand", aeArea.correctOverLand());
-        distanceParameters.put("numDistances", 2);
-        Product coastDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class),
-                                                         distanceParameters, coastDistanceInput);
-
-        Map<String, Product> cloudDistanceInput = new HashMap<String, Product>(2);
-        cloudDistanceInput.put("source", sourceProduct);
-        cloudDistanceInput.put("cloud", cloudClassificationProduct);
-        Map<String, Object> cloudDistanceParameters = new HashMap<String, Object>(1);
-        Product cloudDistanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudDistanceOp.class),
-                                                         cloudDistanceParameters, cloudDistanceInput);
-
-        Map<String, Product> zmaxInput = new HashMap<String, Product>(4);
-        zmaxInput.put("source", sourceProduct);
-        zmaxInput.put("distance", coastDistanceProduct);
-        zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
-        Map<String, Object> zmaxParameters = new HashMap<String, Object>(1);
-        String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
-        if (aeArea.correctOverLand()) {
-            aeMaskExpression = "true";
-        }
-        zmaxParameters.put("aeMaskExpression", aeMaskExpression);
-        zmaxParameters.put("distanceBandName", CoastDistanceOp.COAST_DISTANCE);
-        Product zmaxProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
-
-        Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(4);
-        zmaxCloudInput.put("source", sourceProduct);
-        zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
-        zmaxCloudInput.put("distance", cloudDistanceProduct);
-        Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(1);
-        zmaxCloudParameters.put("aeMaskExpression", AeMaskOp.AE_MASK_RAYLEIGH + ".aep");
-        zmaxCloudParameters.put("distanceBandName", CloudDistanceOp.CLOUD_DISTANCE);
-        Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters,
-                                                     zmaxCloudInput);
+        Product rad2reflProduct = createRad2ReflProduct();
+        Product ctpProduct = createCtpProduct();
+        Product cloudClassificationProduct = createCloudClassificationProduct(rad2reflProduct, ctpProduct);
+        cloudClassificationProduct = updateCloudClassificationProduct(cloudClassificationProduct);
+        Product gasProduct = createGasProduct(rad2reflProduct, cloudClassificationProduct);
+        Product landProduct = createLandProduct(rad2reflProduct, gasProduct);
+        Product fresnelProduct = createFresnelProduct(gasProduct, landProduct);
+        Product rayleighProduct = createRayleighProduct(cloudClassificationProduct, landProduct, fresnelProduct);
+        Product aemaskRayleighProduct = createAeMaskRayleighProduct(landProduct);
+        Product aemaskAerosolProduct = createAeMaskProduct(landProduct);
+        Product coastDistanceProduct = createCoastDistanceProduct(landProduct);
+        Product cloudDistanceProduct = createCloudDistanceProduct(cloudClassificationProduct);
+        Product zmaxProduct = createZMaxProduct(aemaskRayleighProduct, coastDistanceProduct);
+        Product zmaxCloudProduct = createZMaxCloudProduct(aemaskRayleighProduct, cloudDistanceProduct);
 
         // test: create constant reflectance input
-        Map<String, Product> constInput = new HashMap<String, Product>(1);
-        constInput.put("source", sourceProduct);
-//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ConstantValueOp.class), emptyParams, rayleighProduct);
-//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, rayleighProduct);
+//        Map<String, Product> constInput = new HashMap<String, Product>(1);
+//        constInput.put("source", sourceProduct);
+//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ConstantValueOp.class), GPF.NO_PARAMS, rayleighProduct);
+//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), GPF.NO_PARAMS, rayleighProduct);
         // end test
 
-        Map<String, Product> brrCloudInput = new HashMap<String, Product>(4);
-        brrCloudInput.put("l1b", sourceProduct);
-        brrCloudInput.put("brr", rayleighProduct);
-        brrCloudInput.put("refl", rad2reflProduct);
-        brrCloudInput.put("cloud", cloudClassificationProduct);
-        brrCloudInput.put("land", landProduct);
-        Product brrCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrCloudOp.class), emptyParams,
-                                                    brrCloudInput);
+        Product brrCloudProduct = createBrrCloudProduct(rad2reflProduct, cloudClassificationProduct, landProduct,
+                                                        rayleighProduct);
 
-        // begin TEST JavaCL
-        Product brrConvolveProduct = null;
-        if (openclConvolution) {
-            Map<String, Product> brrConvolveInput = new HashMap<String, Product>(4);
-            brrConvolveInput.put("l1b", sourceProduct);
-            brrConvolveInput.put("brr", brrCloudProduct);
-            Map<String, Object> brrConvolveParams = new HashMap<String, Object>(1);
-            brrConvolveParams.put("openclConvolution", openclConvolution);
-            brrConvolveParams.put("bandPrefix", "brr");
-            brrConvolveParams.put("filterWeightsIndex", 0);
-            brrConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class),
-                                                   brrConvolveParams, brrConvolveInput);
-            // end TEST JavaCL
-        }
+        Product brrConvolveProduct = createBrrConvolveProduct(brrCloudProduct);
 
-
-        Map<String, Product> aeRayInput = new HashMap<String, Product>(10);
-        aeRayInput.put("l1b", sourceProduct);
-        aeRayInput.put("refl", rad2reflProduct);
-        aeRayInput.put("land", landProduct);
-        aeRayInput.put("aemask", aemaskRayleighProduct);
-        aeRayInput.put("ray1b", brrCloudProduct);
-        if (openclConvolution) {
-            aeRayInput.put("ray1bconv", brrConvolveProduct);  // use brr pre-convolved with JavaCL
-        }
-//        aeRayInput.put("ray1b", constProduct);  // test: use constant reflectance input
-        aeRayInput.put("rhoNg", gasProduct);
-        aeRayInput.put("zmax", zmaxProduct);
-        aeRayInput.put("cloud", cloudClassificationProduct);
-        aeRayInput.put("zmaxCloud", zmaxCloudProduct);
-        Map<String, Object> aeRayParams = new HashMap<String, Object>(1);
-        aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
-        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
-                "additionalOutputBands").equals("RS")) {
-            exportSeparateDebugBands = true;
-        }
-        aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
-        aeRayParams.put("reshapedConvolution", reshapedConvolution);
-        aeRayParams.put("openclConvolution", openclConvolution);
-        aeRayParams.put("instrument", Instrument.MERIS);
-        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeRayleighOp.class), aeRayParams,
-                                                 aeRayInput);
+        Product aeRayProduct = createArRayProduct(rad2reflProduct, cloudClassificationProduct, gasProduct, landProduct,
+                                                  aemaskRayleighProduct, zmaxProduct, zmaxCloudProduct, brrCloudProduct,
+                                                  brrConvolveProduct);
 
         // test: create constant reflectance input
 //            Map<String, Product> compareConvolutionInput = new HashMap<String, Product>(1);
 //            compareConvolutionInput.put("l1b", sourceProduct);
 //            compareConvolutionInput.put("ae_ray", aeRayProduct);
-//            Product compareConvolutionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CompareConvolutionOp.class), emptyParams, compareConvolutionInput);
+//            Product compareConvolutionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CompareConvolutionOp.class), GPF.NO_PARAMS, compareConvolutionInput);
 //            targetProduct = compareConvolutionProduct;
 //            return;
 
@@ -338,26 +182,168 @@ public class MerisOp extends Operator {
         // test: create constant reflectance input
 //            Map<String, Product> constInputAer = new HashMap<String, Product>(1);
 //            constInputAer.put("source", sourceProduct);
-//            Product constProductAer = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), emptyParams, constInputAer);
+//            Product constProductAer = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), GPF.NO_PARAMS, constInputAer);
         // end test
 
-        // begin TEST JavaCL
-        Product rayAercConvolveProduct = null;
-        if (openclConvolution && !icolAerosolForWater) {
-            Map<String, Product> rayAercConvolveInput = new HashMap<String, Product>(4);
-            rayAercConvolveInput.put("l1b", sourceProduct);
-            rayAercConvolveInput.put("brr", aeRayProduct);
-            Map<String, Object> rayAercConvolveParams = new HashMap<String, Object>(1);
-            rayAercConvolveParams.put("openclConvolution", openclConvolution);
-            rayAercConvolveParams.put("bandPrefix", "rho_ray_aerc");
-//           int aerosolModelIndex = 10;
-            int aerosolModelIndex = IcolUtils.determineAerosolModelIndex(userAlpha);
-            rayAercConvolveParams.put("filterWeightsIndex", aerosolModelIndex - 1);
-            rayAercConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class),
-                                                       rayAercConvolveParams, rayAercConvolveInput);
-        }
-        // end TEST JavaCL
+        Product rayAercConvolveProduct = createRayAercConvolveProduct(aeRayProduct);
+        Product aeAerProduct = createaeAerProduct(cloudClassificationProduct, landProduct, aemaskAerosolProduct,
+                                                  zmaxProduct, zmaxCloudProduct, aeRayProduct, rayAercConvolveProduct);
+        Product reverseRhoToaProduct = createReverseRhoToaProduct(rad2reflProduct, cloudClassificationProduct,
+                                                                  gasProduct, landProduct, aemaskRayleighProduct,
+                                                                  aemaskAerosolProduct, aeRayProduct, aeAerProduct);
+        Product finalRhoToaProduct = createFinalRhoToaProduct(rad2reflProduct, reverseRhoToaProduct);
 
+        if (productType == 0) {
+            // radiance output product
+            Product reverseRadianceProduct = createReverseRadianceProduct(gasProduct, aemaskAerosolProduct,
+                                                                          aeAerProduct, finalRhoToaProduct);
+
+            // additional output bands for RS
+            if (System.getProperty("additionalOutputBands") != null && System.getProperty(
+                    "additionalOutputBands").equals("RS")) {
+
+                addDebugBands(rad2reflProduct, ctpProduct, cloudClassificationProduct, landProduct,
+                              aemaskRayleighProduct, aemaskAerosolProduct, coastDistanceProduct, zmaxProduct,
+                              brrCloudProduct, brrConvolveProduct, aeRayProduct, aeAerProduct, reverseRadianceProduct);
+            } else {
+                // test:
+                // Rayleigh correction
+//                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
+
+                // brr convolution (test)
+//                if (openclConvolution)
+//                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
+                // end test
+            }
+            if (patchedFile != null) {
+                targetProduct = createN1Product(reverseRadianceProduct);
+            } else {
+                targetProduct = reverseRadianceProduct;
+//                targetProduct = constProduct;
+            }
+        } else if (productType == 1) {
+            targetProduct = finalRhoToaProduct;
+        }
+    }
+
+    private void addDebugBands(Product rad2reflProduct, Product ctpProduct, Product cloudClassificationProduct,
+                               Product landProduct, Product aemaskRayleighProduct, Product aemaskAerosolProduct,
+                               Product coastDistanceProduct, Product zmaxProduct, Product brrCloudProduct,
+                               Product brrConvolveProduct, Product aeRayProduct, Product aeAerProduct,
+                               Product reverseRadianceProduct) {
+        // rad2refl
+        DebugUtils.addRad2ReflDebugBands(reverseRadianceProduct, rad2reflProduct);
+
+        // cloud classif flags
+        FlagCoding flagCodingCloud = CloudClassificationOp.createFlagCoding();
+        reverseRadianceProduct.getFlagCodingGroup().add(flagCodingCloud);
+        DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, cloudClassificationProduct, flagCodingCloud,
+                                          CloudClassificationOp.CLOUD_FLAGS);
+
+        // land classif flags
+        FlagCoding flagCodingLand = LandClassificationOp.createFlagCoding();
+        reverseRadianceProduct.getFlagCodingGroup().add(flagCodingLand);
+        DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, landProduct, flagCodingLand,
+                                          LandClassificationOp.LAND_FLAGS);
+
+        // Rayleigh correction
+        DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
+
+        // ctp
+        DebugUtils.addCtpProductDebugBand(reverseRadianceProduct, ctpProduct, "cloud_top_press");
+
+        // brr convolution (test)
+        if (openclConvolution) {
+            DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
+        }
+
+        // (i) AE mask
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, AeMaskOp.AE_MASK_RAYLEIGH);
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, AeMaskOp.AE_MASK_AEROSOL);
+
+        // (iv) zMax
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
+
+        // (iv a) coastDistance
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct,
+                                      CoastDistanceOp.COAST_DISTANCE + "_1");
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct,
+                                      CoastDistanceOp.COAST_DISTANCE + "_2");
+
+        DebugUtils.addAeRayleighProductDebugBands(reverseRadianceProduct, aeRayProduct);
+        DebugUtils.addAeAerosolProductDebugBands(reverseRadianceProduct, aeAerProduct);
+    }
+
+    private Product createN1Product(Product reverseRadianceProduct) {
+        Map<String, Product> n1PatcherInput = new HashMap<String, Product>(2);
+        n1PatcherInput.put("n1", sourceProduct);
+        n1PatcherInput.put("input", reverseRadianceProduct);
+        Map<String, Object> n1Params = new HashMap<String, Object>(1);
+        n1Params.put("patchedFile", patchedFile);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
+                                 n1PatcherInput);
+    }
+
+    private Product createReverseRadianceProduct(Product gasProduct, Product aemaskAerosolProduct, Product aeAerProduct,
+                                                 Product finalRhoToaProduct) {
+        Map<String, Product> reverseRadianceInput = new HashMap<String, Product>(5);
+        reverseRadianceInput.put("l1b", sourceProduct);
+        reverseRadianceInput.put("refl", finalRhoToaProduct);
+        reverseRadianceInput.put("gascor", gasProduct);
+        reverseRadianceInput.put("ae_aerosol", aeAerProduct);
+        reverseRadianceInput.put("aemaskAerosol", aemaskAerosolProduct);
+        return GPF.createProduct(
+                OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), GPF.NO_PARAMS,
+                reverseRadianceInput);
+    }
+
+    private Product createFinalRhoToaProduct(Product rad2reflProduct, Product reverseRhoToaProduct) {
+        // band 11 and 15 correction (new scheme, RS 09/12/2009)
+        Map<String, Product> band11And15Input = new HashMap<String, Product>(3);
+        band11And15Input.put("l1b", sourceProduct);
+        band11And15Input.put("refl", rad2reflProduct);
+        band11And15Input.put("corrRad", reverseRhoToaProduct);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBand11And15Op.class), GPF.NO_PARAMS,
+                                 band11And15Input);
+    }
+
+    private Product createReverseRhoToaProduct(Product rad2reflProduct, Product cloudClassificationProduct,
+                                               Product gasProduct, Product landProduct, Product aemaskRayleighProduct,
+                                               Product aemaskAerosolProduct, Product aeRayProduct,
+                                               Product aeAerProduct) {
+        // rho_TOA product
+        Map<String, Product> reverseRhoToaInput = new HashMap<String, Product>(9);
+        reverseRhoToaInput.put("l1b", sourceProduct);
+        reverseRhoToaInput.put("rhotoa", rad2reflProduct);
+        reverseRhoToaInput.put("land", landProduct);
+        reverseRhoToaInput.put("cloud", cloudClassificationProduct);
+        reverseRhoToaInput.put("aemaskRayleigh", aemaskRayleighProduct);
+        reverseRhoToaInput.put("aemaskAerosol", aemaskAerosolProduct);
+        reverseRhoToaInput.put("gascor", gasProduct);
+        reverseRhoToaInput.put("ae_ray", aeRayProduct);
+        reverseRhoToaInput.put("ae_aerosol", aeAerProduct);
+        Map<String, Object> reverseRhoToaParams = new HashMap<String, Object>(7);
+        reverseRhoToaParams.put("exportRhoToa", exportRhoToa);
+        reverseRhoToaParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
+        reverseRhoToaParams.put("exportRhoToaAerosol", exportRhoToaAerosol);
+        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
+                "additionalOutputBands").equals("RS")) {
+            // they already exist in this case
+            exportAeRayleigh = false;
+            exportAeAerosol = false;
+        }
+        reverseRhoToaParams.put("exportAeRayleigh", exportAeRayleigh);
+        reverseRhoToaParams.put("exportAeAerosol", exportAeAerosol);
+        reverseRhoToaParams.put("exportAlphaAot", exportAlphaAot);
+        return GPF.createProduct(
+                OperatorSpi.getOperatorAlias(MerisReflectanceCorrectionOp.class), reverseRhoToaParams,
+                reverseRhoToaInput);
+    }
+
+    private Product createaeAerProduct(Product cloudClassificationProduct, Product landProduct,
+                                       Product aemaskAerosolProduct, Product zmaxProduct, Product zmaxCloudProduct,
+                                       Product aeRayProduct, Product rayAercConvolveProduct) {
         Map<String, Product> aeAerInput = new HashMap<String, Product>(8);
         aeAerInput.put("l1b", sourceProduct);
         aeAerInput.put("land", landProduct);
@@ -370,7 +356,7 @@ public class MerisOp extends Operator {
 //      aeAerInput.put("ae_ray", constProductAer);  // test!!
         aeAerInput.put("cloud", cloudClassificationProduct);
         aeAerInput.put("zmaxCloud", zmaxCloudProduct);
-        Map<String, Object> aeAerosolParams = new HashMap<String, Object>(1);
+        Map<String, Object> aeAerosolParams = new HashMap<String, Object>(8);
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
                 "additionalOutputBands").equals("RS")) {
             exportSeparateDebugBands = true;
@@ -391,129 +377,241 @@ public class MerisOp extends Operator {
             aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAeAerosolOp.class), aeAerosolParams,
                                              aeAerInput);
         }
+        return aeAerProduct;
+    }
 
-        // rho_TOA product
-        Map<String, Product> reverseRhoToaInput = new HashMap<String, Product>(9);
-        reverseRhoToaInput.put("l1b", sourceProduct);
-        reverseRhoToaInput.put("rhotoa", rad2reflProduct);
-        reverseRhoToaInput.put("land", landProduct);
-        reverseRhoToaInput.put("cloud", cloudClassificationProduct);
-        reverseRhoToaInput.put("aemaskRayleigh", aemaskRayleighProduct);
-        reverseRhoToaInput.put("aemaskAerosol", aemaskAerosolProduct);
-        reverseRhoToaInput.put("gascor", gasProduct);
-        reverseRhoToaInput.put("ae_ray", aeRayProduct);
-        reverseRhoToaInput.put("ae_aerosol", aeAerProduct);
-        Map<String, Object> reverseRhoToaParams = new HashMap<String, Object>(1);
-        reverseRhoToaParams.put("exportRhoToa", exportRhoToa);
-        reverseRhoToaParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
-        reverseRhoToaParams.put("exportRhoToaAerosol", exportRhoToaAerosol);
+    private Product createRayAercConvolveProduct(Product aeRayProduct) {
+        // begin TEST JavaCL
+        Product rayAercConvolveProduct = null;
+        if (openclConvolution && !icolAerosolForWater) {
+            Map<String, Product> rayAercConvolveInput = new HashMap<String, Product>(2);
+            rayAercConvolveInput.put("l1b", sourceProduct);
+            rayAercConvolveInput.put("brr", aeRayProduct);
+            Map<String, Object> rayAercConvolveParams = new HashMap<String, Object>(3);
+            rayAercConvolveParams.put("openclConvolution", openclConvolution);
+            rayAercConvolveParams.put("bandPrefix", "rho_ray_aerc");
+//           int aerosolModelIndex = 10;
+            int aerosolModelIndex = IcolUtils.determineAerosolModelIndex(userAlpha);
+            rayAercConvolveParams.put("filterWeightsIndex", aerosolModelIndex - 1);
+            rayAercConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class),
+                                                       rayAercConvolveParams, rayAercConvolveInput);
+        }
+        return rayAercConvolveProduct;
+        // end TEST JavaCL
+    }
+
+    private Product createArRayProduct(Product rad2reflProduct, Product cloudClassificationProduct, Product gasProduct,
+                                       Product landProduct, Product aemaskRayleighProduct, Product zmaxProduct,
+                                       Product zmaxCloudProduct, Product brrCloudProduct, Product brrConvolveProduct) {
+        Map<String, Product> aeRayInput = new HashMap<String, Product>(10);
+        aeRayInput.put("l1b", sourceProduct);
+        aeRayInput.put("refl", rad2reflProduct);
+        aeRayInput.put("land", landProduct);
+        aeRayInput.put("aemask", aemaskRayleighProduct);
+        aeRayInput.put("ray1b", brrCloudProduct);
+        if (openclConvolution) {
+            aeRayInput.put("ray1bconv", brrConvolveProduct);  // use brr pre-convolved with JavaCL
+        }
+//        aeRayInput.put("ray1b", constProduct);  // test: use constant reflectance input
+        aeRayInput.put("rhoNg", gasProduct);
+        aeRayInput.put("zmax", zmaxProduct);
+        aeRayInput.put("cloud", cloudClassificationProduct);
+        aeRayInput.put("zmaxCloud", zmaxCloudProduct);
+        Map<String, Object> aeRayParams = new HashMap<String, Object>(5);
+        aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        // todo simplify expression
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
                 "additionalOutputBands").equals("RS")) {
-            // they already exist in this case
-            exportAeRayleigh = false;
-            exportAeAerosol = false;
+            exportSeparateDebugBands = true;
         }
-        reverseRhoToaParams.put("exportAeRayleigh", exportAeRayleigh);
-        reverseRhoToaParams.put("exportAeAerosol", exportAeAerosol);
-        reverseRhoToaParams.put("exportAlphaAot", exportAlphaAot);
-        Product reverseRhoToaProduct = GPF.createProduct(
-                OperatorSpi.getOperatorAlias(MerisReflectanceCorrectionOp.class), reverseRhoToaParams,
-                reverseRhoToaInput);
+        aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
+        aeRayParams.put("reshapedConvolution", reshapedConvolution);
+        aeRayParams.put("openclConvolution", openclConvolution);
+        aeRayParams.put("instrument", Instrument.MERIS);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(AeRayleighOp.class), aeRayParams, aeRayInput);
+    }
 
-        // band 11 and 15 correction (new scheme, RS 09/12/2009)
-        Map<String, Product> band11And15Input = new HashMap<String, Product>(2);
-        band11And15Input.put("l1b", sourceProduct);
-        band11And15Input.put("refl", rad2reflProduct);
-        band11And15Input.put("corrRad", reverseRhoToaProduct);
-        Product finalRhoToaProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBand11And15Op.class),
-                                                       emptyParams, band11And15Input);
-
-        if (productType == 0) {
-            // radiance output product
-            Map<String, Product> reverseRadianceInput = new HashMap<String, Product>(7);
-            reverseRadianceInput.put("l1b", sourceProduct);
-            reverseRadianceInput.put("refl", finalRhoToaProduct);
-            reverseRadianceInput.put("gascor", gasProduct);
-            reverseRadianceInput.put("ae_aerosol", aeAerProduct);
-            reverseRadianceInput.put("aemaskAerosol", aemaskAerosolProduct);
-            Map<String, Object> reverseRadianceParams = new HashMap<String, Object>(1);
-            Product reverseRadianceProduct = GPF.createProduct(
-                    OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), reverseRadianceParams,
-                    reverseRadianceInput);
-
-            // additional output bands for RS
-            if (System.getProperty("additionalOutputBands") != null && System.getProperty(
-                    "additionalOutputBands").equals("RS")) {
-
-                // rad2refl
-                DebugUtils.addRad2ReflDebugBands(reverseRadianceProduct, rad2reflProduct);
-
-                // cloud classif flags
-                FlagCoding flagCodingCloud = CloudClassificationOp.createFlagCoding();
-                reverseRadianceProduct.getFlagCodingGroup().add(flagCodingCloud);
-                DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, cloudClassificationProduct, flagCodingCloud,
-                                                  CloudClassificationOp.CLOUD_FLAGS);
-
-                // land classif flags
-                FlagCoding flagCodingLand = LandClassificationOp.createFlagCoding();
-                reverseRadianceProduct.getFlagCodingGroup().add(flagCodingLand);
-                DebugUtils.addSingleDebugFlagBand(reverseRadianceProduct, landProduct, flagCodingLand,
-                                                  LandClassificationOp.LAND_FLAGS);
-
-                // Rayleigh correction
-                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
-
-                // ctp
-                DebugUtils.addCtpProductDebugBand(reverseRadianceProduct, ctpProduct, "cloud_top_press");
-
-                // brr convolution (test)
-                if (openclConvolution) {
-                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
-                }
-
-                // (i) AE mask
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, AeMaskOp.AE_MASK_RAYLEIGH);
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, AeMaskOp.AE_MASK_AEROSOL);
-
-                // (iv) zMax
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
-
-                // (iv a) coastDistance
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct,
-                                              CoastDistanceOp.COAST_DISTANCE + "_1");
-                DebugUtils.addSingleDebugBand(reverseRadianceProduct, coastDistanceProduct,
-                                              CoastDistanceOp.COAST_DISTANCE + "_2");
-
-                DebugUtils.addAeRayleighProductDebugBands(reverseRadianceProduct, aeRayProduct);
-                DebugUtils.addAeAerosolProductDebugBands(reverseRadianceProduct, aeAerProduct);
-            } else {
-                // test:
-                // Rayleigh correction
-//                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
-
-                // brr convolution (test)
-//                if (openclConvolution)
-//                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
-                // end test
-            }
-            if (patchedFile != null) {
-                Map<String, Product> n1PatcherInput = new HashMap<String, Product>(2);
-                n1PatcherInput.put("n1", sourceProduct);
-                n1PatcherInput.put("input", reverseRadianceProduct);
-                Map<String, Object> n1Params = new HashMap<String, Object>(1);
-                n1Params.put("patchedFile", patchedFile);
-                Product n1Product = GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
-                                                      n1PatcherInput);
-                targetProduct = n1Product;
-            } else {
-                targetProduct = reverseRadianceProduct;
-//                targetProduct = constProduct;
-            }
-        } else if (productType == 1) {
-            targetProduct = finalRhoToaProduct;
+    private Product createBrrConvolveProduct(Product brrCloudProduct) {
+        // begin TEST JavaCL
+        Product brrConvolveProduct = null;
+        if (openclConvolution) {
+            Map<String, Product> brrConvolveInput = new HashMap<String, Product>(2);
+            brrConvolveInput.put("l1b", sourceProduct);
+            brrConvolveInput.put("brr", brrCloudProduct);
+            Map<String, Object> brrConvolveParams = new HashMap<String, Object>(3);
+            brrConvolveParams.put("openclConvolution", openclConvolution);
+            brrConvolveParams.put("bandPrefix", "brr");
+            brrConvolveParams.put("filterWeightsIndex", 0);
+            brrConvolveProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrConvolveOp.class),
+                                                   brrConvolveParams, brrConvolveInput);
+            // end TEST JavaCL
         }
+        return brrConvolveProduct;
+    }
 
+    private Product createBrrCloudProduct(Product rad2reflProduct, Product cloudClassificationProduct,
+                                          Product landProduct, Product rayleighProduct) {
+        Map<String, Product> brrCloudInput = new HashMap<String, Product>(5);
+        brrCloudInput.put("l1b", sourceProduct);
+        brrCloudInput.put("brr", rayleighProduct);
+        brrCloudInput.put("refl", rad2reflProduct);
+        brrCloudInput.put("cloud", cloudClassificationProduct);
+        brrCloudInput.put("land", landProduct);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisBrrCloudOp.class), GPF.NO_PARAMS,
+                                 brrCloudInput);
+    }
+
+    private Product createZMaxCloudProduct(Product aemaskRayleighProduct, Product cloudDistanceProduct) {
+        Map<String, Product> zmaxCloudInput = new HashMap<String, Product>(3);
+        zmaxCloudInput.put("source", sourceProduct);
+        zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
+        zmaxCloudInput.put("distance", cloudDistanceProduct);
+        Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>(2);
+        zmaxCloudParameters.put("aeMaskExpression", AeMaskOp.AE_MASK_RAYLEIGH + ".aep");
+        zmaxCloudParameters.put("distanceBandName", CloudDistanceOp.CLOUD_DISTANCE);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters,
+                                 zmaxCloudInput);
+    }
+
+    private Product createZMaxProduct(Product aemaskRayleighProduct, Product coastDistanceProduct) {
+        Map<String, Product> zmaxInput = new HashMap<String, Product>(3);
+        zmaxInput.put("source", sourceProduct);
+        zmaxInput.put("distance", coastDistanceProduct);
+        zmaxInput.put("ae_mask", aemaskRayleighProduct);   // use the more extended mask here
+        String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
+        if (aeArea.correctOverLand()) {
+            aeMaskExpression = "true";
+        }
+        Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
+        zmaxParameters.put("aeMaskExpression", aeMaskExpression);
+        zmaxParameters.put("distanceBandName", CoastDistanceOp.COAST_DISTANCE);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
+    }
+
+    private Product createCloudDistanceProduct(Product cloudClassificationProduct) {
+        Map<String, Product> cloudDistanceInput = new HashMap<String, Product>(2);
+        cloudDistanceInput.put("source", sourceProduct);
+        cloudDistanceInput.put("cloud", cloudClassificationProduct);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(CloudDistanceOp.class), GPF.NO_PARAMS,
+                                 cloudDistanceInput);
+    }
+
+    private Product createCoastDistanceProduct(Product landProduct) {
+        Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
+        coastDistanceInput.put("source", sourceProduct);
+        coastDistanceInput.put("land", landProduct);
+        Map<String, Object> distanceParameters = new HashMap<String, Object>(4);
+        distanceParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        distanceParameters.put("waterExpression", "land_classif_flags.F_LOINLD");
+        distanceParameters.put("correctOverLand", aeArea.correctOverLand());
+        distanceParameters.put("numDistances", 2);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(CoastDistanceOp.class), distanceParameters,
+                                 coastDistanceInput);
+    }
+
+    private Product createAeMaskProduct(Product landProduct) {
+        Map<String, Product> aemaskAerosolInput = new HashMap<String, Product>(2);
+        aemaskAerosolInput.put("source", sourceProduct);
+        aemaskAerosolInput.put("land", landProduct);
+        Map<String, Object> aemaskAerosolParameters = new HashMap<String, Object>(5);
+        aemaskAerosolParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        aemaskAerosolParameters.put("coastlineExpression", "l1_flags.COASTLINE");
+        aemaskAerosolParameters.put("aeArea", aeArea);
+        aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
+        aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters,
+                                 aemaskAerosolInput);
+    }
+
+    private Product createAeMaskRayleighProduct(Product landProduct) {
+        Map<String, Product> aemaskRayleighInput = new HashMap<String, Product>(2);
+        aemaskRayleighInput.put("source", sourceProduct);
+        aemaskRayleighInput.put("land", landProduct);
+        Map<String, Object> aemaskRayleighParameters = new HashMap<String, Object>(5);
+        aemaskRayleighParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        aemaskRayleighParameters.put("coastlineExpression", "l1_flags.COASTLINE");
+        aemaskRayleighParameters.put("aeArea", aeArea);
+        aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
+        aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class),
+                                 aemaskRayleighParameters, aemaskRayleighInput);
+    }
+
+    private Product createRayleighProduct(Product cloudClassificationProduct, Product landProduct,
+                                          Product fresnelProduct) {
+        Map<String, Product> rayleighInput = new HashMap<String, Product>(4);
+        rayleighInput.put("l1b", sourceProduct);
+        rayleighInput.put("land", landProduct);
+        rayleighInput.put("input", fresnelProduct);
+        rayleighInput.put("cloud", cloudClassificationProduct);
+        Map<String, Object> rayleighParameters = new HashMap<String, Object>(2);
+        rayleighParameters.put("correctWater", true);
+        rayleighParameters.put("exportRayCoeffs", true);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(RayleighCorrectionOp.class),
+                                 rayleighParameters, rayleighInput);
+    }
+
+    private Product createFresnelProduct(Product gasProduct, Product landProduct) {
+        Map<String, Product> fresnelInput = new HashMap<String, Product>(3);
+        fresnelInput.put("l1b", sourceProduct);
+        fresnelInput.put("land", landProduct);
+        fresnelInput.put("input", gasProduct);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(FresnelCoefficientOp.class), GPF.NO_PARAMS, fresnelInput);
+    }
+
+    private Product createLandProduct(Product rad2reflProduct, Product gasProduct) {
+        Map<String, Product> landInput = new HashMap<String, Product>(3);
+        landInput.put("l1b", sourceProduct);
+        landInput.put("rhotoa", rad2reflProduct);
+        landInput.put("gascor", gasProduct);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(LandClassificationOp.class), GPF.NO_PARAMS,
+                                 landInput);
+    }
+
+    private Product createGasProduct(Product rad2reflProduct, Product cloudClassificationProduct) {
+        Map<String, Product> gasInput = new HashMap<String, Product>(3);
+        gasInput.put("l1b", sourceProduct);
+        gasInput.put("rhotoa", rad2reflProduct);
+        gasInput.put("cloud", cloudClassificationProduct);
+        Map<String, Object> gasParameters = new HashMap<String, Object>(2);
+        gasParameters.put("correctWater", true);
+        gasParameters.put("exportTg", true);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(GaseousCorrectionOp.class), gasParameters,
+                                 gasInput);
+    }
+
+    private Product updateCloudClassificationProduct(Product cloudClassificationProduct) {
+        if (cloudMaskProduct != null && cloudMaskExpression != null && !cloudMaskExpression.isEmpty()) {
+            Map<String, Object> userCloudParameters = new HashMap<String, Object>(1);
+            userCloudParameters.put("cloudMaskExpression", cloudMaskExpression);
+            Map<String, Product> userCloudInput = new HashMap<String, Product>(2);
+            userCloudInput.put("cloudClassification", cloudClassificationProduct);
+            userCloudInput.put("cloudMask", cloudMaskProduct);
+            cloudClassificationProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisUserCloudOp.class),
+                                                           userCloudParameters, userCloudInput);
+        }
+        return cloudClassificationProduct;
+    }
+
+    private Product createCloudClassificationProduct(Product rad2reflProduct, Product ctpProduct) {
+        Map<String, Product> cloudInput = new HashMap<String, Product>(3);
+        cloudInput.put("l1b", sourceProduct);
+        cloudInput.put("rhotoa", rad2reflProduct);
+        cloudInput.put("ctp", ctpProduct);
+        return GPF.createProduct(
+                OperatorSpi.getOperatorAlias(CloudClassificationOp.class), GPF.NO_PARAMS, cloudInput);
+    }
+
+    private Product createCtpProduct() {
+        Map<String, Object> ctpParameters = new HashMap<String, Object>(2);
+        ctpParameters.put("useUserCtp", useUserCtp);
+        ctpParameters.put("userCtp", userCtp);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisCloudTopPressureOp.class), ctpParameters,
+                                 sourceProduct);
+    }
+
+    private Product createRad2ReflProduct() {
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), GPF.NO_PARAMS, sourceProduct);
     }
 
     /**
