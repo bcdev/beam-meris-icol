@@ -54,7 +54,7 @@ public class IcolModel {
     private boolean openclConvolution = false;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
     private AeArea aeArea;
 
     // Landsat
@@ -119,7 +119,7 @@ public class IcolModel {
 
     public IcolModel() {
         propertyContainer = PropertyContainer.createObjectBacked(this, new ParameterDescriptorFactory());
-        aeArea = AeArea.COSTAL_OCEAN;
+        aeArea = AeArea.COASTAL_OCEAN;
     }
 
     public Product getSourceProduct() {

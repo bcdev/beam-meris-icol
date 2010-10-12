@@ -112,8 +112,8 @@ public class TmOp extends TmBasisOp {
     private boolean openclConvolution = false;      // currently not used in TM
     @Parameter(defaultValue="64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COSTAL_OCEAN", valueSet = {"COSTAL_OCEAN", "OCEAN", "COSTAL_ZONE", "EVERYWHERE"})
-    private AeArea aeArea = AeArea.COSTAL_OCEAN;
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    private AeArea aeArea = AeArea.COASTAL_OCEAN;
     @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
     private boolean exportSeparateDebugBands = false;
 

@@ -3,11 +3,11 @@ package org.esa.beam.meris.icol;
 
 public enum AeArea {
     // 1. apply ICOL over ocean only, in coastal region only [cosat only selected]
-    COSTAL_OCEAN(true, false, "Costal regions over the ocean"),
+    COASTAL_OCEAN(true, false, "Costal regions over the ocean"),
     // 2. apply ICOL everywhere over ocean [no selection]
     OCEAN(false, false, "Everywhere over the ocean"),
     // 3. apply ICOL over ocean and land, in coastal region only [both selected]
-    COSTAL_ZONE(true, true, "Costal regions over ocean and land"),
+    COASTAL_ZONE(true, true, "Costal regions over ocean and land"),
     // 4. apply ICOL everywhere over ocean and land [over land selected]
     EVERYWHERE(false, true, "Everywhere");
 
