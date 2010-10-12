@@ -78,6 +78,10 @@ public class ZmaxOp extends Operator {
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(aeMaskExpression, aeMaskProduct);
         aeMaskBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
+        if (sourceProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
+        }
+
     }
 
     @Override

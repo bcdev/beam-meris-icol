@@ -66,6 +66,10 @@ public class MerisBrrCloudOp extends Operator {
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand("l1_flags.INVALID", l1bProduct);
         invalidBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
+
+        if (l1bProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
+        }
     }
 
     @Override
@@ -89,26 +93,23 @@ public class MerisBrrCloudOp extends Operator {
                     if (isInvalid.getSampleBoolean(x, y)) {
                         targetTile.setSample(x, y, -1.0);
                     } else {
-                        final float brr = brrTile.getSampleFloat(x, y);
-                        boolean isCloud = cloudFlagsTile.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
-                        boolean isIce = landFlagsTile.getSampleBit(x, y, LandClassificationOp.F_ICE);
-                        if (isCloud) {
+                        if (cloudFlagsTile.getSampleBit(x, y, CloudClassificationOp.F_CLOUD)) {
                             final float surfacePressure = surfacePressureTile.getSampleFloat(x, y);
                             final float cloudTopPressure = cloudTopPressureTile.getSampleFloat(x, y);
                             final float rad2refl = rad2reflTile.getSampleFloat(x, y);
                             final float brrCorr = rad2refl * cloudTopPressure / surfacePressure;
                             targetTile.setSample(x, y, brrCorr);
-                        } else if (isIce) {
-                            final float rad2refl = rad2reflTile.getSampleFloat(x, y);
-                            final float brrCorr = rad2refl;
+                        } else if (landFlagsTile.getSampleBit(x, y, LandClassificationOp.F_ICE)) {
+                            final float brrCorr = rad2reflTile.getSampleFloat(x, y);
                             targetTile.setSample(x, y, brrCorr);
                         } else {
                             // leave original value
+                            final float brr = brrTile.getSampleFloat(x, y);
                             targetTile.setSample(x, y, brr);
                         }
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {

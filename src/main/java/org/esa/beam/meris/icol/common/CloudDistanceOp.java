@@ -13,10 +13,8 @@ import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
-import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.icol.utils.NavigationUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
@@ -24,7 +22,7 @@ import org.esa.beam.util.RectangleExtender;
 import org.esa.beam.util.ShapeRasterizer;
 import org.esa.beam.util.math.MathUtils;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
@@ -77,6 +75,9 @@ public class CloudDistanceOp extends Operator {
 
         geocoding = sourceProduct.getGeoCoding();
         rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
+        if (sourceProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
+        }
     }
 
     @Override

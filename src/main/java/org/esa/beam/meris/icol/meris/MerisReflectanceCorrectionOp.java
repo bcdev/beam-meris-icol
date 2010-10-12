@@ -114,11 +114,10 @@ public class MerisReflectanceCorrectionOp extends Operator {
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "reverseRhoToa", productType, true);
         Band[] allBands = rhoToaProduct.getBands();
         Band[] sourceBands = new Band[15];
-        int i = 0;
-        for (Band band : allBands) {
+        for (int i = 0; i < allBands.length; i++) {
+            Band band = allBands[i];
             if (band.getName().startsWith("rho_toa")) {
                 sourceBands[i] = band;
-                i++;
             }
         }
         if (exportRhoToa) {
@@ -149,6 +148,10 @@ public class MerisReflectanceCorrectionOp extends Operator {
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
         targetProduct.getFlagCodingGroup().add(flagCoding);
         aeFlagBand.setSampleCoding(flagCoding);
+
+        if (l1bProduct.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
+        }        
         
         OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
     }

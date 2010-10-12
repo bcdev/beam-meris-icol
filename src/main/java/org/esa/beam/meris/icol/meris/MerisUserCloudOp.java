@@ -14,12 +14,11 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
-import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
+import static org.esa.beam.meris.icol.utils.OperatorUtils.*;
 
 @OperatorMetadata(alias = "Meris.UserCloud",
         version = "1.0",
@@ -59,6 +58,11 @@ public class MerisUserCloudOp extends Operator {
 
         BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(cloudMaskExpression, cloudMask);
         isCloudyBand = baOp.getTargetProduct().getBandAt(0);
+        
+        if (cloudClassification.getPreferredTileSize() != null) {
+            targetProduct.setPreferredTileSize(cloudClassification.getPreferredTileSize());
+        }
+
     }
 
     @Override
@@ -76,7 +80,7 @@ public class MerisUserCloudOp extends Operator {
                     cloudFlags = setFlagValue(cloudFlags, CloudClassificationOp.F_CLOUD, isCloudy);
                     targetTile.setSample(x, y, cloudFlags);
 				}
-                checkForCancelation(pm);
+                checkForCancellation(pm);
 				pm.worked(1);
 			}
         } finally {
