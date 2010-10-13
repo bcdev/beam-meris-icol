@@ -66,6 +66,7 @@ import java.util.Map;
  * @author Marco Zuehlke, Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
+@SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "Meris.AEAerosolCase2",
                   version = "1.0",
                   internal = true,
@@ -247,19 +248,20 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws OperatorException {
         Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
 
-        Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
-        Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-        Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-        Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
-
-        Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
-        Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-        Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
         Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+
+        Tile vza = null;
+        Tile sza = null;
+        Tile vaa = null;
+        Tile saa = null;
+
+        Tile isLand = null;
+        Tile[] zmaxs = null;
+        Tile zmaxCloud = null;
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
                 EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
-        final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+        RhoBracketAlgo.Convolver convolver = null;
 
         Tile flagTile = targetTiles.get(flagBand);
 
@@ -273,7 +275,10 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+
+        final boolean debugMode = System.getProperty("additionalOutputBands") != null && System.getProperty(
+                "additionalOutputBands").equals("RS");
+        if (debugMode) {
             rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
             rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
         }
@@ -315,15 +320,35 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                     }
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 >= 0.0 && rho_12 >= 0.0) {
-                        double alpha;
-                        if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
-                            //Aerosols type determination
-                            double rhoRaecTmp = rhoRaec[Constants.bb775].getSampleDouble(x, y);
-                            final double epsilon = rhoRaecTmp / rho_13;
-                            alpha = Math.log(epsilon) / Math.log(778.0 / 865.0);
-                        } else {
-                            alpha = userAlpha;
+                        // attempt to optimise
+                        if(vza == null) {
+                            vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
                         }
+                        if( sza == null ) {
+                            sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
+                        }
+                        if( vaa == null ) {
+                            vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
+                        }
+                        if( saa == null ) {
+                            saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
+                        }
+                        if( isLand == null ) {
+                            isLand = getSourceTile(isLandBand, sourceRect, pm);
+                        }
+                        if( zmaxs == null ) {
+                            zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
+                        }
+                        if( zmaxCloud == null ) {
+                            zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
+                        }
+                        if( convolver == null ) {
+                            convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+                        }
+                        // end of optimisation attempt
+
+                        final boolean useUserAlpha = isLand.getSampleBoolean(x, y) || !icolAerosolForWater;
+                        double alpha = computeAlpha(useUserAlpha, rhoRaec[Constants.bb775], y, x, rho_13);
                         int iaer = IcolUtils.determineAerosolModelIndex(alpha);
                         if (iaer < 1 || iaer > 26) {
                             flagTile.setSample(x, y, 1);
@@ -382,7 +407,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             double alphaBest = 0.0;
                             double aot865Best = 0.0;
-                            double rhoBrr705Best = 0.0;
+                            double rhoBrr705Best;
                             double rhoBrr705BestPrev = 0.0;
                             double rhoW705Interpolated = 0.0;
 
@@ -392,7 +417,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             // - the AOT at 865nm
 
                             // the final index of retrieved water reflectance rhoW705
-                            int jrhow705 = 0;
+                            int jrhow705;
 
                             // rhoW705 loop (B9, Gerald Moore table):
                             for (int irhow705 = 0; irhow705 < 20; irhow705++) {
@@ -402,7 +427,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                     rhoBrr705BestPrev = rhoBrr705[searchIAOT];
                                 }
                                 double[] aot865 = new double[26];
-                                double taua865C2 = 0.0;
+                                double taua865C2;
                                 // loop over the 26 aerosol models:
                                 for (int iaerC2 = 1; iaerC2 <= 26; iaerC2++) {
                                     double rhoBrrBracket775C2 = rhoBrr775Bracket06 + (iaerC2 - 6) * deltaRhoBrr775Bracket06;
@@ -558,7 +583,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
                                 RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
-                                double aerosol1 = 0.0;
+                                double aerosol1;
                                 aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
                                 aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
 
@@ -590,7 +615,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl - (float) aea);
 
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (debugMode) {
                                     rhoRaecBracket[iwvl].setSample(x, y, roAerMean);
                                     rhoRaecDiffRaster[iwvl].setSample(x, y, rhoRaecIwvl - aerosol1 + fresnel1);
                                 }
@@ -600,7 +625,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                     rhoRaecIwvl *= rhoCloudCorrFac;
                                 }
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl);
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (debugMode) {
                                     rhoRaecBracket[iwvl].setSample(x, y, -1f);
                                 }
                             }
@@ -610,11 +635,14 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                             if (IcolUtils.isIndexToSkip(iwvl, bandsToSkip)) {
                                 continue;
                             }
+                            if (isLand == null) {
+                                isLand = getSourceTile(isLandBand, sourceRect, pm);
+                            }
                             if (!isLand.getSampleBoolean(x, y) && iwvl == 9) {
                                 continue;
                             }
                             rhoAeAcRaster[iwvl].setSample(x, y, rhoRaec[iwvl].getSampleFloat(x, y));
-                            if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                            if (debugMode) {
                                 rhoRaecBracket[iwvl].setSample(x, y, -1f);
                             }
                         }
@@ -624,6 +652,19 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         } catch (IOException e) {
             throw new OperatorException(e);
         }
+    }
+
+    private double computeAlpha(boolean useUserAlpha, Tile tile, int y, int x, double rho_13) {
+        double alpha;
+        if (useUserAlpha) {
+            alpha = userAlpha;
+        } else {
+            //Aerosols type determination
+            double rhoRaecTmp = tile.getSampleDouble(x, y);
+            final double epsilon = rhoRaecTmp / rho_13;
+            alpha = Math.log(epsilon) / Math.log(778.0 / 865.0);
+        }
+        return alpha;
     }
 
     private int getAerosolModelIndex(double alpha) {
