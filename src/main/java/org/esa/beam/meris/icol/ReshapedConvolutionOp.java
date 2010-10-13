@@ -31,6 +31,7 @@ import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.StringUtils;
 
 import javax.media.jai.BorderExtender;
+import javax.media.jai.ImageLayout;
 import javax.media.jai.Interpolation;
 import javax.media.jai.JAI;
 import javax.media.jai.KernelJAI;
@@ -112,10 +113,16 @@ public class ReshapedConvolutionOp extends Operator {
                                                 float downscalingFactor) {
        RenderedOp image;
        if (downscalingFactor != 1.0) {
+
+           ImageLayout targetImageLayout = new ImageLayout();
+           targetImageLayout.setTileWidth((int) (src.getTileWidth() / downscalingFactor));
+           targetImageLayout.setTileHeight((int) (src.getTileHeight() / downscalingFactor));
+           final RenderingHints renderingHints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, targetImageLayout);
+
            image = ScaleDescriptor.create(src,
                                           1.0f / downscalingFactor,
                                           1.0f / downscalingFactor,
-                                          0.0f, 0.0f, interpolation, null);
+                                          0.0f, 0.0f, interpolation, renderingHints);
 //           System.out.printf("Downscaled 1, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
            image = convolve(image, kernel);
        } else {
@@ -123,10 +130,14 @@ public class ReshapedConvolutionOp extends Operator {
        }
 //       System.out.printf("Downscaled 2, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
        if (downscalingFactor != 1.0) {
+           ImageLayout targetImageLayout = new ImageLayout();
+           targetImageLayout.setTileWidth(src.getTileWidth());
+           targetImageLayout.setTileHeight(src.getTileHeight());
+           final RenderingHints renderingHints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, targetImageLayout);
            image = ScaleDescriptor.create(image,
                                           downscalingFactor,
                                           downscalingFactor,
-                                          0.0f, 0.0f, interpolation, null);
+                                          0.0f, 0.0f, interpolation, renderingHints);
        }
 //       System.out.printf("Downscaled 3, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
        return image;
