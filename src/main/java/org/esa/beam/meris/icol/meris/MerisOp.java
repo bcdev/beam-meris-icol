@@ -16,6 +16,8 @@
  */
 package org.esa.beam.meris.icol.meris;
 
+import com.bc.ceres.core.ProgressMonitor;
+import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
@@ -27,6 +29,7 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
+import org.esa.beam.gpf.operators.standard.WriteOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -45,6 +48,7 @@ import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -145,9 +149,15 @@ public class MerisOp extends Operator {
         cloudClassificationProduct = updateCloudClassificationProduct(cloudClassificationProduct);
         Product gasProduct = createGasProduct(rad2reflProduct, cloudClassificationProduct);
         Product landProduct = createLandProduct(rad2reflProduct, gasProduct);
+
+        landProduct = writeAndReadProduct(landProduct, "landProduct");
+
         Product fresnelProduct = createFresnelProduct(gasProduct, landProduct);
         Product rayleighProduct = createRayleighProduct(cloudClassificationProduct, landProduct, fresnelProduct);
         Product aemaskRayleighProduct = createAeMaskRayleighProduct(landProduct);
+
+        aemaskRayleighProduct = writeAndReadProduct( aemaskRayleighProduct, "aemaskRayleighProduct" );
+
         Product aemaskAerosolProduct = createAeMaskProduct(landProduct);
         Product coastDistanceProduct = createCoastDistanceProduct(landProduct);
         Product cloudDistanceProduct = createCloudDistanceProduct(cloudClassificationProduct);
@@ -612,6 +622,20 @@ public class MerisOp extends Operator {
 
     private Product createRad2ReflProduct() {
         return GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), GPF.NO_PARAMS, sourceProduct);
+    }
+
+    private static Product writeAndReadProduct(Product product, String name ) {
+        String tempDir = System.getProperty("java.io.tmpdir");
+        final File tempProductFile = new File(tempDir + "temp" + name);
+        WriteOp writeOp = new WriteOp(product, tempProductFile, ProductIO.DEFAULT_FORMAT_NAME);
+        writeOp.setWriteEntireTileRows(true);
+        writeOp.writeProduct(ProgressMonitor.NULL);
+        try {
+            product = ProductIO.readProduct( tempProductFile );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return product;
     }
 
     /**
