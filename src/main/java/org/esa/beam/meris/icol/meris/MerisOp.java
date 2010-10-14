@@ -16,9 +16,6 @@
  */
 package org.esa.beam.meris.icol.meris;
 
-import com.bc.ceres.core.ProgressMonitor;
-import org.esa.beam.dataio.geotiff.GeoTiffProductWriterPlugIn;
-import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
@@ -30,7 +27,6 @@ import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
-import org.esa.beam.gpf.operators.standard.WriteOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -49,7 +45,6 @@ import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -129,7 +124,6 @@ public class MerisOp extends Operator {
     // N1PatcherOp
     @Parameter(description = "The file to which the patched L1b product is written.")
     private File patchedFile;
-    private final Map<Product, File> tempFiles = new HashMap<Product, File>();
 
     @Override
     public void initialize() throws OperatorException {
@@ -151,15 +145,9 @@ public class MerisOp extends Operator {
         cloudClassificationProduct = updateCloudClassificationProduct(cloudClassificationProduct);
         Product gasProduct = createGasProduct(rad2reflProduct, cloudClassificationProduct);
         Product landProduct = createLandProduct(rad2reflProduct, gasProduct);
-
-        landProduct = writeAndReadProduct(landProduct, "landProduct");
-
         Product fresnelProduct = createFresnelProduct(gasProduct, landProduct);
         Product rayleighProduct = createRayleighProduct(cloudClassificationProduct, landProduct, fresnelProduct);
         Product aemaskRayleighProduct = createAeMaskRayleighProduct(landProduct);
-
-        aemaskRayleighProduct = writeAndReadProduct( aemaskRayleighProduct, "aemaskRayleighProduct" );
-
         Product aemaskAerosolProduct = createAeMaskProduct(landProduct);
         Product coastDistanceProduct = createCoastDistanceProduct(landProduct);
         Product cloudDistanceProduct = createCloudDistanceProduct(cloudClassificationProduct);
@@ -624,35 +612,6 @@ public class MerisOp extends Operator {
 
     private Product createRad2ReflProduct() {
         return GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), GPF.NO_PARAMS, sourceProduct);
-    }
-
-    private Product writeAndReadProduct(Product product, String name ) {
-        String tempDir = System.getProperty("user.home");
-        final File tempProductFile = new File(new File(tempDir + "/temp"),
-                                              "_ICOL_temporary_file_" + name + GeoTiffProductWriterPlugIn.GEOTIFF_FILE_EXTENSION[0]);
-        WriteOp.writeProduct(product, tempProductFile, GeoTiffProductWriterPlugIn.GEOTIFF_FORMAT_NAME, ProgressMonitor.NULL);
-        tempFiles.put( product, tempProductFile );
-        try {
-            product = ProductIO.readProduct( tempProductFile );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return product;
-    }
-
-    private void deleteTempProducts() {
-        for (Product product : tempFiles.keySet()) {
-            File tempFile = tempFiles.get( product );
-            product.dispose();
-            product = null;
-            System.gc();
-            System.out.println( tempFile.delete() );
-        }
-    }
-
-    @Override
-    public void dispose() {
-        deleteTempProducts();
     }
 
     /**
