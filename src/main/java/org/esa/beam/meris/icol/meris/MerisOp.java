@@ -17,6 +17,7 @@
 package org.esa.beam.meris.icol.meris;
 
 import com.bc.ceres.core.ProgressMonitor;
+import org.esa.beam.dataio.geotiff.GeoTiffProductWriterPlugIn;
 import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
@@ -128,6 +129,7 @@ public class MerisOp extends Operator {
     // N1PatcherOp
     @Parameter(description = "The file to which the patched L1b product is written.")
     private File patchedFile;
+    private final Map<Product, File> tempFiles = new HashMap<Product, File>();
 
     @Override
     public void initialize() throws OperatorException {
@@ -624,16 +626,33 @@ public class MerisOp extends Operator {
         return GPF.createProduct(OperatorSpi.getOperatorAlias(Rad2ReflOp.class), GPF.NO_PARAMS, sourceProduct);
     }
 
-    private static Product writeAndReadProduct(Product product, String name ) {
-        String tempDir = System.getProperty("java.io.tmpdir");
-        final File tempProductFile = new File(new File(tempDir), "temp" + name);
-        WriteOp.writeProduct(product, tempProductFile, ProductIO.DEFAULT_FORMAT_NAME, ProgressMonitor.NULL);
+    private Product writeAndReadProduct(Product product, String name ) {
+        String tempDir = System.getProperty("user.home");
+        final File tempProductFile = new File(new File(tempDir + "/temp"),
+                                              "_ICOL_temporary_file_" + name + GeoTiffProductWriterPlugIn.GEOTIFF_FILE_EXTENSION[0]);
+        WriteOp.writeProduct(product, tempProductFile, GeoTiffProductWriterPlugIn.GEOTIFF_FORMAT_NAME, ProgressMonitor.NULL);
+        tempFiles.put( product, tempProductFile );
         try {
             product = ProductIO.readProduct( tempProductFile );
         } catch (IOException e) {
             e.printStackTrace();
         }
         return product;
+    }
+
+    private void deleteTempProducts() {
+        for (Product product : tempFiles.keySet()) {
+            File tempFile = tempFiles.get( product );
+            product.dispose();
+            product = null;
+            System.gc();
+            System.out.println( tempFile.delete() );
+        }
+    }
+
+    @Override
+    public void dispose() {
+        deleteTempProducts();
     }
 
     /**
