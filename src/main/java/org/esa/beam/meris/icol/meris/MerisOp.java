@@ -627,9 +627,7 @@ public class MerisOp extends Operator {
     private static Product writeAndReadProduct(Product product, String name ) {
         String tempDir = System.getProperty("java.io.tmpdir");
         final File tempProductFile = new File(tempDir + "temp" + name);
-        WriteOp writeOp = new WriteOp(product, tempProductFile, ProductIO.DEFAULT_FORMAT_NAME);
-        writeOp.setWriteEntireTileRows(true);
-        writeOp.writeProduct(ProgressMonitor.NULL);
+        WriteOp.writeProduct(product, tempProductFile, ProductIO.DEFAULT_FORMAT_NAME, ProgressMonitor.NULL);
         try {
             product = ProductIO.readProduct( tempProductFile );
         } catch (IOException e) {
