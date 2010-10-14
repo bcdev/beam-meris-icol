@@ -321,28 +321,15 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 >= 0.0 && rho_12 >= 0.0) {
                         // attempt to optimise
-                        if(vza == null) {
+                        if(vza == null || sza ==null || vaa == null || saa == null || isLand == null || zmaxs == null ||
+                           zmaxCloud == null || convolver == null ) {
                             vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
-                        }
-                        if( sza == null ) {
                             sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-                        }
-                        if( vaa == null ) {
                             vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-                        }
-                        if( saa == null ) {
                             saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
-                        }
-                        if( isLand == null ) {
                             isLand = getSourceTile(isLandBand, sourceRect, pm);
-                        }
-                        if( zmaxs == null ) {
                             zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-                        }
-                        if( zmaxCloud == null ) {
                             zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
-                        }
-                        if( convolver == null ) {
                             convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
                         }
                         // end of optimisation attempt
