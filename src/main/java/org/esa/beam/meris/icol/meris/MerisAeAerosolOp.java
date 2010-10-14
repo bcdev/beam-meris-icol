@@ -66,6 +66,7 @@ import java.util.Map;
  * @author Marco Zuehlke, Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
+@SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "Meris.AEAerosol",
                   version = "1.0",
                   internal = true,
@@ -266,15 +267,16 @@ public class MerisAeAerosolOp extends MerisBasisOp {
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws OperatorException {
         Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
 
-        Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
-        Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-        Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-        Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
-
-        Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
-        Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-        Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
         Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+
+        Tile vza = null;
+        Tile sza = null;
+        Tile vaa = null;
+        Tile saa = null;
+
+        Tile isLand = null;
+        Tile[] zmaxs = null;
+        Tile zmaxCloud = null;
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
                 EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
@@ -285,7 +287,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                     EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
         }
 
-        final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+        RhoBracketAlgo.Convolver convolver = null;
 
         Tile flagTile = targetTiles.get(flagBand);
 
@@ -297,7 +299,11 @@ public class MerisAeAerosolOp extends MerisBasisOp {
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        
+        final boolean debugMode = System.getProperty("additionalOutputBands") != null && System.getProperty(
+                "additionalOutputBands").equals("RS");
+
+        if (debugMode) {
             rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
             rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
         }
@@ -339,6 +345,33 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                     }
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
+                        // attempt to optimise
+                        if(vza == null) {
+                            vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
+                        }
+                        if( sza == null ) {
+                            sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
+                        }
+                        if( vaa == null ) {
+                            vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
+                        }
+                        if( saa == null ) {
+                            saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
+                        }
+                        if( isLand == null ) {
+                            isLand = getSourceTile(isLandBand, sourceRect, pm);
+                        }
+                        if( zmaxs == null ) {
+                            zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
+                        }
+                        if( zmaxCloud == null ) {
+                            zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
+                        }
+                        if( convolver == null ) {
+                            convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+                        }
+                        // end of optimisation attempt
+
                         double alpha;
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             //Aerosols type determination
@@ -386,9 +419,9 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                         double[] rhoBrr865 = new double[17];     // B13
 //                        double[] rhoBrr775 = new double[17];     // B12
 //                        double[] rhoBrr705 = new double[17];     // B9
-                        double taua = 0.0;
-                        double rhoa = 0.0;
-                        double rhoa0 = 0.0;
+                        double taua;
+                        double rhoa;
+                        double rhoa0;
                         // RS, 14.09.09:
                         // over water, apply ICOL AE if option is set
                         // otherwise apply user input (as always over land)
@@ -480,8 +513,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
                                 RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
-                                double aerosol1 = 0.0;
-                                aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
+                                double aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
                                 aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
 
                                 final double fresnel1 = rv1.rhoa * paerFB * r1s * (zmaxPart + zmaxCloudPart);
@@ -512,7 +544,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
 
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl - (float) aea);
 
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (debugMode) {
                                     rhoRaecBracket[iwvl].setSample(x, y, roAerMean);
                                     rhoRaecDiffRaster[iwvl].setSample(x, y, rhoRaecIwvl - aerosol1 + fresnel1);
                                 }
@@ -522,7 +554,7 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                                     rhoRaecIwvl *= rhoCloudCorrFac;
                                 }
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl);
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (debugMode) {
                                     rhoRaecBracket[iwvl].setSample(x, y, -1f);
                                 }
                             }
@@ -532,11 +564,14 @@ public class MerisAeAerosolOp extends MerisBasisOp {
                             if (IcolUtils.isIndexToSkip(iwvl, bandsToSkip)) {
                                 continue;
                             }
+                            if (isLand == null) {
+                                isLand = getSourceTile(isLandBand, sourceRect, pm);
+                            }
                             if (!isLand.getSampleBoolean(x, y) && iwvl == 9) {
                                 continue;
                             }
                             rhoAeAcRaster[iwvl].setSample(x, y, rhoRaec[iwvl].getSampleFloat(x, y));
-                            if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                            if (debugMode) {
                                 rhoRaecBracket[iwvl].setSample(x, y, -1f);
                             }
                         }
