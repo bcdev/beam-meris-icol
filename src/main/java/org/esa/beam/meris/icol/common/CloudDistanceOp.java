@@ -75,9 +75,6 @@ public class CloudDistanceOp extends Operator {
 
         geocoding = sourceProduct.getGeoCoding();
         rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
     }
 
     @Override

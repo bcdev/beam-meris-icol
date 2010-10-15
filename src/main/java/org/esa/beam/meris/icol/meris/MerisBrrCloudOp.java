@@ -67,9 +67,6 @@ public class MerisBrrCloudOp extends Operator {
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand("l1_flags.INVALID", l1bProduct);
         invalidBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
 
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
     }
 
     @Override

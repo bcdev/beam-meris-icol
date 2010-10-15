@@ -57,9 +57,6 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
 
         copyRadianceBandGroup(sourceProduct, TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX);
         ProductUtils.copyFlagBands(sourceProduct, targetProduct);
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
     }
 
     private void copyRadianceBandGroup(Product srcProduct, String prefix) {

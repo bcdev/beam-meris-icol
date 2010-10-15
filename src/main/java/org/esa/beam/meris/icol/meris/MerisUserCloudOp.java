@@ -59,10 +59,6 @@ public class MerisUserCloudOp extends Operator {
         BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(cloudMaskExpression, cloudMask);
         isCloudyBand = baOp.getTargetProduct().getBandAt(0);
         
-        if (cloudClassification.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(cloudClassification.getPreferredTileSize());
-        }
-
     }
 
     @Override

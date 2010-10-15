@@ -125,10 +125,6 @@ public class AeMaskOp extends Operator {
         maskBand.setSampleCoding(flagCoding);
         targetProduct.getFlagCodingGroup().add(flagCoding);
 
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
-
         BandMathsOp bandArithmeticOp1 = BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandArithmeticOp1.getTargetProduct().getBandAt(0);
 

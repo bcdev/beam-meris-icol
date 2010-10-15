@@ -160,10 +160,6 @@ public class AeRayleighOp extends Operator {
 
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(),
                                                               "MER_AE_RAY");
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }        
-
         aeRayBands = addBandGroup("rho_aeRay");
         rhoAeRcBands = addBandGroup("rho_ray_aerc");
         rhoAgBracketBands = addBandGroup("rho_ag_bracket");

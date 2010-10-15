@@ -95,9 +95,6 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         targetProduct.setEndTime(sourceProduct.getEndTime());
 
         ProductUtils.copyFlagBands(sourceProduct, targetProduct);
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
         Band[] allBands = sourceProduct.getBands();
         Band[] sourceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
         int i = 0;

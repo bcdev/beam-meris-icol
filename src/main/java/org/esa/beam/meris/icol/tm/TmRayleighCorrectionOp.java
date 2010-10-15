@@ -111,9 +111,6 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
         BandMathsOp bandArithmeticOp =
                 BandMathsOp.createBooleanExpressionBand(LandClassificationOp.LAND_FLAGS + ".F_LANDCONS", landProduct);
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
     }
 
     private Band[] addBandGroup(String prefix) {

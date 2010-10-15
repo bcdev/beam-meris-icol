@@ -44,10 +44,6 @@ public class TmCloudTopPressureOp extends TmBasisOp {
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
-
         reflectanceBand6 = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_6_BAND_NAME);
     }
 

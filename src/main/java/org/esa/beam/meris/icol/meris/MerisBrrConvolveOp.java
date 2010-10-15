@@ -71,10 +71,6 @@ public class MerisBrrConvolveOp extends Operator {
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
         ProductUtils.copyFlagBands(l1bProduct, targetProduct);
 
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
-
         double[][] coeffs = coeffW.getCoeffForRR();
 
         KernelJAI kernelJAI = CoeffW.createKernelByRotation(coeffs[filterWeightsIndex]);

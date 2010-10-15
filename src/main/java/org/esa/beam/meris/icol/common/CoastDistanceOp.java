@@ -101,9 +101,6 @@ public class CoastDistanceOp extends Operator {
         BandMathsOp bandMathOpWater = BandMathsOp.createBooleanExpressionBand(waterExpression, landProduct);
         isWaterBand = bandMathOpWater.getTargetProduct().getBandAt(0);
 
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
     }
 
     @Override

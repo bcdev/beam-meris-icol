@@ -57,10 +57,6 @@ public class MerisBand11And15Op extends Operator {
         }
         OperatorUtils.copyFlagBandsWithImages(corrReflProduct, targetProduct);
 
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }        
-        
         Band detectorBand = ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct, targetProduct);
         detectorBand.setSourceImage(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME).getSourceImage());
     }

@@ -74,10 +74,6 @@ public class TmCloudClassificationOp extends TmBasisOp {
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
-        if (sourceProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(sourceProduct.getPreferredTileSize());
-        }
-
         reflectanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
 
         for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {

@@ -87,9 +87,6 @@ public class FresnelCoefficientOp extends MerisBasisOp {
         } catch (IOException e) {
             throw new OperatorException(e);
         }
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
     }
     
     private void loadFresnelReflectionCoefficient() throws IOException {

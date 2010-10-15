@@ -149,10 +149,6 @@ public class MerisReflectanceCorrectionOp extends Operator {
         targetProduct.getFlagCodingGroup().add(flagCoding);
         aeFlagBand.setSampleCoding(flagCoding);
 
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }        
-        
         OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
     }
 

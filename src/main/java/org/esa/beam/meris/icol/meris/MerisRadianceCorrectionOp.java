@@ -95,10 +95,7 @@ public class MerisRadianceCorrectionOp extends Operator {
                 band.setSourceImage(l1bProduct.getBand(bandName).getSourceImage());
             }
         }
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
-        
+
         OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
         OperatorUtils.copyFlagBandsWithImages(aeAerosolProduct, targetProduct);
     }

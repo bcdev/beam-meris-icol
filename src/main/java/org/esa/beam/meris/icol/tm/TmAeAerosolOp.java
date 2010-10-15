@@ -181,9 +181,6 @@ public class TmAeAerosolOp extends TmBasisOp {
 
 
         aerosolScatteringFuntions = new AerosolScatteringFuntions();
-        if (l1bProduct.getPreferredTileSize() != null) {
-            targetProduct.setPreferredTileSize(l1bProduct.getPreferredTileSize());
-        }
 
         BandMathsOp bandArithmeticOp =
             BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
