@@ -166,7 +166,7 @@ public class MerisOp extends Operator {
 
         Product brrConvolveProduct = createBrrConvolveProduct(brrCloudProduct);
 
-        Product aeRayProduct = createArRayProduct(rad2reflProduct, cloudClassificationProduct, gasProduct, landProduct,
+        Product aeRayProduct = createAeRayProduct(rad2reflProduct, cloudClassificationProduct, gasProduct, landProduct,
                                                   aemaskRayleighProduct, zmaxProduct, zmaxCloudProduct, brrCloudProduct,
                                                   brrConvolveProduct);
 
@@ -400,7 +400,7 @@ public class MerisOp extends Operator {
         // end TEST JavaCL
     }
 
-    private Product createArRayProduct(Product rad2reflProduct, Product cloudClassificationProduct, Product gasProduct,
+    private Product createAeRayProduct(Product rad2reflProduct, Product cloudClassificationProduct, Product gasProduct,
                                        Product landProduct, Product aemaskRayleighProduct, Product zmaxProduct,
                                        Product zmaxCloudProduct, Product brrCloudProduct, Product brrConvolveProduct) {
         Map<String, Product> aeRayInput = new HashMap<String, Product>(10);
