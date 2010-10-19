@@ -1,0 +1,22 @@
+<graphml>
+    <graph id="g1">
+        <node id="n1">
+            <graph id="g2">
+                <node id="n2"/>
+                <node id="n3"/>
+            </graph>
+        </node>
+        <node id="n4"/>
+        <node id="n5">
+            <graph id="g3">
+                <node id="n6"/>
+                <node id="n7"/>
+                <node id="n8"/>
+            </graph>
+        </node>
+        <edge id="e1" source="n1" target="n4"/>
+        <edge id="e2" source="n4" target="n6"/>
+        <edge id="e3" source="n4" target="n7"/>
+        <edge id="e4" source="n4" target="n8"/>
+    </graph>
+</graphml>

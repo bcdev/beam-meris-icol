@@ -1,0 +1,47 @@
+<graphml>
+    <graph id="g1">
+        <node id="n1">
+            <graph id="g2">
+                <node id="n2"/>
+                <node id="n3"/>
+            </graph>
+        </node>
+        <node id="n4"/>
+        <node id="n5"/>
+        <node id="n6">
+            <graph id="g3">
+                <node id="n7"/>
+                <node id="n8"/>
+                <node id="n9"/>
+            </graph>
+        </node>
+        <node id="n10">
+            <graph id="g4">
+                <node id="n11"/>
+                <node id="n12"/>
+                <node id="n13"/>
+            </graph>
+        </node>
+        <node id="n14"/>
+        <node id="n15">
+            <graph id="g5">
+                <node id="n16"/>
+                <node id="n17"/>
+                <node id="n18"/>
+            </graph>
+        </node>
+        <edge id="e1" source="n1" target="n4"/>
+        <edge id="e2" source="n1" target="n5"/>
+        <edge id="e3" source="n4" target="n7"/>
+        <edge id="e4" source="n4" target="n8"/>
+        <edge id="e5" source="n4" target="n9"/>
+        <edge id="e6" source="n5" target="n11"/>
+        <edge id="e7" source="n5" target="n12"/>
+        <edge id="e8" source="n5" target="n13"/>
+        <edge id="e9" source="n6" target="n14"/>
+        <edge id="e10" source="n10" target="n14"/>
+        <edge id="e11" source="n14" target="n16"/>
+        <edge id="e12" source="n14" target="n17"/>
+        <edge id="e13" source="n14" target="n18"/>
+    </graph>
+</graphml>
