@@ -186,7 +186,7 @@ public class MerisOp extends Operator {
         // end test
 
         Product rayAercConvolveProduct = createRayAercConvolveProduct(aeRayProduct);
-        Product aeAerProduct = createaeAerProduct(cloudClassificationProduct, landProduct, aemaskAerosolProduct,
+        Product aeAerProduct = createAeAerProduct(cloudClassificationProduct, landProduct, aemaskAerosolProduct,
                                                   zmaxProduct, zmaxCloudProduct, aeRayProduct, rayAercConvolveProduct);
         Product reverseRhoToaProduct = createReverseRhoToaProduct(rad2reflProduct, cloudClassificationProduct,
                                                                   gasProduct, landProduct, aemaskRayleighProduct,
@@ -341,7 +341,7 @@ public class MerisOp extends Operator {
                 reverseRhoToaInput);
     }
 
-    private Product createaeAerProduct(Product cloudClassificationProduct, Product landProduct,
+    private Product createAeAerProduct(Product cloudClassificationProduct, Product landProduct,
                                        Product aemaskAerosolProduct, Product zmaxProduct, Product zmaxCloudProduct,
                                        Product aeRayProduct, Product rayAercConvolveProduct) {
         Map<String, Product> aeAerInput = new HashMap<String, Product>(8);
@@ -420,8 +420,8 @@ public class MerisOp extends Operator {
         Map<String, Object> aeRayParams = new HashMap<String, Object>(5);
         aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         // todo simplify expression
-        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
-                "additionalOutputBands").equals("RS")) {
+        final String debugProperty = System.getProperty("additionalOutputBands");
+        if (productType == 0 && debugProperty != null && debugProperty.equals("RS")) {
             exportSeparateDebugBands = true;
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
