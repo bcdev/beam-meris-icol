@@ -14,16 +14,18 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
+
 package org.esa.beam.meris.icol.graphgen;
 
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.datamodel.VirtualBand;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
-import org.junit.Assert;
 import org.junit.Test;
 
+import javax.media.jai.operator.ConstantDescriptor;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -33,54 +35,100 @@ import static org.junit.Assert.*;
 
 public class GraphGenTest {
 
-
+    /*
+     * S(u,v) -> Op
+     * Op -> T(a,b,c)
+     */
     @Test
     public void test1() throws IOException {
         final DummyOp op = new DummyOp();
-        final Product sourceProduct = createSourceProduct("source");
-        op.setSourceProduct(sourceProduct);
-        final Product targetProduct = op.getTargetProduct();
+        final Product s = createSourceProduct("s");
+        op.setSourceProduct(s);
+        final Product t = op.getTargetProduct();
         final GraphGen graphGen = new GraphGen();
         MyHandler handler = new MyHandler();
-        graphGen.generateGraph(targetProduct, handler);
+        graphGen.generateGraph(t, handler);
 
         assertEquals(read("GraphGenTest_test1.graphml"), handler.xml.toString());
     }
 
+
+    /*
+     * S1(u,v) -> Op
+     * S2(u,v) -> Op
+     * Op -> T(a,b,c)
+     */
     @Test
     public void test2() throws IOException {
         final DummyOp op = new DummyOp();
-        final Product sourceProduct = createSourceProduct("source");
-        final Product sourceProduct2 = createSourceProduct("source2");
-        op.setSourceProduct("s1", sourceProduct);
-        op.setSourceProduct("s2", sourceProduct2);
-        final Product targetProduct = op.getTargetProduct();
+        final Product s1 = createSourceProduct("s1");
+        final Product s2 = createSourceProduct("s2");
+        op.setSourceProduct("s1", s1);
+        op.setSourceProduct("s2", s2);
+        final Product t = op.getTargetProduct();
         final GraphGen graphGen = new GraphGen();
         MyHandler handler = new MyHandler();
-        graphGen.generateGraph(targetProduct, handler);
+        graphGen.generateGraph(t, handler);
 
         assertEquals(read("GraphGenTest_test2.graphml"), handler.xml.toString());
     }
 
+    /*
+     * S1(u,v) -> Op1
+     * S1(u,v) -> Op2
+     * Op1 -> T1(a,b,c)
+     * Op2 -> T2(a,b,c)
+     * T1,T2 -> Op3
+     * Op3 -> T3
+     */
     @Test
     public void test3() throws IOException {
         final DummyOp op1 = new DummyOp();
         final Product s1 = createSourceProduct("source");
         op1.setSourceProduct(s1);
 
-        final DummyOp op2 = new DummyOp();
+        DummyOp op2 = new DummyOp();
         op2.setSourceProduct(s1);
 
-        final DummyOp op3 = new DummyOp();
-        op3.setSourceProduct("s1", op1.getTargetProduct());
-        op3.setSourceProduct("s2", op2.getTargetProduct());
+        DummyOp op3 = new DummyOp();
+        op3.setSourceProduct("t1", op1.getTargetProduct());
+        op3.setSourceProduct("t2", op2.getTargetProduct());
 
-        final Product targetProduct = op3.getTargetProduct();
+        final Product t3 = op3.getTargetProduct();
+        final GraphGen graphGen = new GraphGen();
+        MyHandler handler = new MyHandler();
+        graphGen.generateGraph(t3, handler);
+
+        assertEquals(read("GraphGenTest_test3.graphml"), handler.xml.toString());
+    }
+
+    /*
+     * S(u,v) -> Op
+     * Op -> T(a,b,c,E,F) (additional bands e and f not computed by Op)
+     */
+    @Test
+    public void test4() throws IOException {
+        final DummyOp2 op = new DummyOp2();
+        final Product sourceProduct = createSourceProduct("s");
+        op.setSourceProduct(sourceProduct);
+        final Product targetProduct = op.getTargetProduct();
+
         final GraphGen graphGen = new GraphGen();
         MyHandler handler = new MyHandler();
         graphGen.generateGraph(targetProduct, handler);
 
-        assertEquals(read("GraphGenTest_test3.graphml"), handler.xml.toString());
+        assertEquals(read("GraphGenTest_test4.graphml"), handler.xml.toString());
+    }
+
+    /**
+     * S(u,v) -> Op1
+     * S(u,v) -> Op2
+     * Op1 -> T1(a,b,c, T2.x, T2.y)
+     * Op2 -> T2(x,y)  // T2 is not expected to appear in output graph
+     */
+    @Test
+    public void test5(){
+        // todo implement
     }
 
     private String read(String fileName) throws IOException {
@@ -88,7 +136,7 @@ public class GraphGenTest {
                 getClass().getResourceAsStream(fileName));
         final char[] contents = new char[1024 * 16];
         final int len = streamReader.read(contents);
-        Assert.assertTrue(len > 0 && len < contents.length);
+        assertTrue(len > 0 && len < contents.length);
         streamReader.close();
 
         return new String(contents, 0, len);
@@ -112,6 +160,27 @@ public class GraphGenTest {
             setTargetProduct(product);
         }
     }
+
+    private static class DummyOp2 extends Operator {
+
+        @Override
+        public void initialize() throws OperatorException {
+            final Product product = new Product("T", "type1", 10, 10);
+            product.addBand("a", ProductData.TYPE_FLOAT32);
+            product.addBand("b", ProductData.TYPE_FLOAT32);
+            product.addBand("c", ProductData.TYPE_FLOAT32);
+
+            // A constant band
+            final Band band1 = product.addBand("d", ProductData.TYPE_FLOAT32);
+            band1.setSourceImage(ConstantDescriptor.create(10f, 10f, new Float[]{3.14f}, null));
+
+            // A virtual band
+            product.addBand(new VirtualBand("e", ProductData.TYPE_FLOAT32, 10, 10, "a + 1"));
+
+            setTargetProduct(product);
+        }
+    }
+
 
     private static class MyHandler implements GraphGen.Handler {
 
@@ -138,26 +207,26 @@ public class GraphGenTest {
         }
 
         @Override
-        public void handleBand(Band band, Operator operator) {
+        public void generateOp2BandEdge(Operator operator, Band band) {
             xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                      operatorIds.get(operator),
                                      bandIds.get(band)));
         }
 
         @Override
-        public void handleSourceProduct(Product sourceProduct, Operator operator) {
+        public void generateProduct2OpEdge(Product sourceProduct, Operator operator) {
             xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                      productIds.get(sourceProduct), operatorIds.get(operator)));
         }
 
         @Override
-        public void handleOperator(Operator operator) {
+        public void generateOpNode(Operator operator) {
             operatorIds.put(operator, nodeId);
             xml.append(String.format("        <node id=\"n%d\"/>\n", nodeId++));
         }
 
         @Override
-        public void handleProduct(Product product) {
+        public void generateProductNode(Product product) {
             final Band[] bands = product.getBands();
             productIds.put(product, nodeId);
             xml.append(String.format("        <node id=\"n%d\">\n", nodeId++));
@@ -168,6 +237,11 @@ public class GraphGenTest {
             }
             xml.append(String.format("            </graph>\n"));
             xml.append(String.format("        </node>\n"));
+        }
+
+        @Override
+        public void generateOp2ProductEdge(Operator operator, Product product) {
+            // does intentionally nothing 
         }
     }
 }
