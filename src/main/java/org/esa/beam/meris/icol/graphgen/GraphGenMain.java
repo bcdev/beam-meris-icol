@@ -28,6 +28,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,33 +40,31 @@ public class GraphGenMain {
 
     public static void main(String[] args) throws IOException {
         MerisOp op = new MerisOp();
-        if( args.length < 2 ) {
-            throw new IllegalArgumentException( "Input and output file locations needed." );
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Input and output file locations needed.");
         }
+
         final Product sourceProduct = ProductIO.readProduct(new File(args[0]));
         op.setSourceProduct(sourceProduct);
         final Product target = op.getTargetProduct();
-        final GraphGen graphGen = new GraphGen();
-        MyHandler handler = new MyHandler();
-        graphGen.generateGraph(target, handler);
 
-        FileWriter fileWriter = new FileWriter( new File( args[1] ) );
+        FileWriter fileWriter = new FileWriter(new File(args[1]));
         BufferedWriter writer = new BufferedWriter(fileWriter);
-        String xml = handler.xml.toString();
-        writer.write(xml);
-        final String[] strings = xml.split("\n");
-        for (String string : strings) {
-            writer.write(String.format("%s\n", string));
-        }
+
+        final GraphGen graphGen = new GraphGen();
+        MyHandler handler = new MyHandler(writer, args.length == 3 && Boolean.parseBoolean(args[2]));
+        graphGen.generateGraph(target, handler);
+        writer.close();
     }
 
     private static class MyHandler implements GraphGen.Handler {
 
-        StringBuilder xml = new StringBuilder();
+        private Writer writer;
+        private boolean hideBands;
 
-        Map<Band, Integer> bandIds = new HashMap<Band, Integer>();
-        Map<Operator, Integer> operatorIds = new HashMap<Operator, Integer>();
-        Map<Product, Integer> productIds = new HashMap<Product, Integer>();
+        private Map<Band, Integer> bandIds = new HashMap<Band, Integer>();
+        private Map<Operator, Integer> operatorIds = new HashMap<Operator, Integer>();
+        private Map<Product, Integer> productIds = new HashMap<Product, Integer>();
 
         private int nodeId = 1;
         private int graphId = 2;
@@ -75,32 +74,42 @@ public class GraphGenMain {
         private static final String SHAPE_OCTAGON = "octagon";
         private static final String SHAPE_TRAPEZOID = "trapezoid";
 
-        private boolean hideBands = false;
+        private MyHandler(Writer writer, boolean hideBands) {
+            this.writer = writer;
+            this.hideBands = hideBands;
+        }
 
         @Override
         public void handleBeginGraph() {
-            xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-                       "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/" +
-                       "XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"" +
-                       "http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns " +
-                       "http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n" +
-                       "    <key for=\"node\" id=\"d0\" yfiles.type=\"nodegraphics\"/>\n" +
-                       "    <key for=\"edge\" id=\"d1\" yfiles.type=\"edgegraphics\"/>\n" +
-                       "    <graph>\n");
+            try {
+                writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+                             "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/" +
+                             "XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"" +
+                             "http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns " +
+                             "http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n" +
+                             "    <key for=\"node\" id=\"d0\" yfiles.type=\"nodegraphics\"/>\n" +
+                             "    <key for=\"edge\" id=\"d1\" yfiles.type=\"edgegraphics\"/>\n" +
+                             "    <graph>\n");
+            } catch (IOException ignored) {
+            }
         }
 
         @Override
         public void handleEndGraph() {
-            xml.append("    </graph>\n" +
-                       "</graphml>");
+            try {
+                writer.write("    </graph>\n" +
+                             "</graphml>");
+            } catch (IOException ignored) {}
         }
 
         @Override
         public void generateOp2BandEdge(Operator operator, Band band) {
             if (!hideBands) {
-                xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
-                                         operatorIds.get(operator),
-                                         bandIds.get(band)));
+                try {
+                    writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                               operatorIds.get(operator),
+                                               bandIds.get(band)));
+                } catch (IOException ignored) {}
             }
         }
 
@@ -110,54 +119,69 @@ public class GraphGenMain {
 
                 final boolean isTarget = product == operator.getTargetProduct();
 
-                if (isTarget) {
-                    xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
-                                             operatorIds.get(operator), productIds.get(product)));
-                } else {
-                    xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\">\n", edgeId++,
-                                             operatorIds.get(operator), productIds.get(product)));
-                    xml.append("            <data key=\"d1\">\n" +
-                               "                <y:PolyLineEdge>\n" +
-                               "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
-                               "                </y:PolyLineEdge>\n" +
-                               "            </data>\n" +
-                               "        </edge>\n"
-                    );
+                try {
+                    if (isTarget) {
+                        writer.write(
+                                String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                              operatorIds.get(operator), productIds.get(product)));
+                    } else {
+                        writer.write(
+                                String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\">\n", edgeId++,
+                                              operatorIds.get(operator), productIds.get(product)));
+                        writer.write("            <data key=\"d1\">\n" +
+                                     "                <y:PolyLineEdge>\n" +
+                                     "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
+                                     "                </y:PolyLineEdge>\n" +
+                                     "            </data>\n" +
+                                     "        </edge>\n"
+                        );
+                    }
+                } catch (IOException ignored) {
                 }
             }
         }
 
         @Override
         public void generateProduct2OpEdge(Product sourceProduct, Operator operator) {
-            xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
-                                     productIds.get(sourceProduct), operatorIds.get(operator)));
+            try {
+                writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                           productIds.get(sourceProduct), operatorIds.get(operator)));
+            } catch (IOException ignored) {
+            }
         }
 
         @Override
         public void generateOpNode(Operator operator) {
             operatorIds.put(operator, nodeId);
-            xml.append(String.format("        <node id=\"n%d\">\n", nodeId++));
-            xml.append(generateLabelTag(operator.getClass().getSimpleName(), SHAPE_OCTAGON));
-            xml.append("        </node>\n");
+            try {
+                writer.write(String.format("        <node id=\"n%d\">\n", nodeId++));
+                writer.write(generateLabelTag(operator.getClass().getSimpleName(), SHAPE_OCTAGON));
+                writer.write("        </node>\n");
+            } catch (IOException ignored) {
+            }
         }
 
         @Override
         public void generateProductNode(Product product) {
             final Band[] bands = product.getBands();
             productIds.put(product, nodeId);
-            xml.append(String.format("        <node id=\"n%d\">\n", nodeId++));
-            xml.append(generateLabelTag(product.getName()));
-            if (!hideBands) {
-                xml.append(String.format("            <graph id=\"g%d\">\n", graphId++));
-                for (Band band : bands) {
-                    bandIds.put(band, nodeId);
-                    xml.append(String.format("                <node id=\"n%d\">\n", nodeId++));
-                    xml.append(String.format("        %s", generateLabelTag(band.getName(), SHAPE_TRAPEZOID)));
-                    xml.append("                </node>\n");
+
+            try {
+                writer.write(String.format("        <node id=\"n%d\">\n", nodeId++));
+                writer.write(generateLabelTag(product.getName()));
+                if (!hideBands) {
+                    writer.write(String.format("            <graph id=\"g%d\">\n", graphId++));
+                    for (Band band : bands) {
+                        bandIds.put(band, nodeId);
+                        writer.write(String.format("                <node id=\"n%d\">\n", nodeId++));
+                        writer.write(String.format("        %s", generateLabelTag(band.getName(), SHAPE_TRAPEZOID)));
+                        writer.write("                </node>\n");
+                    }
+                    writer.write(String.format("            </graph>\n"));
                 }
-                xml.append(String.format("            </graph>\n"));
+                writer.write(String.format("        </node>\n"));
+            } catch (IOException ignored) {
             }
-            xml.append(String.format("        </node>\n"));
         }
 
         private static String generateLabelTag(String label) {
