@@ -134,24 +134,6 @@ public class GraphGen {
         }
     }
 
-    public interface Handler {
-
-        void handleBeginGraph();
-
-        void handleEndGraph();
-
-        void generateOpNode(Operator operator);
-
-        void generateProductNode(Product product);
-
-        void generateOp2BandEdge(Operator operator, Band band);
-
-        void generateOp2ProductEdge(Operator operator, Product product);
-
-        void generateProduct2OpEdge(Product sourceProduct, Operator operator);
-
-    }
-
     private class ProductOpKey {
 
         private Product product;
@@ -253,5 +235,23 @@ public class GraphGen {
             result = 31 * result + (band != null ? band.hashCode() : 0);
             return result;
         }
+    }
+
+    public interface Handler {
+
+        void handleBeginGraph();
+
+        void handleEndGraph();
+
+        void generateOpNode(Operator operator);
+
+        void generateProductNode(Product product);
+
+        void generateOp2BandEdge(Operator operator, Band band);
+
+        void generateOp2ProductEdge(Operator operator, Product product);
+
+        void generateProduct2OpEdge(Product sourceProduct, Operator operator);
+
     }
 }

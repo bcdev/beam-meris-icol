@@ -99,26 +99,41 @@ public class GraphGenMain {
             try {
                 writer.write("    </graph>\n" +
                              "</graphml>");
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
 
         @Override
         public void generateOp2BandEdge(Operator operator, Band band) {
             if (!hideBands) {
+                final boolean isTarget = band.getProduct() == operator.getTargetProduct();
                 try {
-                    writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
-                                               operatorIds.get(operator),
-                                               bandIds.get(band)));
-                } catch (IOException ignored) {}
+                    if (isTarget) {
+                        writer.write(
+                                String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                              operatorIds.get(operator),
+                                              bandIds.get(band)));
+                    } else {
+                        writer.write(
+                                String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\">\n", edgeId++,
+                                              operatorIds.get(operator), bandIds.get(band)));
+                        writer.write("            <data key=\"d1\">\n" +
+                                     "                <y:PolyLineEdge>\n" +
+                                     "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
+                                     "                </y:PolyLineEdge>\n" +
+                                     "            </data>\n" +
+                                     "        </edge>\n"
+                        );
+                    }
+                } catch (IOException ignored) {
+                }
             }
         }
 
         @Override
         public void generateOp2ProductEdge(Operator operator, Product product) {
             if (hideBands) {
-
                 final boolean isTarget = product == operator.getTargetProduct();
-
                 try {
                     if (isTarget) {
                         writer.write(
