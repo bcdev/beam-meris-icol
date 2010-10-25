@@ -2,8 +2,8 @@ org.esa.beam.meris.icol.meris.MerisCloudTopPressureOp$Spi
 org.esa.beam.meris.icol.meris.MerisBrrCloudOp$Spi
 org.esa.beam.meris.icol.meris.MerisBrrConvolveOp$Spi
 org.esa.beam.meris.icol.FresnelCoefficientOp$Spi
-org.esa.beam.meris.icol.meris.MerisAeAerosolOp$Spi
-org.esa.beam.meris.icol.meris.MerisAeAerosolCase2Op$Spi
+org.esa.beam.meris.icol.meris.MerisAdjacencyEffectAerosolOp$Spi
+org.esa.beam.meris.icol.meris.MerisAdjacencyEffectAerosolCase2Op$Spi
 org.esa.beam.meris.icol.ReverseOp$Spi
 org.esa.beam.meris.icol.ReverseDemoProductOp$Spi
 org.esa.beam.meris.icol.meris.MerisReflectanceCorrectionOp$Spi
@@ -31,10 +31,10 @@ org.esa.beam.meris.icol.ConstantValueOp$Spi
 org.esa.beam.meris.icol.TestImageOp$Spi
 org.esa.beam.meris.icol.CompareConvolutionOp$Spi
 org.esa.beam.meris.icol.meris.MerisBand11And15Op$Spi
-org.esa.beam.meris.icol.common.AeMaskOp$Spi
+org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp$Spi
 org.esa.beam.meris.icol.common.CoastDistanceOp$Spi
 org.esa.beam.meris.icol.common.CloudDistanceOp$Spi
 org.esa.beam.meris.icol.common.ZmaxOp$Spi
-org.esa.beam.meris.icol.common.AeRayleighOp$Spi
+org.esa.beam.meris.icol.common.AdjacencyEffectRayleighOp$Spi
 org.esa.beam.meris.icol.common.IcolN1PatcherOp$Spi
 org.esa.beam.meris.icol.meris.MerisPrefilterOp$Spi

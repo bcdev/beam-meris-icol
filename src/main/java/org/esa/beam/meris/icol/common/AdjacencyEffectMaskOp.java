@@ -55,7 +55,7 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
         authors = "Marco Zühlke, Olaf Danne",
         copyright = "(c) 2010 by Brockmann Consult",
         description = "Adjacency mask computation.")
-public class AeMaskOp extends Operator {
+public class AdjacencyEffectMaskOp extends Operator {
 
     public static final String AE_MASK_RAYLEIGH = "ae_mask_rayleigh";
     public static final String AE_MASK_AEROSOL = "ae_mask_aerosol";
@@ -274,7 +274,7 @@ public class AeMaskOp extends Operator {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(AeMaskOp.class);
+            super(AdjacencyEffectMaskOp.class);
         }
     }
 }

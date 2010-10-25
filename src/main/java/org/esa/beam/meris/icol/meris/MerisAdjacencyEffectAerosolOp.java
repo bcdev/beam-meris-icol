@@ -41,7 +41,7 @@ import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.RhoBracketAlgo;
 import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
-import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
@@ -67,13 +67,13 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @SuppressWarnings({"FieldCanBeLocal"})
-@OperatorMetadata(alias = "Meris.AEAerosolCase2",
+@OperatorMetadata(alias = "Meris.AEAerosol",
                   version = "1.0",
                   internal = true,
                   authors = "Marco Zuehlke",
                   copyright = "(c) 2007 by Brockmann Consult",
                   description = "Contribution of aerosol to the adjacency effect.")
-public class MerisAeAerosolCase2Op extends MerisBasisOp {
+public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     public static final String AOT_FLAGS = "aot_flags";
 
@@ -81,6 +81,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     private static final double HA = 3000;
     private static final double NO_DATA_VALUE = -1.0;
     private static final double AE_AOT_THRESHOLD = 0.01;
+
 
     private Band isLandBand;
 
@@ -94,6 +95,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     private Product zmaxProduct;
     @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
+    @SourceProduct(alias = "rayaercconv", optional=true)
+    private Product ray1bconvProduct;
     @SourceProduct(alias = "cloud", optional = true)
     private Product cloudProduct;
     @SourceProduct(alias = "zmaxCloud")
@@ -117,6 +120,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     private int iaerConv;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution;
+    @Parameter(defaultValue="true")
+    private boolean openclConvolution = true;
     @Parameter
     private String landExpression;
 
@@ -128,6 +133,13 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     private Band alphaIndexBand;
     private Band aotBand;
     private Band rhoW9Band;   // additional output for RS
+    private Band rhoW12Band;   // additional output for RS
+    private Band rhoW13Band;   // additional output for RS
+    private Band rhoA9Band;   // additional output for RS
+    private Band rhoA12Band;   // additional output for RS
+    private Band rhoA13Band;   // additional output for RS
+
+    private Band rhoBrr9Band;   // additional output for RS
 
     private Band[] aeAerBands;
     private Band[] rhoAeAcBands;
@@ -138,16 +150,16 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
     private Band[] aerosolDebugBands;
 
     private CoeffW coeffW;
+    private double[/*26*/][/*RR=26|FR=101*/] w;
     private AerosolScatteringFuntions aerosolScatteringFuntions;
     private FresnelReflectionCoefficient fresnelCoefficient;
 
     // tables for case 2 aerosol correction:
-    private static final float[] rhoB9Table = new float[20];
-    private static final float[] rhoB12Table = new float[]{
+    private static final float[] rhoW12Table = new float[]{
             0.0000f, 0.0015f, 0.0032f, 0.0050f, 0.0069f, 0.0089f, 0.0110f, 0.0132f, 0.0157f, 0.0183f,
             0.0212f, 0.0245f, 0.0281f, 0.0322f, 0.0368f, 0.0421f, 0.0483f, 0.0553f, 0.0636f, 0.0732f
     };
-    private static final float[] rhoB13Table = new float[]{
+    private static final float[] rhoW13Table = new float[]{
             0.0000f, 0.0009f, 0.0018f, 0.0029f, 0.0040f, 0.0052f, 0.0065f, 0.0079f, 0.0095f, 0.0112f,
             0.0131f, 0.0152f, 0.0177f, 0.0206f, 0.0240f, 0.0281f, 0.0331f, 0.0394f, 0.0474f, 0.0579f
     };
@@ -162,20 +174,27 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
         flagBand = targetProduct.addBand(AOT_FLAGS, ProductData.TYPE_UINT8);
         FlagCoding flagCoding = createFlagCoding();
-        flagBand.setSampleCoding(flagCoding);
         targetProduct.getFlagCodingGroup().add(flagCoding);
+        flagBand.setSampleCoding(flagCoding);
 
         alphaBand = targetProduct.addBand("alpha", ProductData.TYPE_FLOAT32);
         alphaIndexBand = targetProduct.addBand("alpha_index", ProductData.TYPE_UINT8);
         aotBand = targetProduct.addBand("aot", ProductData.TYPE_FLOAT32);
 
         rhoW9Band = targetProduct.addBand("rhoW9", ProductData.TYPE_FLOAT32);
+        rhoBrr9Band = targetProduct.addBand("rho_brr_9", ProductData.TYPE_FLOAT32);
+        rhoW12Band = targetProduct.addBand("rhoW12", ProductData.TYPE_FLOAT32);
+        rhoW13Band = targetProduct.addBand("rhoW13", ProductData.TYPE_FLOAT32);
+        rhoA9Band = targetProduct.addBand("rhoA9", ProductData.TYPE_FLOAT32);
+        rhoA12Band = targetProduct.addBand("rhoA12", ProductData.TYPE_FLOAT32);
+        rhoA13Band = targetProduct.addBand("rhoA13", ProductData.TYPE_FLOAT32);
 
         rhoAeAcBands = addBandGroup("rho_ray_aeac");
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
             rhoRaecBracketBands = addBandGroup("rho_raec_bracket");
             rhoRaecDiffBands = addBandGroup("rho_raec_diff");
         }
+//        aeAerBands = addBandGroup("rho_aeAer", 0);
         aeAerBands = addBandGroup("rho_aeAer");
 
         if (exportSeparateDebugBands) {
@@ -190,7 +209,6 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         }
 
         String productType = l1bProduct.getProductType();
-
 
         if (reshapedConvolution) {
             rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
@@ -241,11 +259,12 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         return OperatorUtils.getTargetTiles(targetTiles, bands, bandsToSkip);
     }
 
+
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws OperatorException {
         Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
 
-        Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
         Tile vza = null;
         Tile sza = null;
@@ -258,6 +277,13 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
                 EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
+
+        Tile[] rhoRaecConv = null;
+        if (openclConvolution && ray1bconvProduct != null) {
+            rhoRaecConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "rho_ray_aerc_conv",
+                    EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
+        }
+
         RhoBracketAlgo.Convolver convolver = null;
 
         Tile flagTile = targetTiles.get(flagBand);
@@ -266,15 +292,14 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
 
-        Tile rhoW9Tile = targetTiles.get(rhoW9Band);
-
         Tile[] rhoAeAcRaster = getTargetTiles(targetTiles, rhoAeAcBands);
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
-
+        
         final boolean debugMode = System.getProperty("additionalOutputBands") != null && System.getProperty(
                 "additionalOutputBands").equals("RS");
+
         if (debugMode) {
             rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
             rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
@@ -300,7 +325,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                 for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
                     final double rho_13 = rhoRaec[Constants.bb865].getSampleFloat(x, y);
                     final double rho_12 = rhoRaec[Constants.bb775].getSampleFloat(x, y);
-                    final double rho_9 = rhoRaec[Constants.bb705].getSampleFloat(x, y);
+//                    final double rho_9 = rhoRaec[Constants.bb705].getSampleFloat(x, y);
                     /* correct pressure in presence of clouds  - ICOL+ ATBD eqs. (6)-(8) */
                     double rhoCloudCorrFac = 1.0d;
                     boolean isCloud = false;
@@ -316,7 +341,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         }
                     }
 
-                    if (aep.getSampleInt(x, y) == 1 && rho_13 >= 0.0 && rho_12 >= 0.0) {
+                    if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         // attempt to optimise
                         if(vza == null || sza ==null || vaa == null || saa == null || isLand == null || zmaxs == null ||
                            zmaxCloud == null || convolver == null ) {
@@ -331,12 +356,19 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         }
                         // end of optimisation attempt
 
-                        final boolean useUserAlpha = isLand.getSampleBoolean(x, y) || !icolAerosolForWater;
-                        double alpha = computeAlpha(useUserAlpha, rhoRaec[Constants.bb775], y, x, rho_13);
+                        double alpha;
+                        if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
+                            //Aerosols type determination
+                            double rhoRaecTmp = rhoRaec[Constants.bb775].getSampleDouble(x, y);
+                            final double epsilon = rhoRaecTmp / rho_13;
+                            alpha = Math.log(epsilon) / Math.log(778.0 / 865.0);
+                        } else {
+                            alpha = userAlpha;
+                        }
                         int iaer = IcolUtils.determineAerosolModelIndex(alpha);
                         if (iaer < 1 || iaer > 26) {
                             flagTile.setSample(x, y, 1);
-                        }
+                        } 
 
                         //retrieve ROAG at 865 nm with two bounded AOTs
                         final double r1v = fresnelCoefficient.getCoeffFor(vza.getSampleFloat(x, y));
@@ -356,10 +388,8 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         double thetaf = Math.acos(csf) * MathUtils.RTOD;
 
                         double pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
-                        // aot at 865nm depending on aerosol model:
-                        double taua865Iaer = 0.1 * Math.pow((550.0 / 865.0), (iaer / 10.0));
+                        double tauaConst = 0.1 * Math.pow((550.0 / 865.0), ((iaer-1) / 10.0));
                         double paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaer);
-                        double corrFac;
 
                         double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HA);
                         if (isLand.getSampleBoolean(x, y)) {
@@ -368,169 +398,74 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                         }
                         double zmaxCloudPart = ZmaxOp.computeZmaxPart(zmaxCloud, x, y, HA);
 
-                        double aot;
-                        double[] rhoBrr865 = new double[17];     // B13
-                        double[] rhoBrr775 = new double[17];     // B12
-                        double[] rhoBrr705 = new double[17];     // B9
-
-                        //  ICOL D6a ATBD: begin case 2 algorithm
-
-                        // for two iaer, compute two values of rhoBrrBracket in B13for inter-/extrapolation...
-                        final double rhoBrr865Bracket16 = convolver.convolveSample(x, y, 16, Constants.bb865); // B13
-                        final double rhoBrr865Bracket06 = convolver.convolveSample(x, y, 6, Constants.bb865);
-                        final double rhoBrr775Bracket16 = convolver.convolveSample(x, y, 16, Constants.bb775); // B12
-                        final double rhoBrr775Bracket06 = convolver.convolveSample(x, y, 6, Constants.bb775);
-                        final double rhoBrr705Bracket16 = convolver.convolveSample(x, y, 16, Constants.bb705); // B9
-                        final double rhoBrr705Bracket06 = convolver.convolveSample(x, y, 6, Constants.bb705);
-                        final double deltaRhoBrr865Bracket06 = Math.abs((rhoBrr865Bracket16 - rhoBrr865Bracket06) / 10.0);
-                        final double deltaRhoBrr775Bracket06 = Math.abs((rhoBrr775Bracket16 - rhoBrr775Bracket06) / 10.0);
-                        final double deltaRhoBrr705Bracket06 = Math.abs((rhoBrr705Bracket16 - rhoBrr705Bracket06) / 10.0);
-
                         int searchIAOT = -1;
+                        double aot = 0;
+                        double[] rhoBrr865 = new double[17];     // B13
+//                        double[] rhoBrr775 = new double[17];     // B12
+//                        double[] rhoBrr705 = new double[17];     // B9
+                        double taua;
+                        double rhoa;
+                        double rhoa0;
+                        // RS, 14.09.09:
+                        // over water, apply ICOL AE if option is set
+                        // otherwise apply user input (as always over land)
+                        // begin 'old' case 1 water
+                        // first, compute <RO_AER> at 865 and 705nm
+                        double rhoBrrBracket865;
+//                        double rhoBrrBracket705;
+                        if (openclConvolution && ray1bconvProduct != null) {
+                                rhoBrrBracket865 = rhoRaecConv[12].getSampleFloat(x, y);
+//                                rhoBrrBracket705 = rhoRaecConv[8].getSampleFloat(x, y);
+                        } else {
+                            rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
+//                            rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
+                        }
 
+                        double corrFac;
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
-                            double alphaBest = 0.0;
-                            double aot865Best = 0.0;
-                            double rhoBrr705Best;
-                            double rhoBrr705BestPrev = 0.0;
-                            double rhoW705Interpolated = 0.0;
+                            corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
+                            for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
+                                taua = tauaConst * iiaot;
+                                RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
+                                rhoa0 = rv.rhoa;
+                                rhoa = rhoa0 * corrFac;
+                                // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0)
+                                rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
+                                // test:
+                                double rhoW13Test = 0.0;
+                                rhoBrr865[iiaot] += rhoW13Test * Math.exp(-taua / muv) * Math.exp(-taua / mus);
 
-                            // With the 3-band algorithm (705, 775, 865), we want to retrieve 3 unknowns:
-                            // - the water reflectance at 705nm
-                            // - the aerosol type
-                            // - the AOT at 865nm
-
-                            // the final index of retrieved water reflectance rhoW705
-                            int jrhow705;
-
-                            // rhoW705 loop (B9, Gerald Moore table):
-                            for (int irhow705 = 0; irhow705 < 20; irhow705++) {
-                                rhoB9Table[irhow705] = irhow705 * 0.005f;
-                                if (irhow705 > 0 && searchIAOT != -1) {
-                                    // 'best' value of rhoBrr705 retrieved with previous irhoW
-                                    rhoBrr705BestPrev = rhoBrr705[searchIAOT];
+                                if (rhoBrr865[iiaot] > rho_13) {
+                                    searchIAOT = iiaot - 1;
                                 }
-                                double[] aot865 = new double[26];
-                                double taua865C2;
-                                // loop over the 26 aerosol models:
-                                for (int iaerC2 = 1; iaerC2 <= 26; iaerC2++) {
-                                    double rhoBrrBracket775C2 = rhoBrr775Bracket06 + (iaerC2 - 6) * deltaRhoBrr775Bracket06;
-                                    double rhoBrrBracket865C2 = rhoBrr865Bracket06 + (iaerC2 - 6) * deltaRhoBrr865Bracket06;
+                            }
 
-                                    // aot at 865nm depending on case 2 aerosol model:
-                                    final double taua865IaerC2 = 0.1 * Math.pow((550.0 / 865.0), (iaerC2-1)/10.0);
-
-                                    pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaerC2);
-                                    paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaerC2);
-                                    corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
-                                    searchIAOT = -1;
-                                    for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
-                                        // rhoBrr865 computation as for case 1, but with case 2 aerosol model and aot indices:
-                                        taua865C2 = taua865IaerC2 * iiaot;
-                                        RV rv = aerosolScatteringFuntions.aerosol_f(taua865C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
-                                        //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
-                                        final double rhoa0 = rv.rhoa;
-                                        final double rhoa = rhoa0 * corrFac;
-                                        rhoBrr865[iiaot] = rhoa + rhoBrrBracket865C2 * rv.tds * (rv.tus - Math.exp(-taua865C2 / muv));
-                                        // now add water reflectance contribution in B13 from table for given rhoW index
-                                        rhoBrr865[iiaot] += (rhoB13Table[irhow705] * rv.tds * rv.tus);
-
-                                        // if we reached the MERIS measurement in B13, we are done and have the final
-                                        // index of aot at 865nm (aot865best, third unknown) for THIS aerosol type
-                                        // (iaer) and THIS rhoW (irhow705)
-                                        if (rhoBrr865[iiaot] > rho_13) {
-                                            searchIAOT = iiaot - 1;
-                                        }
-                                    } // end iaot loop
-                                    if (searchIAOT != -1) {
-                                        // interpolate aot865 for retrieved index and given case 2 aerosol model
-                                        aot865[iaerC2-1] = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
-                                                                                                       rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * taua865IaerC2;
-
-                                        // rhoBrr775 computation as for case 1, but with case 2 aerosol model index and DERIVED AOT 865!!:
-                                        double taua775C2 = aot865[iaerC2 - 1] * Math.pow((865.0 / 775.0), (iaerC2 - 1)/10.0);
-                                        RV rv775 = aerosolScatteringFuntions.aerosol_f(taua775C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
-                                        final double rhoa0775 = rv775.rhoa;
-                                        final double rhoa775 = rhoa0775 * corrFac;
-                                        rhoBrr775[searchIAOT] = rhoa775 + rhoBrrBracket775C2 * rv775.tds * (rv775.tus - Math.exp(-taua775C2 / muv));
-                                        // now add water reflectance contribution in B12 from table for given rhoW index
-                                        rhoBrr775[searchIAOT] += (rhoB12Table[irhow705] * rv775.tds * rv775.tus);
-
-                                        // ATBD D6a, 2.2, (iii) for ICOL 2.0
-                                        // if we reached the MERIS measurement in B12, we are done and have the final
-                                        // aerosol model (iaer, second unknown) for THIS rhoW (irhow705)
-                                        if (rhoBrr775[searchIAOT] > rho_12) {
-                                            iaer = iaerC2;
-                                            alphaBest = 0.1 - iaer / 10.0;
-                                            aot865Best = aot865[iaerC2-1];
-                                            break;
-                                        }
-                                    }
-                                }  // end iaer loop
-                                if (searchIAOT != -1) {
-                                    // rhoBrr705 computation with derived case 2 aerosol type index (iaer) and DERIVED AOT 865
-                                    double tauaConst705 = aot865[iaer-1] * Math.pow((865.0 / 705.0), ((iaer - 1) / 10.0));
-                                    pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
-                                    RV rv = aerosolScatteringFuntions.aerosol_f(tauaConst705, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
-                                    //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
-                                    final double rhoa0705 = rv.rhoa;
-                                    corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
-                                    final double rhoa705 = rhoa0705 * corrFac;
-                                    double rhoBrrBracket705C1 = rhoBrr705Bracket06 + (iaer - 5) * deltaRhoBrr705Bracket06;
-                                    rhoBrr705[searchIAOT] = rhoa705 + rhoBrrBracket705C1 * rv.tds * (rv.tus - Math.exp(-tauaConst705 / muv));
-                                    // now add water reflectance contribution in B9 from table for given rhoW index
-                                    rhoBrr705[searchIAOT] += (rhoB9Table[irhow705] * rv.tds * rv.tus);
-
-                                    // if we reached the MERIS measurement in B9, we are done and have the final
-                                    // 'experimental' water reflectance at 705nm (ATBD D6a, eq. 11).
-                                    if (rhoBrr705[searchIAOT] > rho_9) {
-                                        rhoBrr705Best = rhoBrr705[searchIAOT];
-                                        jrhow705 = irhow705;
-                                        if (jrhow705 > 0) {
-                                            double delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
-                                            if (Math.abs(delta705) > 1.0) {
-                                                // todo: raise a flag at conditions like this
-                                                delta705 = 0.0;
-                                            }
-                                            rhoW705Interpolated = rhoB9Table[jrhow705] + delta705 *
-                                                    (rhoB9Table[jrhow705 - 1] - rhoB9Table[jrhow705]);
-                                        }
-                                        break;
-                                    }
-                                } else {
-                                    // todo: raise flag
-                                }
-                            } // end irhow705 loop
-                            // todo: raise a 'turbid water' flag if last irhow is reached
-
-                            // We are done with the case 2 retrieval. Set final values of alpha, AOT, these go into the
-                            // the product
-                            aot = aot865Best;
-                            alpha = alphaBest;
-
-                            if (exportSeparateDebugBands && searchIAOT != -1) {
-                                rhoW9Tile.setSample(x, y, rhoW705Interpolated);
+                            if (searchIAOT != -1) {
+                                aot = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
+                                                                               rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * 0.1;
+                            } else {
+                                flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
                         } else {
                             aot = userAot865;
                             searchIAOT = MathUtils.floorInt(aot * 10);
-                            iaer = getAerosolModelIndex(userAlpha);
-                            double rhoBrrBracket865C1 = rhoBrr865Bracket06 + (iaer-5)*deltaRhoBrr865Bracket06;
+                            corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
-                                final double taua = taua865Iaer * iiaot;
+                                taua = tauaConst * iiaot;
                                 RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
-                                final double rhoa0865 = rv.rhoa;
-                                corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart- zmaxCloudPart));
-                                final double rhoa865 = rhoa0865 * corrFac;
-                                rhoBrr865[iiaot] = rhoa865 + rhoBrrBracket865C1 * rv.tds * (rv.tus - Math.exp(-taua / muv));
+                                rhoa0 = rv.rhoa;
+                                rhoa = rhoa0 * corrFac;
+                                // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0) s.a.
+                                rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
+//                                rhoBrr705[iiaot] = rhoa + rhoBrrBracket705 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                             }
                         }
-                        //  end case 2 algorithm
+                        // end old case 1 water
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        // write aot865 to output...
                         aotTile.setSample(x, y, aot);
 
                         //Correct from AE with AEROSOLS
@@ -547,14 +482,9 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 fresnelDebug[iwvl].setSample(x, y, -1);
                             }
                             if (searchIAOT != -1 && aot > AE_AOT_THRESHOLD) {
-                                // todo: extract methods also in this part!
                                 double roAerMean;
-                                if (iwvl == Constants.bb9) {
-                                    roAerMean = rhoBrr705Bracket06 + (iaer - 5) * deltaRhoBrr705Bracket06;
-                                } else if (iwvl == Constants.bb12) {
-                                    roAerMean = rhoBrr775Bracket06 + (iaer - 5) * deltaRhoBrr775Bracket06;
-                                } else if (iwvl == Constants.bb13) {
-                                    roAerMean = rhoBrr865Bracket06 + (iaer - 5) * deltaRhoBrr865Bracket06;
+                                if (openclConvolution && ray1bconvProduct != null) {
+                                    roAerMean = rhoRaecConv[iwvl].getSampleFloat(x, y);
                                 } else {
                                     roAerMean = convolver.convolveSample(x, y, iaer, iwvl);
                                 }
@@ -567,8 +497,7 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
                                 RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
-                                double aerosol1;
-                                aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
+                                double aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
                                 aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
 
                                 final double fresnel1 = rv1.rhoa * paerFB * r1s * (zmaxPart + zmaxCloudPart);
@@ -638,33 +567,10 @@ public class MerisAeAerosolCase2Op extends MerisBasisOp {
         }
     }
 
-    private double computeAlpha(boolean useUserAlpha, Tile tile, int y, int x, double rho_13) {
-        double alpha;
-        if (useUserAlpha) {
-            alpha = userAlpha;
-        } else {
-            //Aerosols type determination
-            double rhoRaecTmp = tile.getSampleDouble(x, y);
-            final double epsilon = rhoRaecTmp / rho_13;
-            alpha = Math.log(epsilon) / Math.log(778.0 / 865.0);
-        }
-        return alpha;
-    }
-
-    private int getAerosolModelIndex(double alpha) {
-        int iaer = (int) (Math.round(-(alpha * 10.0)) + 1);
-        if (iaer < 1) {
-            iaer = 1;
-        } else if (iaer > 26) {
-            iaer = 26;
-        }
-        return iaer;
-    }
-
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(MerisAeAerosolCase2Op.class);
+            super(MerisAdjacencyEffectAerosolOp.class);
         }
     }
 }

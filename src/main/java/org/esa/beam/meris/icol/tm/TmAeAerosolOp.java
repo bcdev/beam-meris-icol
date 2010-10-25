@@ -23,7 +23,7 @@ import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.RhoBracketAlgo;
 import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
 import org.esa.beam.meris.icol.RhoBracketKernellLoop;
-import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
@@ -232,7 +232,7 @@ public class TmAeAerosolOp extends TmBasisOp {
         Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
         Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
         Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
-        Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
         Tile[] rhoRaec = getRhoRaecTiles(pm, sourceRect, instrument);
 

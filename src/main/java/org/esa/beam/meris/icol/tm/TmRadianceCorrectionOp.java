@@ -11,7 +11,7 @@ import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
-import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.l2auxdata.Utils;
@@ -101,8 +101,8 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
                 Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
                 Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
-                Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-                Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
+                Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
                 Tile reflectanceR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber),
                                                   rectangle, pm);
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {

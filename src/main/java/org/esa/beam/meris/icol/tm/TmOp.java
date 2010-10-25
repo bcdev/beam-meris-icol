@@ -14,8 +14,8 @@ import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.FresnelCoefficientOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.Instrument;
-import org.esa.beam.meris.icol.common.AeMaskOp;
-import org.esa.beam.meris.icol.common.AeRayleighOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
@@ -277,7 +277,7 @@ public class TmOp extends TmBasisOp {
         aemaskRayleighParameters.put("aeArea", aeArea);
         aemaskRayleighParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskRayleighParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
-        Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
+        Product aemaskRayleighProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectMaskOp.class), aemaskRayleighParameters, aemaskRayleighInput);
 
         Map<String, Product> aemaskAerosolInput = new HashMap<String, Product>(2);
         aemaskAerosolInput.put("source", conversionProduct);
@@ -287,7 +287,7 @@ public class TmOp extends TmBasisOp {
         aemaskAerosolParameters.put("aeArea", aeArea);
         aemaskAerosolParameters.put("reshapedConvolution", reshapedConvolution);
         aemaskAerosolParameters.put("correctionMode", IcolConstants.AE_CORRECTION_MODE_AEROSOL);
-        Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
+        Product aemaskAerosolProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectMaskOp.class), aemaskAerosolParameters, aemaskAerosolInput);
 
         // Coast distance:
         Map<String, Product> coastDistanceInput = new HashMap<String, Product>(2);
@@ -315,7 +315,7 @@ public class TmOp extends TmBasisOp {
         zmaxInput.put("distance", coastDistanceProduct);
         zmaxInput.put("ae_mask", aemaskRayleighProduct);
         Map<String, Object> zmaxParameters = new HashMap<String, Object>(2);
-        String aeMaskExpression = AeMaskOp.AE_MASK_RAYLEIGH + ".aep";
+        String aeMaskExpression = AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH + ".aep";
         if (aeArea.correctOverLand()) {
             aeMaskExpression = "true";
         }
@@ -331,7 +331,7 @@ public class TmOp extends TmBasisOp {
         zmaxCloudInput.put("ae_mask", aemaskRayleighProduct);
         zmaxCloudInput.put("distance", cloudDistanceProduct);
         Map<String, Object> zmaxCloudParameters = new HashMap<String, Object>();
-        zmaxCloudParameters.put("aeMaskExpression", AeMaskOp.AE_MASK_RAYLEIGH + ".aep");
+        zmaxCloudParameters.put("aeMaskExpression", AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH + ".aep");
         zmaxCloudParameters.put("distanceBandName", CloudDistanceOp.CLOUD_DISTANCE);
         Product zmaxCloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxCloudParameters, zmaxCloudInput);
 
@@ -355,7 +355,7 @@ public class TmOp extends TmBasisOp {
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
         aeRayParams.put("instrument", Instrument.TM5);
-        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AeRayleighOp.class), aeRayParams, aeRayInput);
+        Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectRayleighOp.class), aeRayParams, aeRayInput);
 
         // AE Aerosol:
         // --> same operator as for MERIS, distinguish Meris/Landsat case
@@ -438,8 +438,8 @@ public class TmOp extends TmBasisOp {
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
             DebugUtils.addRayleighCorrDebugBands(correctionProduct, rayleighProduct);
             DebugUtils.addSingleDebugBand(correctionProduct, ctpProduct, TmConstants.LANDSAT5_CTP_BAND_NAME);
-            DebugUtils.addSingleDebugBand(correctionProduct, aemaskRayleighProduct, AeMaskOp.AE_MASK_RAYLEIGH);
-            DebugUtils.addSingleDebugBand(correctionProduct, aemaskAerosolProduct, AeMaskOp.AE_MASK_AEROSOL);
+            DebugUtils.addSingleDebugBand(correctionProduct, aemaskRayleighProduct, AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH);
+            DebugUtils.addSingleDebugBand(correctionProduct, aemaskAerosolProduct, AdjacencyEffectMaskOp.AE_MASK_AEROSOL);
             DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
             DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
             DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_1");

@@ -27,7 +27,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
-import org.esa.beam.meris.icol.common.AeMaskOp;
+import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
@@ -113,7 +113,7 @@ public class ReverseDemoProductOp extends MerisBasisOp {
 				Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
 				Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
 			
-				Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+				Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
 				Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, pm);
 
 				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {

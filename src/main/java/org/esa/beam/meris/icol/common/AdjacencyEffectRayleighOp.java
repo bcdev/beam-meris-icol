@@ -66,7 +66,7 @@ import java.util.Map;
                   authors = "Marco Zuehlke, Olaf Danne",
                   copyright = "(c) 2010 by Brockmann Consult",
                   description = "Contribution of rayleigh to the adjacency effect.")
-public class AeRayleighOp extends Operator {
+public class AdjacencyEffectRayleighOp extends Operator {
 
     private static final double NO_DATA_VALUE = -1.0;
     private static final double HR = 8000; // Rayleigh scale height
@@ -191,7 +191,7 @@ public class AeRayleighOp extends Operator {
                                      pm);
             Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
             Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
-            Tile aep = getSourceTile(aemaskProduct.getBand(AeMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
+            Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
             Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect, pm);
 
@@ -331,7 +331,7 @@ public class AeRayleighOp extends Operator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(AeRayleighOp.class);
+            super(AdjacencyEffectRayleighOp.class);
         }
     }
 }
