@@ -220,6 +220,10 @@ public class GraphGenTest {
         }
 
         @Override
+        public void generateOp2OpEdge(Operator source, Operator target) {
+        }
+
+        @Override
         public void generateOpNode(Operator operator) {
             operatorIds.put(operator, nodeId);
             xml.append(String.format("        <node id=\"n%d\"/>\n", nodeId++));

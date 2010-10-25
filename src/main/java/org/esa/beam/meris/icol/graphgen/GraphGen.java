@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010 Brockmann Consult GmbH (info@brockmann-consult.de)
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option)
@@ -9,7 +9,7 @@
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
@@ -24,7 +24,9 @@ import org.esa.beam.framework.gpf.internal.OperatorContext;
 
 import java.awt.image.RenderedImage;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class GraphGen {
@@ -34,38 +36,35 @@ public class GraphGen {
     private Set<ProductOpKey> productOpKeys = new HashSet<ProductOpKey>();
     private Set<OpBandKey> opBandKeys = new HashSet<OpBandKey>();
     private Set<OpProductKey> opProductKeys = new HashSet<OpProductKey>();
+    private Set<OpOpKey> opOpKeys = new HashSet<OpOpKey>();
 
-    public void generateGraph(Product product, Handler handler) {
+    public void generateGraph(Product targetProduct, Handler handler) {
         handler.handleBeginGraph();
-        generateNodes(product, handler);
-        generateEdges(product, handler);
+        generateNodes(targetProduct, handler);
+        generateEdges(targetProduct, handler);
         handler.handleEndGraph();
     }
 
     private void generateNodes(Product product, Handler handler) {
         final Band[] bands = product.getBands();
         for (Band band : bands) {
-            if (band.isSourceImageSet()) {
-                final MultiLevelImage image = band.getSourceImage();
-                final RenderedImage image0 = image.getImage(0);
-                Operator operator = getOperator(image0);
-                if (operator == null) {
-                    continue;
-                }
-
-                final Product[] sourceProducts = operator.getSourceProducts();
-                for (Product sourceProduct : sourceProducts) {
-                    if (!productNodes.contains(sourceProduct)) {
-                        productNodes.add(sourceProduct);
-                        generateNodes(sourceProduct, handler);
-                    }
-                }
-                if (!operatorNodes.contains(operator)) {
-                    operatorNodes.add(operator);
-                    handler.generateOpNode(operator);
-                }
-
+            Operator operator = getOperator(band);
+            if (operator == null) {
+                continue;
             }
+
+            final Product[] sourceProducts = operator.getSourceProducts();
+            for (Product sourceProduct : sourceProducts) {
+                if (!productNodes.contains(sourceProduct)) {
+                    productNodes.add(sourceProduct);
+                    generateNodes(sourceProduct, handler);
+                }
+            }
+            if (!operatorNodes.contains(operator)) {
+                operatorNodes.add(operator);
+                handler.generateOpNode(operator);
+            }
+
         }
         handler.generateProductNode(product);
     }
@@ -73,42 +72,66 @@ public class GraphGen {
     private void generateEdges(Product product, Handler handler) {
         final Band[] bands = product.getBands();
         for (Band band : bands) {
-            if (band.isSourceImageSet()) {
-                final MultiLevelImage image = band.getSourceImage();
-                final RenderedImage image0 = image.getImage(0);
-                Operator operator = getOperator(image0);
-                if (operator == null) {
-                    continue;
-                }
+            Operator operator = getOperator(band);
+            if (operator == null) {
+                continue;
+            }
 
-                final Product[] sourceProducts = operator.getSourceProducts();
-                for (Product sourceProduct : sourceProducts) {
-                    final ProductOpKey productOpKey = new ProductOpKey(sourceProduct, operator);
-                    if (!productOpKeys.contains(productOpKey)) {
-                        productOpKeys.add(productOpKey);
-                        generateEdges(sourceProduct, handler);
-                        handler.generateProduct2OpEdge(sourceProduct, operator);
+            Product[] sourceProducts = operator.getSourceProducts();
+            for (Product sourceProduct : sourceProducts) {
+                List<Operator> sourceOperators = getSourceOperators(sourceProduct);
+                for (Operator sourceOperator : sourceOperators) {
+                    final OpOpKey opOpKey = new OpOpKey(operator, sourceOperator);
+                    if (!opOpKeys.contains(opOpKey)) {
+                        opOpKeys.add(opOpKey);
+                        handler.generateOp2OpEdge(sourceOperator, operator);
                     }
                 }
+            }
 
-                final OpBandKey opBandKey = new OpBandKey(operator, band);
-                if (!opBandKeys.contains(opBandKey)) {
-                    opBandKeys.add(opBandKey);
-                    handler.generateOp2BandEdge(operator, band);
+            for (Product sourceProduct : sourceProducts) {
+                final ProductOpKey productOpKey = new ProductOpKey(sourceProduct, operator);
+                if (!productOpKeys.contains(productOpKey)) {
+                    productOpKeys.add(productOpKey);
+                    generateEdges(sourceProduct, handler);
+                    handler.generateProduct2OpEdge(sourceProduct, operator);
                 }
+            }
 
-                final OpProductKey opProductKey = new OpProductKey(operator, product);
-                if (!opProductKeys.contains(opProductKey)) {
-                    opProductKeys.add(opProductKey);
-                    handler.generateOp2ProductEdge(operator, product);
-                }
+            final OpBandKey opBandKey = new OpBandKey(operator, band);
+            if (!opBandKeys.contains(opBandKey)) {
+                opBandKeys.add(opBandKey);
+                handler.generateOp2BandEdge(operator, band);
+            }
+
+            final OpProductKey opProductKey = new OpProductKey(operator, product);
+            if (!opProductKeys.contains(opProductKey)) {
+                opProductKeys.add(opProductKey);
+                handler.generateOp2ProductEdge(operator, product);
             }
         }
     }
 
-    private Operator getOperator(RenderedImage image0) {
+    private List<Operator> getSourceOperators(Product sourceProduct) {
+        List<Operator> ops = new ArrayList<Operator>();
+        for (Band band1 : sourceProduct.getBands()) {
+            Operator sourceOperator = getOperator(band1);
+            if (sourceOperator != null) {
+                ops.add(sourceOperator);
+            }
+        }
+        return ops;
+    }
+
+    private Operator getOperator(Band band) {
         Operator operator = null;
+        if (!band.isSourceImageSet()) {
+            return operator;
+        }
+
         try {
+            final MultiLevelImage image = band.getSourceImage();
+            final RenderedImage image0 = image.getImage(0);
             final Field field = getOperatorContextField(image0.getClass());
             field.setAccessible(true);
             OperatorContext operatorContext = (OperatorContext) field.get(image0);
@@ -237,6 +260,45 @@ public class GraphGen {
         }
     }
 
+    private class OpOpKey {
+
+        private final Operator operator;
+        private final Operator op;
+
+        public OpOpKey(Operator operator, Operator op) {
+            this.operator = operator;
+            this.op = op;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OpOpKey opOpKey = (OpOpKey) o;
+
+            if (op != null ? !op.equals(opOpKey.op) : opOpKey.op != null) {
+                return false;
+            }
+            if (operator != null ? !operator.equals(opOpKey.operator) : opOpKey.operator != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operator != null ? operator.hashCode() : 0;
+            result = 31 * result + (op != null ? op.hashCode() : 0);
+            return result;
+        }
+    }
+
     public interface Handler {
 
         void handleBeginGraph();
@@ -253,5 +315,6 @@ public class GraphGen {
 
         void generateProduct2OpEdge(Product sourceProduct, Operator operator);
 
+        void generateOp2OpEdge(Operator source, Operator target);
     }
 }

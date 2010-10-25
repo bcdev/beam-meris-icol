@@ -23,6 +23,7 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.meris.icol.meris.MerisOp;
+import org.esa.beam.meris.icol.tm.TmOp;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,21 +40,34 @@ public class GraphGenMain {
     }
 
     public static void main(String[] args) throws IOException {
-        MerisOp op = new MerisOp();
-        if (args.length < 2) {
-            throw new IllegalArgumentException("Input and output file locations needed.");
+        if (args.length < 3) {
+            throw new IllegalArgumentException("Input and output file locations and product type needed.");
+        }
+
+        Operator op;
+        if( args[2].equalsIgnoreCase("meris") ) {
+            op = new MerisOp();
+        } else if ( args[2].equalsIgnoreCase("landsat") ) {
+            op = new TmOp();
+        } else {
+            throw new IllegalArgumentException( "argument 3 must be 'meris' or 'landsat'." );
         }
 
         final Product sourceProduct = ProductIO.readProduct(new File(args[0]));
         op.setSourceProduct(sourceProduct);
-        final Product target = op.getTargetProduct();
+        final Product targetProduct = op.getTargetProduct();
 
         FileWriter fileWriter = new FileWriter(new File(args[1]));
         BufferedWriter writer = new BufferedWriter(fileWriter);
 
         final GraphGen graphGen = new GraphGen();
-        MyHandler handler = new MyHandler(writer, args.length == 3 && Boolean.parseBoolean(args[2]));
-        graphGen.generateGraph(target, handler);
+        boolean hideBands = args.length >= 4 && Boolean.parseBoolean(args[3]);
+        final boolean hideProducts = args.length >= 5 && Boolean.parseBoolean(args[4]);
+        if( hideProducts ) {
+            hideBands = true;
+        }
+        MyHandler handler = new MyHandler(writer, hideBands, hideProducts);
+        graphGen.generateGraph(targetProduct, handler);
         writer.close();
     }
 
@@ -61,6 +75,7 @@ public class GraphGenMain {
 
         private Writer writer;
         private boolean hideBands;
+        private boolean hideProducts;
 
         private Map<Band, Integer> bandIds = new HashMap<Band, Integer>();
         private Map<Operator, Integer> operatorIds = new HashMap<Operator, Integer>();
@@ -70,9 +85,14 @@ public class GraphGenMain {
         private int graphId = 2;
         private int edgeId = 1;
 
-        private static final String SHAPE_RECTANGLE = "rectangle";
+        private static final String SHAPE_RECTANGLE = "rectangle3d";
         private static final String SHAPE_OCTAGON = "octagon";
         private static final String SHAPE_TRAPEZOID = "trapezoid";
+
+        private MyHandler(Writer writer, boolean hideBands, boolean hideProducts) {
+            this(writer, hideBands);
+            this.hideProducts = hideProducts;
+        }
 
         private MyHandler(Writer writer, boolean hideBands) {
             this.writer = writer;
@@ -132,7 +152,7 @@ public class GraphGenMain {
 
         @Override
         public void generateOp2ProductEdge(Operator operator, Product product) {
-            if (hideBands) {
+            if (hideBands && !hideProducts) {
                 final boolean isTarget = product == operator.getTargetProduct();
                 try {
                     if (isTarget) {
@@ -158,10 +178,23 @@ public class GraphGenMain {
 
         @Override
         public void generateProduct2OpEdge(Product sourceProduct, Operator operator) {
-            try {
-                writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
-                                           productIds.get(sourceProduct), operatorIds.get(operator)));
-            } catch (IOException ignored) {
+            if (!hideProducts) {
+                try {
+                    writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                               productIds.get(sourceProduct), operatorIds.get(operator)));
+                } catch (IOException ignored) {
+                }
+            }
+        }
+
+        @Override
+        public void generateOp2OpEdge(Operator source, Operator target) {
+            if (hideProducts) {
+                try {
+                    writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
+                                               operatorIds.get(source), operatorIds.get(target)));
+                } catch (IOException ignored) {
+                }
             }
         }
 
@@ -170,7 +203,7 @@ public class GraphGenMain {
             operatorIds.put(operator, nodeId);
             try {
                 writer.write(String.format("        <node id=\"n%d\">\n", nodeId++));
-                writer.write(generateLabelTag(operator.getClass().getSimpleName(), SHAPE_OCTAGON));
+                writer.write(generateLabelTag(operator.getClass().getSimpleName(), SHAPE_RECTANGLE));
                 writer.write("        </node>\n");
             } catch (IOException ignored) {
             }
@@ -178,12 +211,15 @@ public class GraphGenMain {
 
         @Override
         public void generateProductNode(Product product) {
+            if (hideProducts) {
+                return;
+            }
             final Band[] bands = product.getBands();
             productIds.put(product, nodeId);
 
             try {
                 writer.write(String.format("        <node id=\"n%d\">\n", nodeId++));
-                writer.write(generateLabelTag(product.getName()));
+                writer.write(generateLabelTag(product.getName(), SHAPE_OCTAGON));
                 if (!hideBands) {
                     writer.write(String.format("            <graph id=\"g%d\">\n", graphId++));
                     for (Band band : bands) {
@@ -199,19 +235,27 @@ public class GraphGenMain {
             }
         }
 
-        private static String generateLabelTag(String label) {
-            return generateLabelTag(label, SHAPE_RECTANGLE);
-        }
-
         private static String generateLabelTag(String label, String shape) {
+            int fontSize = 35;
+            int height = fontSize + 10;
+            int width = label.length() * (fontSize - 10);
+            if(label.endsWith("Op")) {
+                label = label.substring(0, label.length() - 2);
+            }
+            String[] parts = label.split("(?<!^)(?=[A-Z])");
+            label = "";
+            for (String part : parts) {
+                label += part + " ";
+            }
             return String.format(
                     "            <data key=\"d0\">\n" +
                     "                <y:ShapeNode>\n" +
-                    "                    <y:NodeLabel>%s</y:NodeLabel>\n" +
+                    "                    <y:Geometry height=\"" + height + "\" width=\"" + width + "\"/>\n" +
+                    "                    <y:NodeLabel fontSize=\"" + fontSize + "\">%s</y:NodeLabel>\n" +
                     "                    <y:Shape type=\"%s\"/>\n" +
                     "                </y:ShapeNode>\n" +
                     "            </data>\n",
-                    label, shape);
+                    label.trim(), shape);
         }
 
     }
