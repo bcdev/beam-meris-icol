@@ -78,7 +78,7 @@ public class GraphGenMain {
         private boolean hideProducts;
 
         private Map<Band, Integer> bandIds = new HashMap<Band, Integer>();
-        private Map<Operator, Integer> operatorIds = new HashMap<Operator, Integer>();
+        private Map<Op, Integer> operatorIds = new HashMap<Op, Integer>();
         private Map<Product, Integer> productIds = new HashMap<Product, Integer>();
 
         private int nodeId = 1;
@@ -124,11 +124,10 @@ public class GraphGenMain {
         }
 
         @Override
-        public void generateOp2BandEdge(Operator operator, Band band) {
+        public void generateOp2BandEdge(Op operator, Band band) {
             if (!hideBands) {
-                final boolean isTarget = band.getProduct() == operator.getTargetProduct();
                 try {
-                    if (isTarget) {
+                    if (operator.isTargetProduct(band.getProduct())) {
                         writer.write(
                                 String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                               operatorIds.get(operator),
@@ -151,11 +150,10 @@ public class GraphGenMain {
         }
 
         @Override
-        public void generateOp2ProductEdge(Operator operator, Product product) {
+        public void generateOp2ProductEdge(Op operator, Product product) {
             if (hideBands && !hideProducts) {
-                final boolean isTarget = product == operator.getTargetProduct();
                 try {
-                    if (isTarget) {
+                    if (operator.isTargetProduct(product)) {
                         writer.write(
                                 String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                               operatorIds.get(operator), productIds.get(product)));
@@ -177,7 +175,7 @@ public class GraphGenMain {
         }
 
         @Override
-        public void generateProduct2OpEdge(Product sourceProduct, Operator operator) {
+        public void generateProduct2OpEdge(Product sourceProduct, Op operator) {
             if (!hideProducts) {
                 try {
                     writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
@@ -188,7 +186,7 @@ public class GraphGenMain {
         }
 
         @Override
-        public void generateOp2OpEdge(Operator source, Operator target) {
+        public void generateOp2OpEdge(Op source, Op target) {
             if (hideProducts) {
                 try {
                     writer.write(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
@@ -199,11 +197,11 @@ public class GraphGenMain {
         }
 
         @Override
-        public void generateOpNode(Operator operator) {
+        public void generateOpNode(Op operator) {
             operatorIds.put(operator, nodeId);
             try {
                 writer.write(String.format("        <node id=\"n%d\">\n", nodeId++));
-                writer.write(generateLabelTag(operator.getClass().getSimpleName(), SHAPE_RECTANGLE));
+                writer.write(generateLabelTag(operator.getName(), SHAPE_RECTANGLE));
                 writer.write("        </node>\n");
             } catch (IOException ignored) {
             }

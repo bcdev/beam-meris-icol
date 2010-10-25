@@ -187,7 +187,7 @@ public class GraphGenTest {
         StringBuilder xml = new StringBuilder();
 
         Map<Band, Integer> bandIds = new HashMap<Band, Integer>();
-        Map<Operator, Integer> operatorIds = new HashMap<Operator, Integer>();
+        Map<Op, Integer> operatorIds = new HashMap<Op, Integer>();
         Map<Product, Integer> productIds = new HashMap<Product, Integer>();
 
         private int nodeId = 1;
@@ -207,24 +207,24 @@ public class GraphGenTest {
         }
 
         @Override
-        public void generateOp2BandEdge(Operator operator, Band band) {
+        public void generateOp2BandEdge(Op operator, Band band) {
             xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                      operatorIds.get(operator),
                                      bandIds.get(band)));
         }
 
         @Override
-        public void generateProduct2OpEdge(Product sourceProduct, Operator operator) {
+        public void generateProduct2OpEdge(Product sourceProduct, Op operator) {
             xml.append(String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\"/>\n", edgeId++,
                                      productIds.get(sourceProduct), operatorIds.get(operator)));
         }
 
         @Override
-        public void generateOp2OpEdge(Operator source, Operator target) {
+        public void generateOp2OpEdge(Op source, Op target) {
         }
 
         @Override
-        public void generateOpNode(Operator operator) {
+        public void generateOpNode(Op operator) {
             operatorIds.put(operator, nodeId);
             xml.append(String.format("        <node id=\"n%d\"/>\n", nodeId++));
         }
@@ -244,7 +244,7 @@ public class GraphGenTest {
         }
 
         @Override
-        public void generateOp2ProductEdge(Operator operator, Product product) {
+        public void generateOp2ProductEdge(Op operator, Product product) {
             // does intentionally nothing 
         }
     }
