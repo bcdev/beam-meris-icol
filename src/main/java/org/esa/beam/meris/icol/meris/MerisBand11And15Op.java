@@ -74,12 +74,12 @@ public class MerisBand11And15Op extends Operator {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 5);
         try {
-            Tile l1bT10 = getSrc(refl1bProduct, 10, rect, subPm1(pm));
-            Tile l1bT11 = getSrc(refl1bProduct, 11, rect, subPm1(pm));
-            Tile l1bT12 = getSrc(refl1bProduct, 12, rect, subPm1(pm));
+            Tile l1bT10 = getSourceTile(refl1bProduct.getBand("rho_toa_" + 10), rect, subPm1(pm));
+            Tile l1bT11 = getSourceTile(refl1bProduct.getBand("rho_toa_" + 11), rect, subPm1(pm));
+            Tile l1bT12 = getSourceTile(refl1bProduct.getBand("rho_toa_" + 12), rect, subPm1(pm));
 
-            Tile l1nT10 = getSrc(corrReflProduct, 10, rect, subPm1(pm));
-            Tile l1nT12 = getSrc(corrReflProduct, 12, rect, subPm1(pm));
+            Tile l1nT10 = getSourceTile(corrReflProduct.getBand("rho_toa_" + 10), rect, subPm1(pm));
+            Tile l1nT12 = getSourceTile(corrReflProduct.getBand("rho_toa_" + 12), rect, subPm1(pm));
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -100,7 +100,7 @@ public class MerisBand11And15Op extends Operator {
                         targetTile.setSample(x, y, noDataValue);
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -112,10 +112,9 @@ public class MerisBand11And15Op extends Operator {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 3);
         try {
-            Tile l1bT14 = getSrc(refl1bProduct, 14, rect, subPm1(pm));
-            Tile l1bT15 = getSrc(refl1bProduct, 15, rect, subPm1(pm));
-
-            Tile l1nT14 = getSrc(corrReflProduct, 14, rect, subPm1(pm));
+            Tile l1bT14 = getSourceTile(refl1bProduct.getBand("rho_toa_" + 14), rect, subPm1(pm));
+            Tile l1bT15 = getSourceTile(refl1bProduct.getBand("rho_toa_" + 15), rect, subPm1(pm));
+            Tile l1nT14 = getSourceTile(corrReflProduct.getBand("rho_toa_" + 14), rect, subPm1(pm));
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -129,16 +128,12 @@ public class MerisBand11And15Op extends Operator {
                         targetTile.setSample(x, y, noDataValue);
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
             pm.done();
         }
-    }
-
-    private Tile getSrc(Product product, int bandIndex, Rectangle rect, ProgressMonitor pm) {
-        return getSourceTile(product.getBand("rho_toa_" + bandIndex), rect, pm);
     }
 
     public static class Spi extends OperatorSpi {

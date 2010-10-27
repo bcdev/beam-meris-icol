@@ -100,7 +100,7 @@ public class MerisBrrCloudOp extends Operator {
                             final float brrCorr = rad2reflTile.getSampleFloat(x, y);
                             targetTile.setSample(x, y, brrCorr);
                         } else {
-                            // leave original value
+                            // take value from rayleigh correction
                             final float brr = brrTile.getSampleFloat(x, y);
                             targetTile.setSample(x, y, brr);
                         }

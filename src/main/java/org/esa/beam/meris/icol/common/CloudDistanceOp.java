@@ -48,7 +48,6 @@ public class CloudDistanceOp extends Operator {
     private static final int SOURCE_EXTEND_FR = 320;
 
     private RectangleExtender rectCalculator;
-    private int sourceExtend;
     private GeoCoding geocoding;
 
     @SourceProduct(alias="source")
@@ -63,6 +62,7 @@ public class CloudDistanceOp extends Operator {
     	targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "cloud_distance_"+ sourceProduct.getName(), "CLOUDD");
 
         final String productType = sourceProduct.getProductType();
+        int sourceExtend;
         if (productType.indexOf("_RR") > -1) {
             sourceExtend = SOURCE_EXTEND_RR;
         } else {
@@ -74,7 +74,8 @@ public class CloudDistanceOp extends Operator {
         band.setNoDataValueUsed(true);
 
         geocoding = sourceProduct.getGeoCoding();
-        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
+        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()),
+                                               sourceExtend, sourceExtend);
     }
 
     @Override
@@ -101,7 +102,7 @@ public class CloudDistanceOp extends Operator {
                     	cloudDistance.setSample(x, y, NO_DATA_VALUE);
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {

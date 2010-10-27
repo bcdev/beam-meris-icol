@@ -177,18 +177,7 @@ public class AdjacencyEffectMaskOp extends Operator {
             }
             Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, subPm1(pm));
 
-            Rectangle box = new Rectangle();
-            Area costalArea = new Area();
-            for (int y = sourceRect.y; y < sourceRect.y + sourceRect.height; y++) {
-                for (int x = sourceRect.x; x < sourceRect.x + sourceRect.width; x++) {
-                    if (isCoastline(isLand, isCoastline, x, y)) {
-                        box.setBounds(x - aeWidth, y - aeWidth, 2 * aeWidth, 2 * aeWidth);
-                        Area area2 = new Area(box);
-                        costalArea.add(area2);
-                    }
-                }
-                pm.worked(1);
-            }
+            Area costalArea = computeCoastalArea(pm, sourceRect, isLand, isCoastline);
             boolean correctOverLand = aeArea.correctOverLand();
             boolean correctInCoastalAreas = aeArea.correctCostalArea();
             // todo: over land, apply AE algorithm everywhere except for cloud pixels.
@@ -226,6 +215,22 @@ public class AdjacencyEffectMaskOp extends Operator {
         } finally {
             pm.done();
         }
+    }
+
+    private Area computeCoastalArea(ProgressMonitor pm, Rectangle sourceRect, Tile land, Tile coastline) {
+        Rectangle box = new Rectangle();
+        Area costalArea = new Area();
+        for (int y = sourceRect.y; y < sourceRect.y + sourceRect.height; y++) {
+            for (int x = sourceRect.x; x < sourceRect.x + sourceRect.width; x++) {
+                if (isCoastline(land, coastline, x, y)) {
+                    box.setBounds(x - aeWidth, y - aeWidth, 2 * aeWidth, 2 * aeWidth);
+                    Area area2 = new Area(box);
+                    costalArea.add(area2);
+                }
+            }
+            pm.worked(1);
+        }
+        return costalArea;
     }
 
     private boolean isCoastline(Tile isLandTile, Tile coastline, int x, int y) {

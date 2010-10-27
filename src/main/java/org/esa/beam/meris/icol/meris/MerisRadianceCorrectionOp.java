@@ -41,7 +41,6 @@ import java.awt.Rectangle;
 import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 
-
 /**
  * Operator providing an output product with AE corrected MERIS radiances.
  *
@@ -49,24 +48,24 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Meris.IcolCorrectedRadiances",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zuehlke, Olaf Danne",
-        copyright = "(c) 2007 by Brockmann Consult",
-        description = "Writes the AE corrected radiances to output product.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Marco Zuehlke, Olaf Danne",
+                  copyright = "(c) 2007 by Brockmann Consult",
+                  description = "Writes the AE corrected radiances to output product.")
 public class MerisRadianceCorrectionOp extends Operator {
 
     private static final int NO_DATA_VALUE = -1;
 
-    @SourceProduct(alias="l1b")
+    @SourceProduct(alias = "l1b")
     private Product l1bProduct;
-    @SourceProduct(alias="refl")
+    @SourceProduct(alias = "refl")
     private Product rhoToaProduct;
-    @SourceProduct(alias="gascor")
+    @SourceProduct(alias = "gascor")
     private Product gasCorProduct;
-    @SourceProduct(alias="ae_aerosol")
+    @SourceProduct(alias = "ae_aerosol")
     private Product aeAerosolProduct;
-    @SourceProduct(alias="aemaskAerosol")
+    @SourceProduct(alias = "aemaskAerosol")
     private Product aemaskAerosolProduct;
 
     @TargetProduct
@@ -110,30 +109,30 @@ public class MerisRadianceCorrectionOp extends Operator {
         }
     }
 
-    public void computeL1Flags(Band band, Tile targetTile, ProgressMonitor pm)  {
+    public void computeL1Flags(Band band, Tile targetTile, ProgressMonitor pm) {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 4);
         try {
             Tile sourceTile = getSourceTile(l1bProduct.getBand(band.getName()), rect, subPm1(pm));
-            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + 1), rect, subPm1(pm));
-            Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rect, subPm1(pm));
-            Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect, subPm1(pm));
+            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + 1), rect,
+                                         subPm1(pm));
+            Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
+                                               rect, subPm1(pm));
+            Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect,
+                                           subPm1(pm));
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
                     int l1Flag = sourceTile.getSampleInt(x, y);
                     boolean aeApplied = false;
                     if (aemaskAerosol.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
-                        aeApplied = true;
-                        if (aeAerosol.getSampleBit(x, y, 1)) {
-                            aeApplied = false;
-                        }
+                        aeApplied = !aeAerosol.getSampleBit(x, y, 1);
                     }
-                    l1Flag &= 1+2+4+16+32+64+128; //erase SUSPECT
+                    l1Flag &= 1 + 2 + 4 + 16 + 32 + 64 + 128; //erase SUSPECT
                     l1Flag = BitSetter.setFlag(l1Flag, 3, aeApplied); // set SUSPECT, if ae applied
                     targetTile.setSample(x, y, l1Flag);
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -143,14 +142,16 @@ public class MerisRadianceCorrectionOp extends Operator {
 
     public void computeRadiances(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
         Rectangle rect = targetTile.getRectangle();
-        pm.beginTask("Processing frame...", rect.height+ 4);
+        pm.beginTask("Processing frame...", rect.height + 4);
         try {
             final int bandNumber = band.getSpectralBandIndex() + 1;
 
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rect, subPm1(pm));
-            Tile detectorIndexTile = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME), rect, subPm1(pm));
-            Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" +  bandNumber), rect, subPm1(pm));
-            Tile rhoToaCorrTile = getSourceTile(rhoToaProduct.getBand("rho_toa_AEAC_" +  bandNumber), rect, subPm1(pm));
+            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rect,
+                                     subPm1(pm));
+            Tile detectorIndexTile = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME),
+                                                   rect, subPm1(pm));
+            Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rect, subPm1(pm));
+            Tile rhoToaCorrTile = getSourceTile(rhoToaProduct.getBand("rho_toa_AEAC_" + bandNumber), rect, subPm1(pm));
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -158,14 +159,14 @@ public class MerisRadianceCorrectionOp extends Operator {
                     if (detectorIndex != -1) {
                         double rhoToa = rhoToaCorrTile.getSampleDouble(x, y);
                         double result = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) *
-                                auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
-                                (Math.PI * auxData.seasonal_factor);
+                                         auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
+                                        (Math.PI * auxData.seasonal_factor);
                         final double radianceOrig = radianceR.getSampleDouble(x, y);
 //                            if (result == 0) {
 //                                result = radianceOrig;
 //                            }
                         // final consistency check:
-                        double reldiff = 100.0*Math.abs(result - radianceOrig)/radianceOrig;
+                        double reldiff = 100.0 * Math.abs(result - radianceOrig) / radianceOrig;
                         if (result <= 0.0 || reldiff > 20.0) {
 //                            if (result <= 0.0) {
                             result = radianceOrig;
@@ -176,7 +177,7 @@ public class MerisRadianceCorrectionOp extends Operator {
                         targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -185,6 +186,7 @@ public class MerisRadianceCorrectionOp extends Operator {
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(MerisRadianceCorrectionOp.class);
         }

@@ -33,11 +33,11 @@ import java.text.ParseException;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Landsat.Geometry",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Landsat geometry computation.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Landsat geometry computation.")
 public class TmGeometryOp extends TmBasisOp {
 
     public static final int NO_DATA_VALUE = -1;
@@ -61,7 +61,7 @@ public class TmGeometryOp extends TmBasisOp {
 
     private int aveBlock;
 
-    @SourceProduct(alias="l1g")
+    @SourceProduct(alias = "l1g")
     private Product sourceProduct;
     @TargetProduct
     private Product targetProduct;
@@ -72,9 +72,6 @@ public class TmGeometryOp extends TmBasisOp {
     private String startTime;
     @Parameter
     private String stopTime;
-    
-    private int sceneWidth;
-    private int sceneHeight;
 
     private int doy;
     private double gmt;
@@ -92,10 +89,10 @@ public class TmGeometryOp extends TmBasisOp {
 
         sourceGeocoding = sourceProduct.getGeoCoding();
 
-        aveBlock = landsatTargetResolution /(2*LANDSAT_ORIGINAL_RESOLUTION);
+        aveBlock = landsatTargetResolution / (2 * LANDSAT_ORIGINAL_RESOLUTION);
 
-        sceneWidth = sourceProduct.getSceneRasterWidth()/(2*aveBlock+1) + 1;
-        sceneHeight = sourceProduct.getSceneRasterHeight()/(2*aveBlock+1) + 1;
+        int sceneWidth = sourceProduct.getSceneRasterWidth() / (2 * aveBlock + 1) + 1;
+        int sceneHeight = sourceProduct.getSceneRasterHeight() / (2 * aveBlock + 1) + 1;
 
         final String productType;
         if (landsatTargetResolution == TmConstants.LANDSAT5_GEOM_FR) {
@@ -110,8 +107,8 @@ public class TmGeometryOp extends TmBasisOp {
             if (imageToMapTransform instanceof AffineTransform) {
                 AffineTransform affineTransform = (AffineTransform) imageToMapTransform;
                 final AffineTransform destTransform = new AffineTransform(affineTransform);
-                double scaleX = ((double)sourceProduct.getSceneRasterWidth()) / sceneWidth;
-                double scaleY = ((double)sourceProduct.getSceneRasterHeight()) / sceneHeight;
+                double scaleX = ((double) sourceProduct.getSceneRasterWidth()) / sceneWidth;
+                double scaleY = ((double) sourceProduct.getSceneRasterHeight()) / sceneHeight;
                 destTransform.scale(scaleX, scaleY);
                 Rectangle destBounds = new Rectangle(sceneWidth, sceneHeight);
                 try {
@@ -131,26 +128,27 @@ public class TmGeometryOp extends TmBasisOp {
             targetProduct.setStartTime(ProductData.UTC.parse(startTime));
             targetProduct.setEndTime(ProductData.UTC.parse(stopTime));
         } catch (ParseException e) {
-            throw new OperatorException("Start or stop time invalid or has wrong format - must be 'yyyymmdd hh:mm:ss'.");
+            throw new OperatorException(
+                    "Start or stop time invalid or has wrong format - must be 'yyyymmdd hh:mm:ss'.");
         }
 
-        for (int i=0; i< TmConstants.LANDSAT5_RADIANCE_BAND_NAMES.length; i++) {
+        for (int i = 0; i < TmConstants.LANDSAT5_RADIANCE_BAND_NAMES.length; i++) {
             Band band = targetProduct.addBand(TmConstants.LANDSAT5_RADIANCE_BAND_NAMES[i], ProductData.TYPE_FLOAT32);
             band.setGeophysicalNoDataValue(NO_DATA_VALUE);
             band.setNoDataValueUsed(true);
         }
-        
-        Band latitudeBand = targetProduct.addBand(LATITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band longitudeBand = targetProduct.addBand(LONGITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band altitudeBand = targetProduct.addBand(ALTITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
 
-        Band szaBand = targetProduct.addBand(SUN_ZENITH_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band saaBand = targetProduct.addBand(SUN_AZIMUTH_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band vzaBand = targetProduct.addBand(VIEW_ZENITH_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band vaaBand = targetProduct.addBand(VIEW_AZIMUTH_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band airMassBand = targetProduct.addBand(AIR_MASS_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band scatteringAngleBand = targetProduct.addBand(SCATTERING_ANGLE_BAND_NAME, ProductData.TYPE_FLOAT32);
-        Band specularAngleBand = targetProduct.addBand(SPECULAR_ANGLE_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(LATITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(LONGITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(ALTITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
+
+        targetProduct.addBand(SUN_ZENITH_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(SUN_AZIMUTH_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(VIEW_ZENITH_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(VIEW_AZIMUTH_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(AIR_MASS_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(SCATTERING_ANGLE_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(SPECULAR_ANGLE_BAND_NAME, ProductData.TYPE_FLOAT32);
 
     }
 
@@ -159,7 +157,7 @@ public class TmGeometryOp extends TmBasisOp {
 
         Rectangle targetRectangle = targetTile.getRectangle();
         Rectangle sourceRectangle = new Rectangle(0, 0, sourceProduct.getSceneRasterWidth(),
-                sourceProduct.getSceneRasterHeight());
+                                                  sourceProduct.getSceneRasterHeight());
 
         Tile radianceSourceTile = null;
         if (targetBand.getName().startsWith(TmConstants.LANDSAT5_RADIANCE_BAND_PREFIX)) {
@@ -175,18 +173,18 @@ public class TmGeometryOp extends TmBasisOp {
             int y2 = sourceRectangle.y + sourceRectangle.height - 1;
 
             int aveSize = 2 * aveBlock + 1;
-            for (int iSrcY = y1+ aveBlock; iSrcY <= y2+ aveBlock; iSrcY+= aveSize) {
-                for (int iSrcX = x1+ aveBlock; iSrcX <= x2+ aveBlock; iSrcX+= aveSize) {
-                    int iTarX = ((iSrcX-x1- aveBlock)/ aveSize);
-                    int iTarY = ((iSrcY-y1- aveBlock)/ aveSize);
-                    
+            for (int iSrcY = y1 + aveBlock; iSrcY <= y2 + aveBlock; iSrcY += aveSize) {
+                for (int iSrcX = x1 + aveBlock; iSrcX <= x2 + aveBlock; iSrcX += aveSize) {
+                    int iTarX = ((iSrcX - x1 - aveBlock) / aveSize);
+                    int iTarY = ((iSrcY - y1 - aveBlock) / aveSize);
+
                     if (!(LandsatUtils.isCoordinatesOutOfBounds(iTarX, iTarY, targetTile))) {
-                        final GeoPos geoPosAve = getGeoposSpatialAverage(iSrcX, iSrcY);
+                        final GeoPos geoPosAve = getGeoPosSpatialAverage(iSrcX, iSrcY);
 
                         final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
                         final double saa = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getAzimuth();
-                        final double vza = getViewZenithAngle(iSrcX, iSrcY);
-                        final double vaa = getViewAzimuthAngle(iSrcX, iSrcY);
+                        final double vza = 0.0f; // RS, 10/11/2009
+                        final double vaa = 0.0f; // RS, 10/11/2009
 
                         final double mus = Math.cos(sza * MathUtils.DTOR);
                         final double muv = Math.cos(vza * MathUtils.DTOR);
@@ -242,10 +240,10 @@ public class TmGeometryOp extends TmBasisOp {
         double radianceAve = 0.0;
         double srcNoDataValue = radianceTile.getRasterDataNode().getGeophysicalNoDataValue();
         int n = 0;
-        final int minX = Math.max(0,iTarX-aveBlock);
-        final int minY = Math.max(0,iTarY-aveBlock);
-        final int maxX = Math.min(sourceProduct.getSceneRasterWidth()-1,iTarX+aveBlock);
-        final int maxY = Math.min(sourceProduct.getSceneRasterHeight()-1,iTarY+aveBlock);
+        final int minX = Math.max(0, iTarX - aveBlock);
+        final int minY = Math.max(0, iTarY - aveBlock);
+        final int maxX = Math.min(sourceProduct.getSceneRasterWidth() - 1, iTarX + aveBlock);
+        final int maxY = Math.min(sourceProduct.getSceneRasterHeight() - 1, iTarY + aveBlock);
 //        final int maxX = Math.min(radianceTile.getWidth()-1,iTarX+aveBlock);
 //        final int maxY = Math.min(radianceTile.getHeight()-1,iTarY+aveBlock);
 
@@ -264,55 +262,18 @@ public class TmGeometryOp extends TmBasisOp {
             radianceAve = NO_DATA_VALUE;
         }
 
-        return (float)radianceAve;
+        return (float) radianceAve;
     }
-
-//    private float getRadianceSpatialAverage(Tile radianceTile, int iTarX, int iTarY) throws Exception {
-//
-//        float radianceAve = 0.0f;
-//
-//        int n = 0;
-//        final int minX = Math.max(0,iTarX-aveBlock);
-//        final int minY = Math.max(0,iTarY-aveBlock);
-//        final int rasterWidth = sourceProduct.getSceneRasterWidth();
-//        final int rasterHeight = sourceProduct.getSceneRasterHeight();
-////        final int maxX = Math.min(rasterWidth -1,iTarX+aveBlock);
-////        final int maxY = Math.min(rasterHeight -1,iTarY+aveBlock);
-////        final int maxX = Math.min(radianceTile.getWidth()-1,iTarX+aveBlock);
-////        final int maxY = Math.min(radianceTile.getHeight()-1,iTarY+aveBlock);
-//
-//        final int maxX = (iTarX + aveBlock >= rasterWidth) ? (rasterWidth- iTarX - aveBlock) : aveBlock;
-//        final int maxY = (iTarY + aveBlock >= rasterHeight) ? (rasterHeight - iTarY - aveBlock) : aveBlock;
-//
-//        for (int iy = minY; iy <= maxY; iy++) {
-//            for (int ix = minX; ix <= maxX; ix++) {
-//                final float radiance = radianceTile.getSampleFloat(ix, iy);
-//                boolean valid = (Double.compare(radiance, NO_DATA_VALUE) != 0);
-//                if (valid) {
-//                    n++;
-//                    radianceAve += radiance;
-//                }
-//            }
-//        }
-//        if (n > 0) {
-//            radianceAve /= n;
-//        } else {
-//            radianceAve = NO_DATA_VALUE;
-//        }
-//
-//        return radianceAve;
-//    }
-
 
     private float getAltitudeSpatialAverage(int iTarX, int iTarY) throws Exception {
 
         float altAve = 0.0f;
 
         int n = 0;
-        final int minX = Math.max(0,iTarX-aveBlock);
-        final int minY = Math.max(0,iTarY-aveBlock);
-        final int maxX = Math.min(sourceProduct.getSceneRasterWidth()-1,iTarX+aveBlock);
-        final int maxY = Math.min(sourceProduct.getSceneRasterHeight()-1,iTarY+aveBlock);
+        final int minX = Math.max(0, iTarX - aveBlock);
+        final int minY = Math.max(0, iTarY - aveBlock);
+        final int maxX = Math.min(sourceProduct.getSceneRasterWidth() - 1, iTarX + aveBlock);
+        final int maxY = Math.min(sourceProduct.getSceneRasterHeight() - 1, iTarY + aveBlock);
 
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
@@ -335,16 +296,16 @@ public class TmGeometryOp extends TmBasisOp {
         return altAve;
     }
 
-    private GeoPos getGeoposSpatialAverage(int iSrcX, int iSrcY) {
+    private GeoPos getGeoPosSpatialAverage(int iSrcX, int iSrcY) {
 
         float latAve = 0.0f;
         float lonAve = 0.0f;
 
         int n = 0;
-        final int minX = Math.max(0,iSrcX-aveBlock);
-        final int minY = Math.max(0,iSrcY-aveBlock);
-        final int maxX = Math.min(sourceProduct.getSceneRasterWidth()-1,iSrcX+aveBlock);
-        final int maxY = Math.min(sourceProduct.getSceneRasterHeight()-1,iSrcY+aveBlock);
+        final int minX = Math.max(0, iSrcX - aveBlock);
+        final int minY = Math.max(0, iSrcY - aveBlock);
+        final int maxX = Math.min(sourceProduct.getSceneRasterWidth() - 1, iSrcX + aveBlock);
+        final int maxY = Math.min(sourceProduct.getSceneRasterHeight() - 1, iSrcY + aveBlock);
 
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
@@ -367,26 +328,16 @@ public class TmGeometryOp extends TmBasisOp {
             lonAve = NO_DATA_VALUE;
         }
 
-        GeoPos geoPosAve = new GeoPos(latAve, lonAve);
-        return geoPosAve;
+        return new GeoPos(latAve, lonAve);
     }
 
-
-    private float getViewZenithAngle(int iTarX, int iTarY) {
-        float vza = 0.0f;  // RS, 10/11/2009
-        return vza;
-    }
-
-    private float getViewAzimuthAngle(int iTarX, int iTarY) {
-        float vaa = 0.0f;  // RS, 10/11/2009
-        return vaa;
-    }
 
     /**
      * The Service Provider Interface (SPI) for the operator.
      * It provides operator meta-data and is a factory for new operator instances.
      */
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(TmGeometryOp.class);
         }

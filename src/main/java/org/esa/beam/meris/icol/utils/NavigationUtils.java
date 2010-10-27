@@ -40,9 +40,8 @@ public class NavigationUtils {
         final float distLat = (float) (-(deltaY / MEAN_EARTH_RADIUS) * MathUtils.RTOD);
         final float distLon = (float) (-(deltaX / (MEAN_EARTH_RADIUS * Math
                 .cos(startPoint.lat * MathUtils.DTOR))) * MathUtils.RTOD);
-        final GeoPos geoPos = new GeoPos(startPoint.lat + distLat, startPoint.lon + distLon);
 
-        return geoPos;
+        return new GeoPos(startPoint.lat + distLat, startPoint.lon + distLon);
     }
 
     public static float distanceInMeters(GeoCoding geocoding, PixelPos p1, PixelPos p2) {
@@ -52,8 +51,7 @@ public class NavigationUtils {
         final float phiH = (float) (MathUtils.DTOR * geoPosH.getLat());
         final float lamN = (float) (MathUtils.DTOR * geoPosN.getLon());
         final float phiN = (float) (MathUtils.DTOR * geoPosN.getLat());
-        final float distance = (float) (MEAN_EARTH_RADIUS * Math.acos(
+        return (float) (MEAN_EARTH_RADIUS * Math.acos(
                 Math.sin(phiH) * Math.sin(phiN) + Math.cos(phiH) * Math.cos(phiN) * Math.cos(Math.abs(lamN - lamH))));
-        return distance;
     }
 }
