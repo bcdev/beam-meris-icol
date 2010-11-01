@@ -152,24 +152,17 @@ public class TmLandClassificationOp extends TmBasisOp {
     }
 
     private boolean isLand(int x, int y, Tile targetTile) {
-        boolean isLand;
 
-        if (!landsatLandFlagApplyNdviFilter &&
-            !landsatLandFlagApplyTemperatureFilter) {
+        if (!landsatLandFlagApplyNdviFilter && !landsatLandFlagApplyTemperatureFilter) {
             // no filter applied
             return false;
         }
 
-        boolean isLand1 = (targetTile.getSampleBit(x, y, F_NDVI) ||
-                !landsatLandFlagApplyNdviFilter);
-        boolean isLand2 = true;
-        if (!isLand1) {
-            isLand2 = (targetTile.getSampleBit(x, y, F_TEMP) ||
-                    !landsatLandFlagApplyTemperatureFilter);
-        }
+        boolean isLand1 = targetTile.getSampleBit(x, y, F_NDVI) || !landsatLandFlagApplyNdviFilter;
+        boolean isLand2 = targetTile.getSampleBit(x, y, F_TEMP) || !landsatLandFlagApplyTemperatureFilter;
 
-        isLand = isLand1 || isLand2;
-        return isLand;
+        return isLand1 || isLand2;
+
     }
 
     /**
