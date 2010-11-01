@@ -40,7 +40,7 @@ public class TmCloudTopPressureOp extends TmBasisOp {
         final int sceneHeight = sourceProduct.getSceneRasterHeight();
         targetProduct = new Product(sourceProduct.getName() + "_CTP", "ICOL", sceneWidth, sceneHeight);
 
-        Band ctpBand = targetProduct.addBand(TmConstants.LANDSAT5_CTP_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(TmConstants.LANDSAT5_CTP_BAND_NAME, ProductData.TYPE_FLOAT32);
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
