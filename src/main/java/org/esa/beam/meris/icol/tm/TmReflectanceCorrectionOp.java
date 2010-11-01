@@ -80,10 +80,8 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
     @Parameter(defaultValue = "true")
     private boolean exportAlphaAot;
 
-    private List<Band> rhoToaBands;
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
-    private Band l1FlagBand;
     private Band aeFlagBand;
     private Map<Band, Band> copySource;
 
@@ -232,7 +230,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         final int bandNumber = band.getSpectralBandIndex() + 1;
 
         // AE  rayleigh and aerosol correction
-        if (!band.isFlagBand() && !IcolUtils.isIndexToSkip(bandNumber-1, new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
+        if (!band.isFlagBand() && bandNumber-1 != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
 //         correctForRayleigh(targetTile, bandId+1, pm);
             if (rhoToaRayBands != null && rhoToaRayBands.contains(band)) {
                 correctForRayleigh(targetTile, bandNumber, pm);
@@ -273,7 +271,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
                     result += FLAG_LANDCONS;
                 }
                 if (cloud.getSampleBit(x, y, 0)) {
-                    result += FLAG_LANDCONS;
+                    result += FLAG_CLOUD;
                 }
                 boolean aotError = aerosol.getSampleBit(x, y, 1);
                 if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
@@ -330,8 +328,10 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
         Tile aepAerosol= getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
         Tile rhoToaR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber), rectangle, pm);
-        Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);;
-        Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);;
+//        Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
+        Tile aeRayleigh = null;
+//        Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
+        Tile aeAerosol = null;
 
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
             for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
