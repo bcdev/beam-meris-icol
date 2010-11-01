@@ -148,7 +148,7 @@ public class CoastDistanceOp extends Operator {
                         distanceTiles[i].setSample(x, y, distances[i]);
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {

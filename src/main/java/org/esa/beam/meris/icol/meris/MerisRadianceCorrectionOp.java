@@ -55,8 +55,6 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
                   description = "Writes the AE corrected radiances to output product.")
 public class MerisRadianceCorrectionOp extends Operator {
 
-    private static final int NO_DATA_VALUE = -1;
-
     @SourceProduct(alias = "l1b")
     private Product l1bProduct;
     @SourceProduct(alias = "refl")
@@ -171,8 +169,7 @@ public class MerisRadianceCorrectionOp extends Operator {
 //                            if (result <= 0.0) {
                             result = radianceOrig;
                         }
-                        double radiance = result;
-                        targetTile.setSample(x, y, radiance);
+                        targetTile.setSample(x, y, result);
                     } else {
                         targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
                     }

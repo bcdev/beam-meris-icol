@@ -181,7 +181,7 @@ public class TmGeometryOp extends TmBasisOp {
                     if (!(LandsatUtils.isCoordinatesOutOfBounds(iTarX, iTarY, targetTile))) {
                         final GeoPos geoPosAve = getGeoPosSpatialAverage(iSrcX, iSrcY);
 
-                        final double sza = (LandsatUtils.getSunAngles(geoPosAve, doy, gmt)).getZenith();
+                        final double sza = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getZenith();
                         final double saa = LandsatUtils.getSunAngles(geoPosAve, doy, gmt).getAzimuth();
                         final double vza = 0.0f; // RS, 10/11/2009
                         final double vaa = 0.0f; // RS, 10/11/2009

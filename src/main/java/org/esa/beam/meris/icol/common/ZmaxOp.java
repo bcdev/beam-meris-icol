@@ -108,7 +108,7 @@ public class ZmaxOp extends Operator {
                     }
                     zmax.setSample(x, y, zMaxValue);
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {

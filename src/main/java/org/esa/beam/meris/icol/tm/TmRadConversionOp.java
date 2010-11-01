@@ -53,7 +53,6 @@ public class TmRadConversionOp extends Operator {
     @Parameter
     private String stopTime;
 
-     private int daysSince2000;
     private double seasonalFactor;
 
     final int NO_DATA_VALUE = -1;
@@ -62,7 +61,7 @@ public class TmRadConversionOp extends Operator {
     public void initialize() throws OperatorException {
 
         final String startTimeString = sourceProduct.getStartTime().toString().substring(0,20);
-        daysSince2000 = LandsatUtils.getDaysSince2000(startTimeString);
+        int daysSince2000 = LandsatUtils.getDaysSince2000(startTimeString);
         seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,
                                                       TmConstants.SUN_EARTH_DISTANCE_SQUARE);
 
@@ -185,7 +184,7 @@ public class TmRadConversionOp extends Operator {
                         }
                     }
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
 				pm.worked(1);
 			}
         } catch (Exception e) {
