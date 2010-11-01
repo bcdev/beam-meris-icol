@@ -13,11 +13,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
-import org.esa.beam.meris.l2auxdata.L2AuxData;
-import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
-import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
 import java.util.Map;
@@ -38,8 +34,6 @@ public class TmGaseousTransmittanceOp extends Operator {
 
     @SourceProduct(alias="l1g")
     private Product sourceProduct;
-    @SourceProduct(alias="refl")
-    private Product conversionProduct;
     @SourceProduct(alias="geometry")
     private Product geometryProduct;
 
@@ -81,7 +75,7 @@ public class TmGaseousTransmittanceOp extends Operator {
                     }
 
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {

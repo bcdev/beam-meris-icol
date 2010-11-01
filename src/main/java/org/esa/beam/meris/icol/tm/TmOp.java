@@ -170,7 +170,6 @@ public class TmOp extends TmBasisOp {
         // compute gaseous transmittance (ATBD D4, section 5.3.3)
         Map<String, Product> gaseousTransmittanceInput = new HashMap<String, Product>(3);
         gaseousTransmittanceInput.put("l1g", sourceProduct);
-        gaseousTransmittanceInput.put("refl", conversionProduct);
         gaseousTransmittanceInput.put("geometry", geometryProduct);
         Map<String, Object> gaseousTransmittanceParameters = new HashMap<String, Object>(1);
         gaseousTransmittanceParameters.put("ozoneContent", landsatUserOzoneContent);
