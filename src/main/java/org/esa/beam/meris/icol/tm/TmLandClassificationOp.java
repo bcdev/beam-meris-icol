@@ -68,11 +68,16 @@ public class TmLandClassificationOp extends TmBasisOp {
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
-        reflectanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+//        reflectanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+//
+//        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
+//            reflectanceBands[i] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]);
+//        }
 
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-            reflectanceBands[i] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]);
-        }
+        reflectanceBands = new Band[3];
+        reflectanceBands[0] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[2]);
+        reflectanceBands[1] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[3]);
+        reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[5]);
 
     }
 
@@ -102,9 +107,12 @@ public class TmLandClassificationOp extends TmBasisOp {
         try {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                    final float tm3 = reflectanceTile[2].getSampleFloat(x, y);
-                    final float tm4 = reflectanceTile[3].getSampleFloat(x, y);
-                    final float tm6 = reflectanceTile[5].getSampleFloat(x, y);
+//                    final float tm3 = reflectanceTile[2].getSampleFloat(x, y);
+//                    final float tm4 = reflectanceTile[3].getSampleFloat(x, y);
+//                    final float tm6 = reflectanceTile[5].getSampleFloat(x, y);
+                    final float tm3 = reflectanceTile[0].getSampleFloat(x, y);
+                    final float tm4 = reflectanceTile[1].getSampleFloat(x, y);
+                    final float tm6 = reflectanceTile[2].getSampleFloat(x, y);
 
                     if (landsatLandFlagApplyNdviFilter) {
                         double ndvi = (tm4 - tm3)/(tm4 + tm3);
