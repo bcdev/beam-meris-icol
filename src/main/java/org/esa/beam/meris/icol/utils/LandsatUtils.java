@@ -67,7 +67,7 @@ public class LandsatUtils {
                 0.040849
         };
         final double et = 720.0*(a[0] + a[1]*Math.cos(tet) - a[2]*Math.sin(tet) -
-                              a[3]*Math.cos(2.0*tet) - a[4]*Math.sin(2.0*tet))/Math.PI;
+                              a[3]*Math.cos(2.0*tet)    - a[4]*Math.sin(2.0*tet))/Math.PI;
 
         // true solar time
         final double tsv = tsm + et/60.0 - 12.0;
@@ -94,9 +94,6 @@ public class LandsatUtils {
                                Math.cos(xla)*Math.cos(delta)*Math.cos(ah);
         double elev = Math.asin(amuZero);
         double az = Math.cos(delta)*Math.sin(ah)/Math.cos(elev);
-        if (Math.abs(az - 1.0) > 0.0) {
-            az = Math.signum(az)*Math.abs(az);
-        }
         final double caz = (-Math.cos(xla)*Math.sin(delta) +
                              Math.sin(xla)*Math.cos(delta)*Math.cos(ah))/Math.cos(elev);
         double azim = Math.asin(az);
@@ -208,9 +205,7 @@ public class LandsatUtils {
 
     public static double convertRadToRefl(double rad, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
-        double refl= (float) ((rad * constantTerm) / TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId]);
-
-        return refl;
+        return (double) (float) ((rad * constantTerm) / TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId]);
     }
 
     public static double convertReflToRad(double refl, double cosSza, int bandId, double seasonalFactor) {
