@@ -51,8 +51,6 @@ import java.net.URL;
         description = "Fresnel Coefficient computation.")
 public class FresnelCoefficientOp extends MerisBasisOp {
 
-    public static final String RHO_TOA_BAND_PREFIX = "rho_toa";
-
     private FresnelReflectionCoefficient fresnelCoefficient;
     private Band isLandBand;
     
