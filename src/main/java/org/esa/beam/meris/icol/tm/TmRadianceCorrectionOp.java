@@ -41,15 +41,13 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
     @TargetProduct
     private Product targetProduct;
 
-    private int daysSince2000;
     private double seasonalFactor;
 
     @Override
     public void initialize() throws OperatorException {
 
-        daysSince2000 = LandsatUtils.getDaysSince2000(sourceProduct.getStartTime().getElemString());
-        seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,
-                                                      TmConstants.SUN_EARTH_DISTANCE_SQUARE);
+        int daysSince2000 = LandsatUtils.getDaysSince2000(sourceProduct.getStartTime().getElemString());
+        seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,  TmConstants.SUN_EARTH_DISTANCE_SQUARE);
 
         targetProduct = createCompatibleProduct(sourceProduct, sourceProduct.getName() + "_ICOL", sourceProduct.getProductType());
         targetProduct.setStartTime(sourceProduct.getStartTime());
@@ -117,7 +115,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                             double corrected = gasCorValue - aeRayleighValue;
                             if (aepAerosol.getSampleInt(x, y) == 1) {
                                 final double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
-                                corrected = corrected - aeAerosolValue;
+                                corrected -= aeAerosolValue;
                             }
                             if (corrected > 0) {
                                 double reflectance = corrected * tgValue;
@@ -128,8 +126,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                             double reflectance  = reflectanceR.getSampleDouble(x, y);
                             result = LandsatUtils.convertReflToRad(reflectance, cosSza, bandNumber-1, seasonalFactor);
                         }
-                        double reflectance = result;
-                        targetTile.setSample(x, y, reflectance);
+                        targetTile.setSample(x, y, result);
                     }
                     pm.worked(1);
                 }

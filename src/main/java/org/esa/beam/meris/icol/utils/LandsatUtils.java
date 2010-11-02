@@ -210,9 +210,7 @@ public class LandsatUtils {
 
     public static double convertReflToRad(double refl, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
-        double rad = refl * TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId] / constantTerm;
-
-        return rad;
+        return refl * TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId] / constantTerm;
     }
 
     public static boolean isCoordinatesOutOfBounds(int x, int y, Tile tile) {
