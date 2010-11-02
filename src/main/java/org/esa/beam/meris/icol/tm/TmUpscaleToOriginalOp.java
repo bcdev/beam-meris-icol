@@ -13,7 +13,6 @@ import org.esa.beam.util.ProductUtils;
 
 import javax.media.jai.Interpolation;
 import javax.media.jai.RenderedOp;
-import javax.media.jai.operator.AddDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.media.jai.operator.SubtractDescriptor;
 import java.awt.image.RenderedImage;
@@ -63,7 +62,6 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 //                }
 //                targetBand = targetProduct.addBand(srcBandName, dataType);
 
-                MultiLevelImage sourceImage = sourceBand.getSourceImage();
                 if (radianceBandIndex != 6) {
                     targetBand = targetProduct.addBand(srcBandName, ProductData.TYPE_FLOAT32);
                     Band correctedBand = correctedProduct.getBand(sourceBand.getName());
@@ -90,6 +88,7 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                     RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceBand.getGeophysicalImage(), upscaledDiffImage, null);
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {
+                    MultiLevelImage sourceImage = sourceBand.getSourceImage();
                     targetBand = targetProduct.addBand(srcBandName, dataType);
                     ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
                     targetBand.setSourceImage(sourceImage);
