@@ -51,11 +51,11 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Meris.IcolCorrectedReflectances",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zühlke",
-        copyright = "(c) 2007 by Brockmann Consult",
-        description = "Corrects for the adjacency effect and computes rho TOA.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Marco Zühlke",
+                  copyright = "(c) 2007 by Brockmann Consult",
+                  description = "Corrects for the adjacency effect and computes rho TOA.")
 public class MerisReflectanceCorrectionOp extends Operator {
 
     private static final int FLAG_AE_MASK_RAYLEIGH = 1;
@@ -66,41 +66,41 @@ public class MerisReflectanceCorrectionOp extends Operator {
     private static final int FLAG_AE_APPLIED_AEROSOL = 32;
     private static final int FLAG_ALPHA_ERROR = 64;
     private static final int FLAG_AOT_ERROR = 128;
-    
-    @SourceProduct(alias="l1b")
+
+    @SourceProduct(alias = "l1b")
     private Product l1bProduct;
-    @SourceProduct(alias="rhotoa")
+    @SourceProduct(alias = "rhotoa")
     private Product rhoToaProduct;
-    @SourceProduct(alias="land")
+    @SourceProduct(alias = "land")
     private Product landProduct;
-    @SourceProduct(alias="cloud")
+    @SourceProduct(alias = "cloud")
     private Product cloudProduct;
     @SourceProduct(alias="aemaskRayleigh")
     private Product aemaskRayleighProduct;
     @SourceProduct(alias="aemaskAerosol")
     private Product aemaskAerosolProduct;
-    @SourceProduct(alias="gascor")
+    @SourceProduct(alias = "gascor")
     private Product gasCorProduct;
-    @SourceProduct(alias="ae_ray")
+    @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol")
+    @SourceProduct(alias = "ae_aerosol")
     private Product aeAerosolProduct;
-   
+
     @TargetProduct
     private Product targetProduct;
-    
-    @Parameter(defaultValue="true")
-    private boolean exportRhoToa = true;
-    @Parameter(defaultValue="true")
-    private boolean exportRhoToaRayleigh = true;
-    @Parameter(defaultValue="true")
-    private boolean exportRhoToaAerosol = true;
-    @Parameter(defaultValue="true")
-    private boolean exportAeRayleigh = true;
-    @Parameter(defaultValue="true")
-    private boolean exportAeAerosol = true;
-    @Parameter(defaultValue="true")
-    private boolean exportAlphaAot = true;
+
+    @Parameter(defaultValue = "true")
+    private boolean exportRhoToa;
+    @Parameter(defaultValue = "true")
+    private boolean exportRhoToaRayleigh;
+    @Parameter(defaultValue = "true")
+    private boolean exportRhoToaAerosol;
+    @Parameter(defaultValue = "true")
+    private boolean exportAeRayleigh;
+    @Parameter(defaultValue = "true")
+    private boolean exportAeAerosol;
+    @Parameter(defaultValue = "true")
+    private boolean exportAlphaAot;
 
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
@@ -143,7 +143,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
         }
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
-        
+
         // create and add the flags coding
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
         targetProduct.getFlagCodingGroup().add(flagCoding);
@@ -184,11 +184,11 @@ public class MerisReflectanceCorrectionOp extends Operator {
         cloudAttr = new MetadataAttribute("alpha_out_of_range", ProductData.TYPE_UINT8);
         cloudAttr.getData().setElemInt(FLAG_ALPHA_ERROR);
         flagCoding.addAttribute(cloudAttr);
-        
+
         cloudAttr = new MetadataAttribute("aot_out_of_range", ProductData.TYPE_UINT8);
         cloudAttr.getData().setElemInt(FLAG_AOT_ERROR);
         flagCoding.addAttribute(cloudAttr);
-        
+
         return flagCoding;
     }
 
@@ -202,29 +202,29 @@ public class MerisReflectanceCorrectionOp extends Operator {
             }
         }
     }
-    
+
     private List<Band> addBandGroup(Band[] sourceBands, String bandPrefix) {
         List<Band> bandList = new ArrayList<Band>(sourceBands.length);
         for (Band srcBand : sourceBands) {
-            int bandNo = srcBand.getSpectralBandIndex()+1;
+            int bandNo = srcBand.getSpectralBandIndex() + 1;
             Band targetBand = targetProduct.addBand(bandPrefix + "_" + bandNo, ProductData.TYPE_FLOAT32);
             ProductUtils.copySpectralBandProperties(srcBand, targetBand);
             targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
             targetBand.setNoDataValue(srcBand.getNoDataValue());
-            if (bandNo == 11 || bandNo== 14 || bandNo== 15) {
+            if (bandNo == 11 || bandNo == 14 || bandNo == 15) {
                 targetBand.setSourceImage(srcBand.getSourceImage());
             } else {
                 bandList.add(targetBand);
             }
-		}
+        }
         return bandList;
     }
-    
+
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
         final int bandId = band.getSpectralBandIndex();
         final int bandNumber = bandId + 1;
-        
+
         if (rhoToaRayBands != null && rhoToaRayBands.contains(band)) {
             correctForRayleigh(targetTile, bandNumber, pm);
         } else if (rhoToaAerBands != null && rhoToaAerBands.contains(band)) {
@@ -240,10 +240,14 @@ public class MerisReflectanceCorrectionOp extends Operator {
         try {
             Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rect, subPm1(pm));
             Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rect, subPm1(pm));
-            Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rect, subPm1(pm));
-            Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rect, subPm1(pm));
-            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rect, subPm1(pm));
-            Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect, subPm1(pm));
+            Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
+                                                rect, subPm1(pm));
+            Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
+                                               rect, subPm1(pm));
+            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rect,
+                                         subPm1(pm));
+            Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect,
+                                         subPm1(pm));
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -258,7 +262,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
                         result += FLAG_LANDCONS;
                     }
                     if (cloud.getSampleBit(x, y, 0)) {
-                        result += FLAG_LANDCONS;
+                        result += FLAG_CLOUD;
                     }
                     if (aemaskRayleigh.getSampleInt(x, y) == 1 && gasCor0.getSampleFloat(x, y) != -1) {
                         result += FLAG_AE_APPLIED_RAYLEIGH;
@@ -275,7 +279,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
                     }
                     targetTile.setSample(x, y, result);
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -287,10 +291,14 @@ public class MerisReflectanceCorrectionOp extends Operator {
         Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height + 5);
         try {
-            Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
-            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
-            Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, subPm1(pm));
-            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, subPm1(pm));
+            Tile gasCor = getSourceTile(
+                    gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                    subPm1(pm));
+            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
+                                    rectangle, subPm1(pm));
+            Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle,
+                                     subPm1(pm));
+            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle, subPm1(pm));
             Tile aeRayleigh = null;
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
@@ -299,7 +307,8 @@ public class MerisReflectanceCorrectionOp extends Operator {
                     double gasCorValue = gasCor.getSampleDouble(x, y);
                     if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
                         if (aeRayleigh == null) {
-                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, subPm1(pm));
+                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                                                       subPm1(pm));
                         }
                         double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                         double corrected = gasCorValue - aeRayleighValue;
@@ -312,7 +321,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
                     }
                     targetTile.setSample(x, y, rhoToa);
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -320,15 +329,21 @@ public class MerisReflectanceCorrectionOp extends Operator {
         }
     }
 
-    private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
+    private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws
+                                                                                                   OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height + 7);
         try {
-            Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
-            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, subPm1(pm));
-            Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, subPm1(pm));
-            Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, subPm1(pm));
-            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle, subPm1(pm));
+            Tile gasCor = getSourceTile(
+                    gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                    subPm1(pm));
+            Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
+                                    rectangle, subPm1(pm));
+            Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
+                                             rectangle, subPm1(pm));
+            Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
+                                            rectangle, subPm1(pm));
+            Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle, subPm1(pm));
             Tile aeRayleigh = null;
             Tile aeAerosol = null;
 
@@ -339,14 +354,16 @@ public class MerisReflectanceCorrectionOp extends Operator {
                     double corrected = 0.0;
                     if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
                         if (aeRayleigh == null) {
-                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, subPm1(pm));
+                            aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                                                       subPm1(pm));
                         }
                         double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                         corrected = gasCorValue - aeRayleighValue;
                     }
                     if (aepAerosol.getSampleInt(x, y) == 1) {
                         if (aeAerosol == null) {
-                            aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, subPm1(pm));
+                            aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                                                      subPm1(pm));
                         }
                         double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
                         corrected -= aeAerosolValue;
@@ -362,7 +379,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
                     }
                     targetTile.setSample(x, y, rhoToa);
                 }
-                checkForCancelation(pm);
+                checkForCancellation(pm);
                 pm.worked(1);
             }
         } finally {
@@ -371,6 +388,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(MerisReflectanceCorrectionOp.class);
         }

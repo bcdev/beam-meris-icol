@@ -125,8 +125,7 @@ public class FresnelCoefficientOp extends MerisBasisOp {
 						if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
 							final double rs = fresnelCoefficient.getCoeffFor(sza.getSampleDouble(x, y));
 							final double rv = fresnelCoefficient.getCoeffFor(vza.getSampleDouble(x, y));
-							final double cf = 1 + rs + rv;
-							targetTile.setSample(x, y, cf);
+                            targetTile.setSample(x, y, 1 + rs + rv);
 						}
 					} else {
 						if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
