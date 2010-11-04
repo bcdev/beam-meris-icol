@@ -16,8 +16,6 @@
  */
 package org.esa.beam.meris.icol;
 
-import org.esa.beam.meris.icol.AerosolScatteringFuntions;
-
 import junit.framework.TestCase;
 
 /**
@@ -29,45 +27,45 @@ import junit.framework.TestCase;
 public class AerosolScatteringFuntionsTest extends TestCase {
 
 	public void testSelectIzaNearest() throws Exception {
-		assertEquals(0, AerosolScatteringFuntions.selectIzaNearest(0));
-		assertEquals(1, AerosolScatteringFuntions.selectIzaNearest(5));
-		assertEquals(2, AerosolScatteringFuntions.selectIzaNearest(16));
-		assertEquals(12, AerosolScatteringFuntions.selectIzaNearest(90));
+		assertEquals(0, AerosolScatteringFunctions.selectIzaNearest(0));
+		assertEquals(1, AerosolScatteringFunctions.selectIzaNearest(5));
+		assertEquals(2, AerosolScatteringFunctions.selectIzaNearest(16));
+		assertEquals(12, AerosolScatteringFunctions.selectIzaNearest(90));
 	}
 	
 	public void testSelectIzaUpperIndex() throws Exception {
-		assertEquals(1, AerosolScatteringFuntions.selectIzaUpperIndex(0));
-		assertEquals(2, AerosolScatteringFuntions.selectIzaUpperIndex(5));
-		assertEquals(2, AerosolScatteringFuntions.selectIzaUpperIndex(16));
-		assertEquals(12, AerosolScatteringFuntions.selectIzaUpperIndex(80));
-		assertEquals(12, AerosolScatteringFuntions.selectIzaUpperIndex(90));
+		assertEquals(1, AerosolScatteringFunctions.selectIzaUpperIndex(0));
+		assertEquals(2, AerosolScatteringFunctions.selectIzaUpperIndex(5));
+		assertEquals(2, AerosolScatteringFunctions.selectIzaUpperIndex(16));
+		assertEquals(12, AerosolScatteringFunctions.selectIzaUpperIndex(80));
+		assertEquals(12, AerosolScatteringFunctions.selectIzaUpperIndex(90));
 	}
 	
 	public void testAerosolTranmittance() throws Exception {
-		AerosolScatteringFuntions aerosolScatteringFuntions = new AerosolScatteringFuntions();
-		double d = aerosolScatteringFuntions.aerosolTranmittance(1, 1, 1);
+		AerosolScatteringFunctions aerosolScatteringFunctions = new AerosolScatteringFunctions();
+		double d = aerosolScatteringFunctions.aerosolTransmittance(1, 1, 1);
 		assertEquals(0.992361, d);
 	}
 	
 	public void testAerosol() throws Exception {
-		AerosolScatteringFuntions aerosolScatteringFuntions = new AerosolScatteringFuntions();
-		double d = aerosolScatteringFuntions.aerosolPrimaryReflectance(45, 45, 13, 7);
+		AerosolScatteringFunctions aerosolScatteringFunctions = new AerosolScatteringFunctions();
+		double d = aerosolScatteringFunctions.aerosolPrimaryReflectance(45, 45, 13, 7);
 		assertEquals(1.237436867076458, d);
 	}
 	
 	public void testReadFourierAerosol() throws Exception {
-		AerosolScatteringFuntions aerosolScatteringFuntions = new AerosolScatteringFuntions();
-		double[][][][] ds = aerosolScatteringFuntions.readFourierAerosol(1);
+		AerosolScatteringFunctions aerosolScatteringFunctions = new AerosolScatteringFunctions();
+		double[][][][] ds = aerosolScatteringFunctions.readFourierAerosol(1);
 		assertEquals(1.00274, ds[1][1][0][0]);
-		double[][][][] ds8 = aerosolScatteringFuntions.readFourierAerosol(8);
+		double[][][][] ds8 = aerosolScatteringFunctions.readFourierAerosol(8);
 		assertEquals(1.00724, ds8[1][1][0][0]);
-		double[][][][] ds4= aerosolScatteringFuntions.readFourierAerosol(4);
+		double[][][][] ds4= aerosolScatteringFunctions.readFourierAerosol(4);
 		assertEquals(1.00724, ds8[1][1][0][0]);
 	}
 	
 	public void testAerosolPhase() throws Exception {
-		AerosolScatteringFuntions aerosolScatteringFuntions = new AerosolScatteringFuntions();
-		double d = aerosolScatteringFuntions.aerosolPhase(45, 1);
+		AerosolScatteringFunctions aerosolScatteringFunctions = new AerosolScatteringFunctions();
+		double d = aerosolScatteringFunctions.aerosolPhase(45, 1);
 		assertEquals(1.2018744286197576, d);
 	}
 }

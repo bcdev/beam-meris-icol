@@ -30,7 +30,7 @@ import java.io.InputStreamReader;
  * @author marcoz
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class AerosolScatteringFuntions {
+public class AerosolScatteringFunctions {
 
    private static final double[] angle = {0, 2.84, 17.64, 28.77, 36.19,
     		43.61, 51.03, 58.46, 65.88, 69.59, 73.30, 77.01, 80.72};
@@ -45,7 +45,7 @@ public class AerosolScatteringFuntions {
    private double[][] albedo;
    private double[][] phase;
    
-   public AerosolScatteringFuntions() {
+   public AerosolScatteringFunctions() {
 	   transmittance = new double[NUM_IAER+1][][];
 	   fourier = new double[NUM_IAER+1][][][][];
 	   phase = new double[NUM_IAER+1][];
@@ -102,7 +102,7 @@ public class AerosolScatteringFuntions {
 	   return y;
    }
    
-   double aerosolTranmittance(int isza, int iaot, int iaer) throws IOException {
+   double aerosolTransmittance(int isza, int iaot, int iaer) throws IOException {
 //	   isza = checkIndex(isza, NUM_IZA);
 //	   iaot = checkIndex(iaot, NUM_IAOT);
 //	   iaer = checkIndex(iaer, NUM_IAER);
@@ -353,13 +353,11 @@ public class AerosolScatteringFuntions {
 //		iaer = checkIndex(iaer, NUM_IAER);
 		double paerF = aerosolPhase(thetaf,iaer);
         double paerB = aerosolPhase(thetab,iaer);
-        double paerFB = paerF/paerB;
-        return paerFB;
+        return paerF/paerB;
 	}
     
     public double aerosolPhaseB(double thetaf, double thetab, int iaer) throws IOException {
-        double paerB = aerosolPhase(thetab,iaer);
-        return paerB;
+        return aerosolPhase(thetab,iaer);
 	}
 	
 	public double aerosolPhase(double theta, int iaer) throws IOException {
@@ -372,10 +370,7 @@ public class AerosolScatteringFuntions {
 		double thePhase = phase[iaer][phaseIndex + NTHETA];
 		double prevTheta = phase[iaer][phaseIndex - 1];
 		double prevPhase = phase[iaer][phaseIndex + NTHETA - 1];
-		double pa = interpolateLin(theTheta, thePhase,
-				prevTheta, prevPhase,
-				theta);
-		return pa;
+        return interpolateLin(theTheta, thePhase, prevTheta, prevPhase, theta);
 	}
 	
 	int getPhaesIndex(double theta, int iaer) {
@@ -430,23 +425,23 @@ public class AerosolScatteringFuntions {
 	    
 	    //compute the downward transmittance
 	    int isza = selectIza(sza);
-	    y1 = aerosolTranmittance(isza, iaot, iaer);
-	    y2 = aerosolTranmittance(isza+1, iaot, iaer);
+	    y1 = aerosolTransmittance(isza, iaot, iaer);
+	    y2 = aerosolTransmittance(isza+1, iaot, iaer);
 	    y3 = interZa(isza,y1,y2,sza);
 	    
-	    y1 = aerosolTranmittance(isza, iaot+1, iaer);
-	    y2 = aerosolTranmittance(isza+1, iaot+1, iaer);
+	    y1 = aerosolTransmittance(isza, iaot+1, iaer);
+	    y2 = aerosolTransmittance(isza+1, iaot+1, iaer);
 	    y4 = interZa(isza,y1,y2,sza);
 	    rv.tds = interpolateLin(aot_inf, y3, aot_sup, y4, aot);  // returnvalue
 
 	    //compute the upward transmittance
 	    int ivza = selectIza(vza);
-	    y1 = aerosolTranmittance(ivza, iaot, iaer);
-	    y2 = aerosolTranmittance(ivza+1, iaot, iaer);
+	    y1 = aerosolTransmittance(ivza, iaot, iaer);
+	    y2 = aerosolTransmittance(ivza+1, iaot, iaer);
 	    y3 = interZa(ivza,y1,y2,vza);
 	    
-	    y1 = aerosolTranmittance(ivza, iaot+1, iaer);
-	    y2 = aerosolTranmittance(ivza+1, iaot+1, iaer);
+	    y1 = aerosolTransmittance(ivza, iaot+1, iaer);
+	    y2 = aerosolTransmittance(ivza+1, iaot+1, iaer);
 	    y4 = interZa(ivza,y1,y2,sza);
 	    rv.tus = interpolateLin(aot_inf, y3, aot_sup, y4, aot);  // returnvalue
 	    

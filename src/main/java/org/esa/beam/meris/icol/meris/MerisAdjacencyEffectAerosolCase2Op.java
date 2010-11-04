@@ -33,8 +33,8 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.icol.AerosolScatteringFuntions;
-import org.esa.beam.meris.icol.AerosolScatteringFuntions.RV;
+import org.esa.beam.meris.icol.AerosolScatteringFunctions;
+import org.esa.beam.meris.icol.AerosolScatteringFunctions.RV;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
 import org.esa.beam.meris.icol.IcolConstants;
@@ -104,8 +104,8 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
 
     @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
     private boolean exportSeparateDebugBands = false;
-    @Parameter(defaultValue = "true")
-    private boolean icolAerosolForWater = true;
+    @Parameter(defaultValue = "false")
+    private boolean icolAerosolForWater;
     @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
     private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
@@ -138,7 +138,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
     private Band[] aerosolDebugBands;
 
     private CoeffW coeffW;
-    private AerosolScatteringFuntions aerosolScatteringFuntions;
+    private AerosolScatteringFunctions aerosolScatteringFunctions;
     private FresnelReflectionCoefficient fresnelCoefficient;
 
     // tables for case 2 aerosol correction:
@@ -201,7 +201,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
         }
 
 
-        aerosolScatteringFuntions = new AerosolScatteringFuntions();
+        aerosolScatteringFunctions = new AerosolScatteringFunctions();
 
         BandMathsOp bandArithmeticOp =
                 BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
@@ -355,10 +355,10 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                         double csf = mus * muv - nus * nuv * Math.cos(phi * MathUtils.DTOR);
                         double thetaf = Math.acos(csf) * MathUtils.RTOD;
 
-                        double pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
+                        double pab = aerosolScatteringFunctions.aerosolPhase(thetab, iaer);
                         // aot at 865nm depending on aerosol model:
                         double taua865Iaer = 0.1 * Math.pow((550.0 / 865.0), (iaer / 10.0));
-                        double paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaer);
+                        double paerFB = aerosolScatteringFunctions.aerosolPhaseFB(thetaf, thetab, iaer);
                         double corrFac;
 
                         double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HA);
@@ -420,14 +420,14 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                     // aot at 865nm depending on case 2 aerosol model:
                                     final double taua865IaerC2 = 0.1 * Math.pow((550.0 / 865.0), (iaerC2-1)/10.0);
 
-                                    pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaerC2);
-                                    paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaerC2);
+                                    pab = aerosolScatteringFunctions.aerosolPhase(thetab, iaerC2);
+                                    paerFB = aerosolScatteringFunctions.aerosolPhaseFB(thetaf, thetab, iaerC2);
                                     corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                                     searchIAOT = -1;
                                     for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                         // rhoBrr865 computation as for case 1, but with case 2 aerosol model and aot indices:
                                         taua865C2 = taua865IaerC2 * iiaot;
-                                        RV rv = aerosolScatteringFuntions.aerosol_f(taua865C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                        RV rv = aerosolScatteringFunctions.aerosol_f(taua865C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                         //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                         final double rhoa0 = rv.rhoa;
                                         final double rhoa = rhoa0 * corrFac;
@@ -444,12 +444,12 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                     } // end iaot loop
                                     if (searchIAOT != -1) {
                                         // interpolate aot865 for retrieved index and given case 2 aerosol model
-                                        aot865[iaerC2-1] = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
+                                        aot865[iaerC2-1] = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
                                                                                                        rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * taua865IaerC2;
 
                                         // rhoBrr775 computation as for case 1, but with case 2 aerosol model index and DERIVED AOT 865!!:
                                         double taua775C2 = aot865[iaerC2 - 1] * Math.pow((865.0 / 775.0), (iaerC2 - 1)/10.0);
-                                        RV rv775 = aerosolScatteringFuntions.aerosol_f(taua775C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                        RV rv775 = aerosolScatteringFunctions.aerosol_f(taua775C2, iaerC2, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                         final double rhoa0775 = rv775.rhoa;
                                         final double rhoa775 = rhoa0775 * corrFac;
                                         rhoBrr775[searchIAOT] = rhoa775 + rhoBrrBracket775C2 * rv775.tds * (rv775.tus - Math.exp(-taua775C2 / muv));
@@ -470,8 +470,8 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                 if (searchIAOT != -1) {
                                     // rhoBrr705 computation with derived case 2 aerosol type index (iaer) and DERIVED AOT 865
                                     double tauaConst705 = aot865[iaer-1] * Math.pow((865.0 / 705.0), ((iaer - 1) / 10.0));
-                                    pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
-                                    RV rv = aerosolScatteringFuntions.aerosol_f(tauaConst705, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                    pab = aerosolScatteringFunctions.aerosolPhase(thetab, iaer);
+                                    RV rv = aerosolScatteringFunctions.aerosol_f(tauaConst705, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                     //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                     final double rhoa0705 = rv.rhoa;
                                     corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
@@ -518,7 +518,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                             double rhoBrrBracket865C1 = rhoBrr865Bracket06 + (iaer-5)*deltaRhoBrr865Bracket06;
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 final double taua = taua865Iaer * iiaot;
-                                RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 final double rhoa0865 = rv.rhoa;
                                 corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart- zmaxCloudPart));
@@ -565,7 +565,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
 
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1;
                                 aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
@@ -581,14 +581,14 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
 
                                 //Compute the aerosols functions for the second aot
                                 final double taua2 = 0.1 * (searchIAOT + 1) * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                RV rv2 = aerosolScatteringFuntions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aea2 = (roAerMean - rhoRaecIwvl) * (rv2.tds / (1.0 - roAerMean * rv2.sa));
                                 aea2 = (rv2.tus - Math.exp(-taua2 / muv)) * aea2;
                                 aea2 = aea2 - rv2.rhoa * paerFB * r1s * (zmaxPart + zmaxCloudPart);
 
                                 //AOT INTERPOLATION to get AE_aer
-                                double aea = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], aea1,
+                                double aea = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], aea1,
                                                                                       rhoBrr865[searchIAOT + 1], aea2, rho_13);
 
                                 if (isCloud) {

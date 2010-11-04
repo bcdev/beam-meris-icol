@@ -16,7 +16,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.icol.AerosolScatteringFuntions;
+import org.esa.beam.meris.icol.AerosolScatteringFunctions;
 import org.esa.beam.meris.icol.CoeffW;
 import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
 import org.esa.beam.meris.icol.IcolConstants;
@@ -120,7 +120,7 @@ public class TmAeAerosolOp extends TmBasisOp {
 
     private CoeffW coeffW;
     private double[/*26*/][/*RR=26|FR=101*/] w;
-    private AerosolScatteringFuntions aerosolScatteringFuntions;
+    private AerosolScatteringFunctions aerosolScatteringFunctions;
     private FresnelReflectionCoefficient fresnelCoefficient;
 
     private int numSpectralBands;
@@ -180,7 +180,7 @@ public class TmAeAerosolOp extends TmBasisOp {
         }
 
 
-        aerosolScatteringFuntions = new AerosolScatteringFuntions();
+        aerosolScatteringFunctions = new AerosolScatteringFunctions();
 
         BandMathsOp bandArithmeticOp =
             BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
@@ -352,9 +352,9 @@ public class TmAeAerosolOp extends TmBasisOp {
                         double csf = mus * muv - nus * nuv * Math.cos(phi * MathUtils.DTOR);
                         double thetaf = Math.acos(csf) * MathUtils.RTOD;
 
-                        double pab = aerosolScatteringFuntions.aerosolPhase(thetab, iaer);
+                        double pab = aerosolScatteringFunctions.aerosolPhase(thetab, iaer);
                         double tauaConst = 0.1 * Math.pow((550.0 / 865.0), (iaer / 10.0));
-                        double paerFB = aerosolScatteringFuntions.aerosolPhaseFB(thetaf, thetab, iaer);
+                        double paerFB = aerosolScatteringFunctions.aerosolPhaseFB(thetaf, thetab, iaer);
                         double corrFac = 0.0;
 
                         double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HA);
@@ -387,7 +387,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                             // icolAerosolForWater = true only for MERIS
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                AerosolScatteringFuntions.RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
@@ -404,7 +404,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                             }
 
                             if (searchIAOT != -1) {
-                                aot = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
+                                aot = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
                                         rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * 0.1;
                             } else {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
@@ -414,7 +414,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                             searchIAOT = MathUtils.floorInt(aot * 10);
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                AerosolScatteringFuntions.RV rv = aerosolScatteringFuntions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart- zmaxCloudPart));
@@ -455,7 +455,7 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                AerosolScatteringFuntions.RV rv1 = aerosolScatteringFuntions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1 = 0.0;
                                 aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
@@ -471,14 +471,14 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 //Compute the aerosols functions for the second aot
                                 final double taua2 = 0.1 * (searchIAOT + 1) * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                AerosolScatteringFuntions.RV rv2 = aerosolScatteringFuntions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aea2 = (roAerMean - rhoRaecIwvl) * (rv2.tds / (1.0 - roAerMean * rv2.sa));
                                 aea2 = (rv2.tus - Math.exp(-taua2 / muv)) * aea2;
                                 aea2 = aea2 - rv2.rhoa * paerFB * r1s * (zmaxPart + zmaxCloudPart);
 
                                 //AOT INTERPOLATION to get AE_aer
-                                double aea = aerosolScatteringFuntions.interpolateLin(rhoBrr865[searchIAOT], aea1,
+                                double aea = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], aea1,
                                         rhoBrr865[searchIAOT + 1], aea2, rho_13);
 
                                 if (isCloud) {
