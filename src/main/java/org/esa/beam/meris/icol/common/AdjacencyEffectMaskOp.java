@@ -125,6 +125,8 @@ public class AdjacencyEffectMaskOp extends Operator {
         maskBand.setSampleCoding(flagCoding);
         targetProduct.getFlagCodingGroup().add(flagCoding);
 
+        targetProduct.setPreferredTileSize(128, 128);
+
         BandMathsOp bandArithmeticOp1 = BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandArithmeticOp1.getTargetProduct().getBandAt(0);
 
@@ -177,6 +179,13 @@ public class AdjacencyEffectMaskOp extends Operator {
             }
             Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), sourceRect, subPm1(pm));
 
+            Tile detectorIndexTile = null;
+            if (sourceProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME) != null) {
+                detectorIndexTile = getSourceTile(sourceProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME),
+                                                  sourceRect,
+                                                  subPm1(pm));
+            }
+
             Area costalArea = computeCoastalArea(pm, sourceRect, isLand, isCoastline);
             boolean correctOverLand = aeArea.correctOverLand();
             boolean correctInCoastalAreas = aeArea.correctCostalArea();
@@ -184,12 +193,14 @@ public class AdjacencyEffectMaskOp extends Operator {
             // even if land pixel is far away from water
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
                 for (int x = relevantTragetRect.x; x < relevantTragetRect.x + relevantTragetRect.width; x++) {
-                    if (x == 60 && y == 120) {
-                        System.out.println("");
-                    }
                     if (Math.abs(sza.getSampleFloat(x, y)) > 80.0) {
                         // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
                         // functions (PM4, 2010/03/04)
+                        aeMask.setSample(x, y, 0);
+                    } else if (detectorIndexTile != null && isAtCurruptEdge(x, y, relevantTragetRect, detectorIndexTile)) {
+                        // In MERIS N1, we often see vertical stripes of invalid (currupt?) pixels with zero radiances
+                        // at the left and right edges of the images leading to artifacts after AE correction.
+                        // To avoid this, we do not apply AE correction here 
                         aeMask.setSample(x, y, 0);
                     } else {
                         // if 'correctOverLand',  compute for both ocean and land ...
@@ -216,6 +227,53 @@ public class AdjacencyEffectMaskOp extends Operator {
             pm.done();
         }
     }
+
+    private boolean isAtCurruptEdge(int x, int y, Rectangle relevantTragetRect, Tile detectorIndexTile) {
+        final int firstValidIndex = getFirstValidIndex(y, relevantTragetRect, detectorIndexTile);
+        boolean invalidLeftEdgePixel = (firstValidIndex != -1 && x < firstValidIndex + aeWidth);
+        
+        final int lastValidIndex = getLastValidIndex(y, relevantTragetRect, detectorIndexTile);
+        boolean invalidRightEdgePixel = (lastValidIndex != -1 && x > lastValidIndex - aeWidth);
+
+        return invalidLeftEdgePixel || invalidRightEdgePixel;
+    }
+
+    private int getFirstValidIndex(int y, Rectangle rectangle, Tile detectorIndexTile) {
+        int firstValidIndex = -1;
+        // check if transition from invalid to valid happens in this tile
+        if (detectorIndexTile.getSampleInt(rectangle.x, y) == -1 &&
+                detectorIndexTile.getSampleInt(rectangle.x + rectangle.width - 1, y) != -1) {
+                // determine first valid pixel in row
+                for (int x = rectangle.x; x < rectangle.x + rectangle.width - 1; x++) {
+                    if (detectorIndexTile.getSampleInt(x, y) == -1 && detectorIndexTile.getSampleInt(x + 1,
+                                                                                                     y) != -1) {
+                        firstValidIndex = x + 1;
+                        break;
+                    }
+                }
+            }
+
+        return firstValidIndex;
+    }
+
+    private int getLastValidIndex(int y, Rectangle rectangle, Tile detectorIndexTile) {
+        int lastValidIndex = -1;
+
+        // check if transition from valid to invalid happens in this tile
+        if (detectorIndexTile.getSampleInt(rectangle.x, y) != -1 &&
+            detectorIndexTile.getSampleInt(rectangle.x + rectangle.width - 1, y) == -1) {
+            // determine first valid pixel in row
+            for (int x = rectangle.x; x < rectangle.x + rectangle.width - 1; x++) {
+                if (detectorIndexTile.getSampleInt(x, y) != -1 && detectorIndexTile.getSampleInt(x+1, y) == -1) {
+                    lastValidIndex = x;
+                    break;
+                }
+            }
+        }
+
+        return lastValidIndex;
+    }
+
 
     private Area computeCoastalArea(ProgressMonitor pm, Rectangle sourceRect, Tile land, Tile coastline) {
         Rectangle box = new Rectangle();
