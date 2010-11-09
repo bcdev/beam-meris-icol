@@ -1,331 +1,207 @@
 <chapter id="sum.products">
-    <title>IDEPIX Products</title>
+    <title>ICOL+ Products</title>
 
-    <sect1 id="sum.products.l2.qwg">
-        <title>Standard L2 Products</title>
+    <sect1 id="sum.products.input">
+
+        <title>Input Products</title>
         <para>
-            The standard L2 products which can be derived using the MEPIX tool are:
+            The input products which can be processed with the ICOL+ processor are:
             <itemizedlist mark='bullet'>
                 <listitem>
-                     Cloud Top Pressure
+                    MERIS L1b radiance files (.N1 format or BEAM DIMAP format)
                 </listitem>
                 <listitem>
-                     Surface Pressure
+                    MERIS L1b radiance files (BEAM DIMAP format, i.e. subsets of original .N1 files)
                 </listitem>
                 <listitem>
-                      Cloud Flag
+                    MERIS L2 cloud product (BEAM DIMAP format): An optional input product which must contain
+                    a suitable cloud classification flag band which can then be used to define an alternative cloud mask
+                    expression for the AE correction algorithm.
+                </listitem>
+                <listitem>
+                    LANDSAT TM L1b radiance files (GEOTIFF format)
+                </listitem>
+                <listitem>
+                    LANDSAT TM L1g radiance files (original GEOTIFF file downscaled to AE correction grid with ICOL+
+                    and saved as BEAM DIMAP file)
                 </listitem>
             </itemizedlist>
-            The algorithms have been implemented on the basis of the recent DPM and IODD versions (i80, i8r0).
-            One major difference to the IPF implementation is that the pressure products are calculated for all
-            surfaces. This has been done in order to be able to assess later the possibility of using the pressure
-            products for pixel classification. However, over cloud and cloud free land pixels, respectively, the
-            cloud top pressure and land surface pressure products should be identical between IDEPIX and the
-            standard processing.
-       </para> 
+        </para>
+    </sect1>
 
+    <sect1 id="sum.products.output">
+        <title>Output Products</title>
+        <sect2 id="sum.products.output.meris">
+            <title>MERIS</title>
 
-        <sect2 id="sum.products.l2.qwg.ctp">
-            <title>Cloud Top Pressure</title>
-            <para>
-                The cloud top pressure (CTP) is basically derived with an algorithm as described for the standard
-                Level 2 processing ([1], section 4.5.3). The main characteristics of this algorithm are summarized
-                in the following table.
-
-                <!-- This CALS table compiles under Mac OS X but not under Windows :-( -->
-
-                <table frame='all'><title>Cloud Top Pressure derival</title>
-                    <tgroup cols='2' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1'/>
-                    <colspec colname='c2'/>
-                    <thead>
-                        <row>
-                           <entry>IDEPIX CTP algorithm characteristics</entry>
-                           <entry>Comparison of IDEPIX and IPF/megs products</entry>
-                        </row>
-                    </thead>
-
-                    <tbody>
-                    <row>
-                       <entry>To retrieve the Cloud Top Pressure,a  neural net (NN) approach is used. The
-                                MERIS signals in channel 10, 11, the surface albedo and the geometry (sun zenith
-                                angle, viewing zenith angle and azimuth  angle) are used as input of the Neural Network.
-                                The net produces the cloud top pressure.  Depending on the surface albedo two
-                                different neural nets are used (one for surface  albedo equal to zero, one for nonzero
-                                surface albedo). Neural Nets are selected according to spectral shift index.
-                       </entry>
-                       <entry>Implementation is the same. Differences in results less than 1 percent for pixels
-                           flagged as cloudy (likely due to truncation errors)
-                       </entry>
-                    </row>
-
-                    </tbody>
-                    </tgroup>
-                </table>
-            </para>
+            The MERIS L1c output products which can be derived using the ICOL+ processor are:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    MERIS L1c radiances: The MERIS radiances for bands 1-15 corrected for the adjacency effect.
+                    This product can be retrieved in either original .N1 format or BEAM DIMAP format (user option).
+                </listitem>
+                <listitem>
+                    MERIS L1c TOA reflectances: AE corrected radiances for bands 1-15 converted to TOA reflectances.
+                    This product is provided in BEAM DIMAP format.
+                    Within this product, the following quantities are optionally provided (user option):
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            TOA reflectances (bands 1-15) corrected for AE (Rayleigh part of correction only)
+                        </listitem>
+                        <listitem>
+                            TOA reflectances (bands 1-15) corrected for AE (Rayleigh and aerosol parts of
+                            correction)
+                        </listitem>
+                        <listitem>
+                            AE Rayleigh correction term (bands 1-15)
+                        </listitem>
+                        <listitem>
+                            AE aerosol correction term (bands 1-15)
+                        </listitem>
+                        <listitem>
+                            Angstrom coefficient and aerosol optical thickness at 865nm.
+                        </listitem>
+                    </itemizedlist>
+                </listitem>
+            </itemizedlist>
         </sect2>
 
-        <sect2 id="sum.products.l2.qwg.psurf">
-            <title>Surface Pressure</title>
-            <para>
-                The surface pressure is also derived with an algorithm as described for the standard
-                Level 2 processing ([1], section 4.5.2). The main characteristics of this algorithm are summarized
-                in the following table.
+        <sect2 id="sum.products.output.landsat">
+            <title>LANDSAT</title>
 
-                <!-- This CALS table compiles under Mac OS X but not under Windows :-( -->
+            The LANDSAT TM output products which can be derived using the ICOL+ processor are:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    LANDSAT TM L1c radiances: The LANDSAT TM radiances for bands 1-5 and 7 corrected for the
+                    adjacency
+                    effect.
+                    This product is provided in BEAM DIMAP format. It contains the same bands as the GEOTIFF input
+                    product.
+                </listitem>
+                <listitem>
+                    LANDSAT TM L1g radiances: The LANDSAT TM radiances for bands 1-7 downscaled to the AE correction
+                    grid.
+                    This product is provided in BEAM DIMAP format. Processing time can be saved if this product is
+                    computed once and then re-used as input for different AE correction processes with varying user
+                    options.
+                </listitem>
+                <listitem>
+                    <para>
+                        LANDSAT TM L1g flag bands: The LANDSAT TM cloud and land classification flags as used for
+                        the AE
+                        correction (i.e. downscaled to the AE correction grid).
+                        This product is provided in BEAM DIMAP format.
+                    </para>
+                    <para>
+                        <!--
+                          This is what an equation must be written in docbook. The sum.xml must start with '!DOCTYPE equation...'
+                          othrwise the <equation> tag is not recognized!!
+                          Use inlineequation instead of equation to get the eq. within text flow!
+                          <equation>
+                              <alt>a + b &lt; c</alt>
+                          </equation>
+                          -->
 
-                <table frame='all'><title>Surface Pressure derival</title>
-                    <tgroup cols='2' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1'/>
-                    <colspec colname='c2'/>
-                    <thead>
-                        <row>
-                           <entry>IDEPIX surface pressure algorithm characteristics</entry>
-                           <entry>Differences to standard L2 algorithm</entry>
-                        </row>
-                    </thead>
+                        The coding of the cloud classification flag is listed in the following table:
 
-                    <tbody>
-                    <row>
-                       <entry>
-                           To retrieve the surface pressure, a polynominal algorithm is used, as described in
-                            detail in [1].
-                       </entry>
-                       <entry>
-                           Implementation is the same. Differences in  results less than 1 percent for pixels over
-                            land and not flagged as cloudy (likely due to truncation errors).
-                       </entry>
-                    </row>
+                        <table frame='all'>
+                            <title>Cloud classification flags</title>
+                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                                <colspec colname='c1'/>
+                                <colspec colname='c2'/>
+                                <colspec colname='c3'/>
+                                <thead>
+                                    <row>
+                                        <entry>Name</entry>
+                                        <entry>Value</entry>
+                                        <entry>Description</entry>
+                                    </row>
+                                </thead>
+                                <tbody>
+                                    <row>
+                                        <entry>F_CLOUD</entry>
+                                        <entry>0</entry>
+                                        <entry>Pixel was finally specified as cloudy (if all flags below are set)
+                                        </entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_BRIGHT</entry>
+                                        <entry>1</entry>
+                                        <entry>Brightness flag (set if TM3 &lt; BT)</entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_NDVI</entry>
+                                        <entry>2</entry>
+                                        <entry>NDVI flag (set if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                        </entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_NDSI</entry>
+                                        <entry>4</entry>
+                                        <entry>NDSI flag (set if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
+                                        </entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_TEMP</entry>
+                                        <entry>8</entry>
+                                        <entry>Temperature flag (set if TM6 &lt; TM6T_CLOUD)</entry>
+                                    </row>
+                                </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
 
-                    </tbody>
-                    </tgroup>
-                </table>
+                    <para>
+                        The coding of the land classification flag is listed in the following table:
 
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.l2.qwg.cloudflag">
-            <title>Cloud Flags</title>
-            <para>
-                The cloud flags are also derived with an algorithm as described for the standard
-                Level 2 processing ([1], section 5.5). The main characteristics of this algorithm are summarized
-                in the following table.
-
-                <!-- This CALS table compiles under Mac OS X but not under Windows :-( -->
-
-                <table frame='all'><title>Cloud Flags derival</title>
-                    <tgroup cols='2' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1'/>
-                    <colspec colname='c2'/>
-                    <thead>
-                        <row>
-                           <entry>IDEPIX cloud flag determination characteristics</entry>
-                           <entry>Comparison of IDEPIX and IPF/megs products</entry>
-                        </row>
-                    </thead>
-
-                    <tbody>
-                    <row>
-                       <entry>
-                           For pixels identified as LAND, tests are performed on the ratio of Rayleigh-corrected
-                            reflectance at several wavelengths. The coarse Rayleigh correction uses an algorithm
-                            described in [1], section 5.5.6, to  compute the reflectance due to Rayleigh scattering.
-                            Finally, a set of Boolean parameters are used to index a decision table which provides
-                            the CLOUD_F flag (see [1], step 5.5.1 for details).
-                       </entry>
-                       <entry>
-                           No differences. Almost full agreement in results.
-                       </entry>
-                    </row>
-
-                    </tbody>
-                    </tgroup>
-                </table>
-
-            </para>
+                        <table frame='all'>
+                            <title>Land classification flags</title>
+                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                                <colspec colname='c1'/>
+                                <colspec colname='c2'/>
+                                <colspec colname='c3'/>
+                                <thead>
+                                    <row>
+                                        <entry>Name</entry>
+                                        <entry>Value</entry>
+                                        <entry>Description</entry>
+                                    </row>
+                                </thead>
+                                <tbody>
+                                    <row>
+                                        <entry>F_LANDCONS</entry>
+                                        <entry>0</entry>
+                                        <entry>Pixel was classified as land</entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_LOINLD</entry>
+                                        <entry>1</entry>
+                                        <entry>Pixel was classified as inland waters (currently no algorithm implemented and set to false)
+                                        </entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_NDVI</entry>
+                                        <entry>2</entry>
+                                        <entry>NDVI flag (set if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                        </entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_TEMP</entry>
+                                        <entry>8</entry>
+                                        <entry>Temperature flag (set if TM6 &gt; TM6T_LAND (summer), TM6 &lt; TM6T_LAND (winter))</entry>
+                                    </row>
+                                    <row>
+                                        <entry>F_ICE</entry>
+                                        <entry>16</entry>
+                                        <entry>Pixel was classified as ice (currently no algorithm implemented and set to false)</entry>
+                                    </row>
+                                </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
+                </listitem>
+            </itemizedlist>
         </sect2>
     </sect1>
 
-
-    <sect1 id="sum.products.o2">
-        <title>O2 Products</title>
-        <para>
-            The IDEPIX tool can also derive products which had been of interest within the O2 project. These are:
-            <itemizedlist mark='bullet'>
-                <listitem>
-                    Surface Pressure, derived from a new Neural Net approach including a straylight correction as developed by FUB
-                </listitem>
-                <listitem>
-                    TOA Pressure ('P1'), derived from an improved LISE algorithm
-                </listitem>
-                <listitem>
-                    Surface Pressure, derived from an improved LISE algorithm
-                </listitem>
-                <listitem>
-                    Rayleigh-corrected TOA Pressure ('P2'), derived from an improved LISE algorithm
-                </listitem>
-                <listitem>
-                    Aerosol apparent pressure ('PScatt', LISE approach)
-                </listitem>
-            </itemizedlist>
-            The algorithms have been implemented based on the documentation and breadboard software
-            provided by FUB and LISE. During two collocations the implementation was verified together with
-            the algorithm developers.
-
-
-       </para>
-
-
-        <sect2 id="sum.products.o2.psurffub">
-            <title>Surface Pressure (FUB)</title>
-            <para>
-                This algorithm was developed as IDL code by Free University of Berlin (FUB) and is described in
-                [3]. The algorithm includes a new straylight correction scheme proposed by FUB (see [4]).
-                Brockmann Consult provided a Java implementation in IDEPIX. A validation with the original
-                IDL code was performed by applying Junit tests on distinct test data provided by FUB.
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.o2.ptoalise">
-            <title>TOA Pressure ('P1', LISE)</title>
-            <para>
-                This algorithm was developed as FORTRAN code by LISE and is described in [5]. Brockmann
-                Consult provided a Java implementation in IDEPIX. A validation with the original FORTRAN code
-                was performed by applying Junit tests on distinct test data provided by LISE.
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.o2.psurflise">
-            <title>Surface Pressure (LISE)</title>
-            <para>
-                This algorithm was developed as FORTRAN code by LISE and is a slight extension of the TOA
-                pressure using filter-dependent C coefficients. Brockmann Consult provided a Java
-                implementation in IDEPIX.
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.o2.praycorrlise">
-            <title>Rayleigh-corrected TOA Pressure ('P2', LISE)</title>
-            <para>
-                This correction has been proposed by LISE to be applied on the TOA Pressure. This product
-                is provided as additional band in IDEPIX.
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.o2.pscattlise">
-            <title>Aerosol apparent pressure ('PScatt', LISE)</title>
-            <para>
-                This algorithm was developed as FORTRAN code by LISE and is described in [5]. Brockmann
-            Consult provided a Java implementation in IDEPIX. A validation with the original FORTRAN code
-            was performed by applying Junit tests on distinct test data provided by LISE.
-            </para>
-        </sect2>
-   </sect1>
-
-    <sect1 id="sum.products.globcover">
-        <title>GlobCover Products</title>
-        <para>
-            The GlobCover products (pixel classification) which can be derived using the IDEPIX tool
-            are:
-            <itemizedlist mark='bullet'>
-                <listitem>
-                    Blue Bands pixel classification
-                </listitem>
-                <listitem>
-                    Cloud Probability
-                </listitem>
-            </itemizedlist>
-            MEPIX uses the implementation which had been developed within the GlobCover project.
-       </para>
-
-        <sect2 id="sum.products.globcover.blueband">
-            <title>Blue Bands</title>
-            <para>
-
-                <table frame='all'><title>Blue Bands derival</title>
-                    <tgroup cols='1' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1'/>
-                    <thead>
-                        <row>
-                           <entry>IDEPIX Blue Band algorithm characteristics</entry>
-                        </row>
-                    </thead>
-
-                    <tbody>
-                    <row>
-                       <entry>
-                           A simple blue band test that provides with very good results for VEGETATION has been adopted
-                            for MERIS, and enhanced it by using the 412 nm channel. The developed cloud screening
-                            method is applied to reflectances. A first threshold for the B1 reflectances (R1) is used to detect
-                            the mostbrilliant dense clouds. The cloudy pixels are validated trough a restoration process, which
-                            eliminates false detections due to snow covers. A threshold on the NDSI ((R10-R13)/(R10+R13)
-                            is used to detect snow covers. The remained clear pixels are tested by a second filter, which performs
-                            the ratio R11/R10 related to the altitude of the scattering surface. An optimised threshold
-                            permits to identify thin clouds not detect by the first blue band test. Three states are supposed:
-                            0=Out of Orbit, 1=Clear and 2=Cloud). The optimised cloud mask is globally coherent with the
-                            bright flag of standard MERIS products. However, a higher performance of the cloud screening
-                            over semi-transparent clouds can be observed. Large areas are not detected by the bright flag or
-                            probability algorithms. This analysis shows that blue bands algorithm can better detect semi
-                            transparent clouds.
-                       </entry>
-                    </row>
-
-                    </tbody>
-                    </tgroup>
-                </table>
-
-            </para>
-        </sect2>
-
-        <sect2 id="sum.products.globcover.cloudprob">
-            <title>Cloud Probability</title>
-            <para>
-
-                <table frame='all'><title>Cloud Probability derival</title>
-                    <tgroup cols='1' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1'/>
-                    <thead>
-                        <row>
-                           <entry>IDEPIX Cloud Probability algorithm characteristics</entry>
-                        </row>
-                    </thead>
-
-                    <tbody>
-                    <row>
-                       <entry>
-                           This algorithm includes two neural networks (land/water) which get as input:
-                           <itemizedlist mark='bullet'>
-                                <listitem>
-                                    the reflectances in bands 1-6, 9,10, 13
-                                </listitem>
-                                <listitem>
-                                    the reflectances ratio of band 11 / band 10, which is a measure for the air mass above the
-                                    measured surface
-                                </listitem>
-                                <listitem>
-                                    the surface pressure from the tie-point grid
-                                </listitem>
-                                <listitem>
-                                    the exact pixel-wavelength of band 11
-                                </listitem>
-                                <listitem>
-                                     and some pixel geometry
-                                </listitem>
-                          </itemizedlist>
-
-                        The output of the net is a floating number [0..1] indicating the likelihood that the pixel is a cloud.
-                        This is compared against a threshold to set a binary cloud flag
-                       </entry>
-                    </row>
-
-                    </tbody>
-                    </tgroup>
-                </table>
-
-            </para>
-        </sect2>
-        
-   </sect1>
-
-    
 </chapter>

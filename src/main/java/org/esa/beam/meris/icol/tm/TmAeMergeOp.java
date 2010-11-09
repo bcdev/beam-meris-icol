@@ -25,6 +25,7 @@ import java.awt.Rectangle;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Tm.AeMerge",
+                  internal=true,
         version = "1.1",
         authors = "Marco Zuehlke, Olaf Danne",
         copyright = "(c) 2007-2009 by Brockmann Consult",

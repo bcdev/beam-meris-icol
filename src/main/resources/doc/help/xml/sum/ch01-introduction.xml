@@ -8,7 +8,8 @@
 
     <sect1 id="sum.introduction.objectives">
         <title>Objectives</title>
-        <para>In MERIS images an increase in the radiances, especially in the near infrared bands, can often be
+        <para>In images retrieved from spectrometers such as MERIS, an increase in the radiances,
+            especially in the near infrared bands, can often be
             observed over water and in the vicinity of vegetated coasts. The affected area can extend over
             10km or even more. This increase is not (always) related to an increase in the aerosol optical
             depth but is caused by the so-called adjacency effect. This effect results when photons are reflected
@@ -23,6 +24,37 @@
             black and vegetated areas are very bright. The effect is easier to illustrate in coastal waters because
             it decreases from coastline to off-shore. This effect can best be studied in MERIS Full Resolution
             images, but even in reduced resolution the adjacency effect can also clearly be seen.
+        </para>
+
+        <para>
+            In order to build up a reliable tool for the correction of the adjacency effect, the ICOL (= Improve
+            Contrast over Ocean and Land) prototype processor was developed as BEAM plugin. Although this prototype (ICOL1.0) has
+            proven  to retrieve results as expected from theory, it has some well-known limitations:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    Restricted to coastal areas over water (although the AE is known to exist as well over land)
+                </listitem>
+                <listitem>
+                    Restriction to case 1 waters
+                </listitem>
+                <listitem>
+                    No proper handling of clouds and sea ice
+                </listitem>
+                <listitem>
+                    Restricted to application on MERIS data only
+                </listitem>
+                <listitem>
+                    Slow processing
+                </listitem>
+            </itemizedlist>
+            To overcome these limitations and to be able to apply the AE correction within operational processing
+            chains, an improved BEAM plugin (ICOL+) has been developed. With this processor, the AE correction is applicable
+            anywhere over ocean as well as over land and considers case 2 waters, clouds and sea ice. An improved
+            convolution scheme (the core mathematical part of the AE corection) has been integrated to significantly
+            speed up the processor. Moreover, it is possible with ICOL+ to apply the AE correction on Landsat TM data.
+            This feature mainly serves as a demonstration for the general portability of the AE correction scheme
+            to other instruments within future projects (e.g. related to the Sentinel missions). However, the full
+            correction scheme has been implemented as for MERIS and shown to provide results as expected.
         </para>
 
     </sect1>
@@ -45,9 +77,6 @@
             The ICOL user manual specifications assumes that the reader is familiar with basic concepts in
             using the BEAM software and its integrated processors.
         </para>
-        <para>
-            NOTE: This help manual may not always reflect the latest state during the processor development.
-        </para>
     </sect1>
 
     <sect1 id="sum.introduction.acronymsAndNomenclature">
@@ -68,6 +97,9 @@
                     </listitem>
                     <listitem>
                         SUM - Software User Manual
+                    </listitem>
+                    <listitem>
+                        TODO: continue
                     </listitem>
                 </itemizedlist>
             </para>

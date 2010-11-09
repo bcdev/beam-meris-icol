@@ -1,30 +1,24 @@
 <chapter id="sum.processor">
-    <title>IDEPIX Processor</title>
+    <title>ICOL+ User Interface</title>
 
     <para>
-        The IDEPIX processor user interface is represented by one main dialog, which
-        curently consists of the following components:
+        The ICOL+ processor graphical user interface is represented by one main dialog, which
+        consists of the following components:
         <itemizedlist mark='bullet'>
             <listitem>
-                 'I/O Parameters' Tab Pane
+                'I/O Parameters' Tab Pane
             </listitem>
             <listitem>
-                 'Cloudscreening' Tab Pane
+                'General Settings' Tab Pane
             </listitem>
             <listitem>
-                 'IPF Compatible Products' Tab Pane
+                'MERIS' Tab Pane
             </listitem>
             <listitem>
-                 'Pressure Products' Tab Pane
+                'LANDSAT TM' Tab Pane
             </listitem>
             <listitem>
-                 'Cloud Products' Tab Pane
-            </listitem>
-            <listitem>
-                 'GlobAlbedo' Tab Pane
-            </listitem>
-            <listitem>
-                 'Run', 'Close' and 'Help' control buttons
+                'Run', 'Close' and 'Help' control buttons
             </listitem>
         </itemizedlist>
     </para>
@@ -33,34 +27,63 @@
         <title>I/O Parameters Tab Pane</title>
 
         <figure id="figure.processor.iotab">
-			<title>I/O Parameters Tab Pane</title>
-			<graphic scale="60" fileref="figures/iotab.png"/>
-		</figure>
+            <title>I/O Parameters Tab Pane</title>
+            <graphic scale="60" fileref="figures/iotab.png"/>
+        </figure>
 
-        This tab pane consists of the following components:
+        This tab pane (<xref linkend="figure.processor.iotab" xrefstyle="select: label"/>)
+        consists of the following components:
         <itemizedlist mark='bullet'>
             <listitem>
-                 Input product file: Select the input product file by either typing the product path into the text
-                 filed or by pressing the file selection button to invoke a standard file dialog.
+                Input product file: Select the input product file by pressing the file selection button to invoke
+                a standard file dialog.
             </listitem>
             <listitem>
-                Output product file: Select the output product file by either typing the product path into the text
-                filed or by pressing the file selection button to invoke a standard file dialog.
+                Output product file: Select the output product file by typing the product filename into the text
+                field.
             </listitem>
             <listitem>
-                 Output product format and target directory:
-                 <itemizedlist mark='bullet'>
+                Output product format and target directory:
+                <itemizedlist mark='bullet'>
                     <listitem>
                         'Save as': If this checkbox is selected, the output product will be saved to disk.
                     </listitem>
                     <listitem>
                         Output product format: Select one of the available output product formats.
+                        For MERIS, these are:
+                        <itemizedlist mark='bullet'>
+                            <listitem>
+                                BEAM-DIMAP
+                            </listitem>
+                            <listitem>
+                                NETCDF
+                            </listitem>
+                            <listitem>
+                                N1 (in case the input product is a .N1 file and the output product has been selected
+                                as 'Radiance Product' (see below). In this case, the output product contains the
+                                same bands as the input N1 product. This allows the AE corrected product to be re-used
+                                as input for many other BEAM processors (such as Case 2 Regional) within a processing
+                                chain.
+                            </listitem>
+                        </itemizedlist>
+                        For LANDSAT TM, these are:
+                        <itemizedlist mark='bullet'>
+                            <listitem>
+                                BEAM-DIMAP
+                            </listitem>
+                            <listitem>
+                                NETCDF
+                            </listitem>
+                            <listitem>
+                                GeoTIFF
+                            </listitem>
+                        </itemizedlist>
                     </listitem>
                     <listitem>
                         Select the output product directory by either typing the product path into the text
                         filed or by pressing the file selection button to invoke a standard file dialog.
                     </listitem>
-                 </itemizedlist>
+                </itemizedlist>
             </listitem>
             <listitem>
                 'Open in Visat': If this checkbox is selected, the output product is opened in Visat
@@ -69,238 +92,402 @@
         </itemizedlist>
     </sect1>
 
-    <sect1 id="sum.processor.cloudscreening">
-        <title>'Cloudscreening' Tab Pane</title>
-        The 'Cloudscreening' provides a list to select a cloud screening algorithm which is valid in the
-        current context (instrument, project). In case an invalid algorithm is selected, the user
-        will be notified. - This part is still under development.
+    <sect1 id="sum.processor.general">
+        <title>'General Settings' Tab Pane</title>
+
+        <figure id="figure.processor.general">
+            <title>'General Settings' Tab Pane</title>
+            <graphic scale="60" fileref="figures/generalsettingstab.png"/>
+        </figure>
+
+        This tab pane (<xref linkend="figure.processor.general" xrefstyle="select: label"/>) consists of three
+        subpanels.
+
+        <sect2 id="sum.processor.general.processing">
+            <title>'Processing' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Where to apply the AE algorithm': This drop-down menu provides the following options where the
+                    AE algorithm shall be applied
+                    (see also<xref linkend="figure.processor.general.aeareas" xrefstyle="select: label"/>:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            Coastal regions over the ocean
+                        </listitem>
+                        <listitem>
+                            Everywhere over the ocean
+                        </listitem>
+                        <listitem>
+                            Coastal regions over ocean and land
+                        </listitem>
+                        <listitem>
+                            Everywhere
+                        </listitem>
+                    </itemizedlist>
+                </listitem>
+            </itemizedlist>
+
+            <figure id="figure.processor.general.aeareas">
+                <title>Drop-down menu for the selection of the area to apply the AE correction</title>
+                <graphic scale="60" fileref="figures/aeApplyMenu.png"/>
+            </figure>
+        </sect2>
+
+        <sect2 id="sum.processor.general.aerosoltype">
+            <title>'Aerosol Type Determination' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Reference wavelength (nm)': A text field to enter the reference wavelength for Angstrom and
+                    AOT values below. The default is 550nm..
+                </listitem>
+                <listitem>
+                    'Angstrom': A text field to enter the Angstrom coefficient. The default is -1, the valid
+                    interval is [-2.1, -0.4].
+                </listitem>
+                <listitem>
+                    'AOT': A text field to enter the aerosol optical thickness. The default is 0.2, the valid
+                    interval is [0.0, 1.5].
+                </listitem>
+                <listitem>
+                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
+                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
+                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
+                    (same as over land).
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.general.advanced">
+            <title>'Advanced Options' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
+                    If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)
+                    is performed using OpenCL libraries. Under suitable conditions, this results in a significant
+                    speed-up
+                    of the processor. However, this option is based on a rather new technology, and the implementation
+                    in
+                    ICOL+
+                    is still somewhat experimental. There are the following limitations:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            Suitable GPU hardware must be integrated in the computer and properly be installed.
+                            In general, this procedure is machine- and platform-dependent and is completely separate
+                            from
+                            the
+                            ICOL+ installation.
+                        </listitem>
+                        <listitem>
+                            The current implementation is applicable only for an aerosol type which is unique (constant)
+                            over the computed scene.
+                        </listitem>
+                        <listitem>
+                            The efficiency of the procedure depends on the dimensions of the particular scene and is
+                            parameter-dependent. Currently, a set of constant, hard-coded parameters is being used
+                            which is very likely not perfect for many cases.
+                        </listitem>
+                    </itemizedlist>
+                    A more detailed description of the OpenCL issue is beyond the scope of this manual. A good
+                    literature
+                    starting point is e.g. [xxx].
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
     </sect1>
 
-    <sect1 id="sum.processor.ipf">
-        <title>'IPF Compatible Products' Tab Pane</title>
+    <sect1 id="sum.processor.meris">
+        <title>'MERIS' Tab Pane</title>
 
-        <figure id="figure.processor.ipftab">
-			<title>'IPF Compatible Products' Tab Pane</title>
-			<graphic scale="60" fileref="figures/ipftab.png"/>
-		</figure>
+        <figure id="figure.processor.meris">
+            <title>'MERIS' Tab Pane</title>
+            <graphic scale="60" fileref="figures/meristab.png"/>
+        </figure>
 
-        This tab pane consists of the following components:
-        <itemizedlist mark='bullet'>
-            <listitem>
-                 'TOA Reflectances': If this checkbox is selected, the output product will contain
-                  the TOA Reflectances (derived from radiance-to-reflectance conversion) for each MERIS band.
-            </listitem>
-            <listitem>
-                 'Gas Absorption Corrected Reflectances': If this checkbox is selected, the output product will contain
-                  the gas absorption corrected reflectances for each MERIS band.
-            </listitem>
-            <listitem>
-                 'Land/Water reclassification flags': If this checkbox is selected, the output product will contain
-                  an additional flag band derived from a land/water reclassification.
-            </listitem>
-            <listitem>
-                 'Rayleigh Corrected Reflectances': If this checkbox is selected, the output product will contain
-                  the Rayleigh corrected reflectances for each MERIS band.
-            </listitem>
-            <listitem>
-                 'L2 Cloud Top Pressure and Surface Pressure': If this checkbox is selected, the output product will contain
-                  bands with the L2 Cloud Top Pressure and Surface Pressure,
-                derived as described in <xref linkend="sum.products.l2" xrefstyle="select: label"/>.
-            </listitem>
-            <listitem>
-                'L2 Cloud Detection Flags': If this checkbox is selected, the output product will contain
-                  a cloud classification flag band,
-                derived as described in <xref linkend="sum.products.l2" xrefstyle="select: label"/>.
-            </listitem>
-            <listitem>
-                'P1 Pressure Threshold': Text field to set the threshold for P1 pressure used for cloud detection.
-                Default is 125 hPa.
-            </listitem>
-            <listitem>
-                'PScatt Pressure Threshold': Text field to set the threshold for PScatt pressure used for cloud detection.
-                Default is 700 hPa.
-            </listitem>
-            <listitem>
-                'RhoTOA442 Threshold': Text field to set the threshold for RhoTOA at 442nm used for cloud detection.
-                Default is 0.185.
-            </listitem>
-            <listitem>
-                'User Defined Delta RhoTOA442 Threshold': Text field to set the threshold for the delta on the
-                threshold of RhoTOA at 442nm used for cloud detection. Default is 0.03.
-            </listitem>
-            <listitem>
-                'RhoTOA753 Threshold': Text field to set the threshold for for RhoTOA at 442nm used for cloud detection.
-                Default is 0.1.
-            </listitem>
-            <listitem>
-                'RhoTOA Ratio 753/775 Threshold': Text field to set the threshold for the RhoTOA ratio 753nm/775nm
-                used for cloud detection. Default is 0.15.
-            </listitem>
-            <listitem>
-                'MDSI Threshold': Text field to set the MDSI threshold used for cloud detection.
-            </listitem>
-        </itemizedlist>
-        See [2] for details on the usage of these thresholds in MERIS cloud detection algorithm.
+        This tab pane (<xref linkend="figure.processor.meris" xrefstyle="select: label"/>) consists of five subpanels.
+
+        <sect2 id="sum.processor.meris.outputproduct">
+            <title>'Product Type Selection' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Compute radiance product', 'Compute rhoToa product': With this radio button group (toggle button),
+                    the user can
+                    determine whether he wants to write AE corrected radiances or TOA reflectances to the output
+                    product.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.meris.rhotoa">
+            <title>'RhoToa Product' Subpanel</title>
+             <itemizedlist mark='bullet'>
+                <listitem>
+                    Bands included in the rhoToa product: With the checkboxes in this subpanel, the user can select
+                    additional quantities
+                    (as listed in<xref linkend="sum.products.output.meris" xrefstyle="select: label"/>)
+                    to be written to the output product. Note that the checkboxes are enabled only if
+                    'Compute rhoToa product' was selected above.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.meris.processing">
+            <title>'Processing' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Consider case 2 waters in AE algorithm': With this checkbox the user can select that
+                    case 2 waters are considered in the AE correction algorithm.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.meris.ctp">
+            <title>'Cloud Top Pressure' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Compute by algorithm', 'Use constant value': With this radio button group (toggle button), the user
+                    can
+                    determine whether he wants to use a cloud top pressure computed by the algorithm or to
+                    use a constant value.
+                </listitem>
+                <listitem>
+                    'CTP': A text field to enter the constant cloud top pressure value. The default is 1013 hPa, the
+                    valid
+                    interval is [0.0, 1013.0]. Note that this textfield is enabled only if
+                    'Use constant value' was selected above.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.meris.cloudmask">
+            <title>'Cloud Mask' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    Cloud product file: Select the cloud product file by pressing the file selection button to invoke
+                    a standard file dialog.
+                </listitem>
+                <listitem>
+                    Mask expression: Define a cloud mask expression by either typing in the text field or by
+                    pressing selection button to invoke a standard BEAM expression editor
+                    (<xref linkend="figure.processor.meris.cloudmask.expressioneditor" xrefstyle="select: label"/>).
+                    A detailed description how to use
+                    this component can be found in the BEAM help (search keyword 'Band Maths Expression Editor').
+                    An expression validity check is performed before the ICOL processing is being started.
+                    E.g., if 'xxx' is typed into the text field, an error message as shown in
+                    <xref linkend="figure.processor.meris.cloudmask.expression.invalid" xrefstyle="select: label"/>
+                    will be displayed.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <figure id="figure.processor.meris.cloudmask.expressioneditor">
+            <title>BEAM Band Maths Expression Editor</title>
+            <graphic scale="60" fileref="figures/userCloudExpressionEditor.png"/>
+        </figure>
+
+        <figure id="figure.processor.meris.cloudmask.expression.invalid">
+            <title>Cloud mask expression validation: expression invalid.</title>
+            <graphic scale="60" fileref="figures/cloudexpression_invalid.png"/>
+        </figure>
+
     </sect1>
 
+    <sect1 id="sum.processor.landsat">
+        <title>'LANDSAT TM' Tab Pane</title>
+        <figure id="figure.processor.landsat">
+            <title>'LANDSAT TM' Tab Pane</title>
+            <graphic scale="60" fileref="figures/landsattab.png"/>
+        </figure>
 
-    <sect1 id="sum.processor.pressure">
-        <title>'Pressure Products' Tab Pane</title>
+        This tab pane (<xref linkend="figure.processor.landsat" xrefstyle="select: label"/>) consists of four subpanels.
 
-        <figure id="figure.processor.pressure">
-			<title>'Pressure Products' Tab Pane</title>
-			<graphic scale="60" fileref="figures/pressuretab.png"/>
-		</figure>
+        <sect2 id="sum.processor.landsat.atmparams">
+            <title>'Atmospheric Parameters' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Ozone content (cm atm):' : A text field to enter the ozone content value to be used by the
+                    AE correction algorithm. The default is 0.32 cm atm, the valid interval is [0.01, 1.0].
+                </listitem>
+                <listitem>
+                    'Surface pressure (hPa):' : A text field to enter the surface pressure value to be used by the
+                    AE correction algorithm. The default is 1013.0 hPa, the valid interval is [300.0, 1060.0].
+                </listitem>
+                <listitem>
+                    'Surface TM apparent temperature (K):' : A text field to enter the ozone content value to be used by
+                    the
+                    AE correction algorithm. The default is 300 K, the valid interval is [200.0, 320.0].
+                </listitem>
+            </itemizedlist>
+        </sect2>
 
-        This tab pane consists of the following components:
-        <itemizedlist mark='bullet'>
-            <listitem>
-                 'Barometric Pressure': If this checkbox is selected, the output product will contain
-                  a band with the barometric pressure derived for each pixel.
-            </listitem>
-            <listitem>
-                 'Use GETASSE30 DEM for Barometric Pressure Computation':
-                 If this checkbox is selected, the barometric pressure will be computed using
-                the GETASSE30 DEM instead of the tie point DEM. Note that this option can only
-                be used if the GETASSE30 DEM has been installed in BEAM.
-            </listitem>
-            <listitem>
-                 'Surface Pressure (FUB, O2 Project)': If this checkbox is selected,
-                  the output product will contain
-                  a band with the surface pressure,
-                  derived as described in <xref linkend="sum.products.o2.psurffub" xrefstyle="select: label"/>
-                 for each pixel.
-            </listitem>
-             <listitem>
-                 'Apply Tropical Atmosphere (instead of USS standard) in FUB algorithm':
-                  If this checkbox is selected, a tropical atmosphere (instead of USS standard)
-                  is used within the FUB surface pressure algorithm.
-            </listitem>
-            <listitem>
-                 ''P1' (LISE, O2 project, all surfaces)': If this checkbox is selected,
-                  the output product will contain
-                  a band with the 'P1' pressure,
-                  derived as described in <xref linkend="sum.products.o2.ptoalise" xrefstyle="select: label"/>
-                 for each pixel over each surface.
-            </listitem>
-             <listitem>
-                 'Surface pressure (LISE, O2 project, land)': If this checkbox is selected,
-                  the output product will contain
-                  a band with the surface pressure,
-                  derived as described in <xref linkend="sum.products.o2.psurflise" xrefstyle="select: label"/>
-                 for each pixel over land.
-            </listitem>
-            <listitem>
-                 ''P2' (LISE, O2 project, ocean)': If this checkbox is selected,
-                  the output product will contain
-                  a band with the 'P2' pressure,
-                  derived as described in <xref linkend="sum.products.o2.psurflise" xrefstyle="select: label"/>
-                 for each pixel over ocean.
-            </listitem>
-            <listitem>
-                 ''PScatt' (LISE, O2 project, ocean)': If this checkbox is selected,
-                  the output product will contain
-                  a band with the 'PScatt' pressure,
-                  derived as described in <xref linkend="sum.products.o2.pscattlise" xrefstyle="select: label"/>
-                 for each pixel over ocean.
-            </listitem>
-           
-        </itemizedlist>
+        <sect2 id="sum.processor.landsat.cloudflag">
+            <title>'Cloud Flag Settings' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    With the checkboxes in this subpanel, the user can select subsequent tests
+                    (see also<xref linkend="sum.products.output.landsat" xrefstyle="select: label"/>)
+                    to finally define a cloud flag:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            Brightness test ('passed' if TM3 &lt; BT)
+                        </listitem>
+                        <listitem>
+                            NDVI test ('passed' if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                        </listitem>
+                        <listitem>
+                            NDSI test ('passed' if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
+                        </listitem>
+                        <listitem>
+                            Temperature test ('passed' if TM6 &lt; TM6T_CLOUD)
+                        </listitem>
+                    </itemizedlist>
+                    If all selected tests are passed, the given pixel is considered and flagged as 'cloudy'.
+                </listitem>
+                <listitem>
+                    With the textfields in this subpanel, the user can specify distinct thresholds for the tests above:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            Brightness threshold BT: The default is 0.3, the valid interval is [0.0, 1.0]
+                        </listitem>
+                        <listitem>
+                            NDVI threshold NDVIT_CLOUD: The default is 0.2, the valid interval is [0.0, 1.0]
+                        </listitem>
+                        <listitem>
+                            NDSI threshold NDSIT: The default is 3.0, the valid interval is [0.0, 10.0]
+                        </listitem>
+                        <listitem>
+                            Temperature threshold TM6T_CLOUD: The default is 300.0, the valid interval is [200.0, 320.0]
+                        </listitem>
+                    </itemizedlist>
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.landsat.landflag">
+            <title>'Land Flag Settings' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    With the checkboxes in this subpanel, the user can select subsequent tests
+                    (see also<xref linkend="sum.products.output.landsat" xrefstyle="select: label"/>)
+                    to finally define a land flag:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            NDVI test ('passed' if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                        </listitem>
+                        <listitem>
+                            Temperature test ('passed' if TM6 &gt; TM6T (summer), TM6 &lt; TM6T (winter))
+                        </listitem>
+                    </itemizedlist>
+                    If all selected tests are passed, the given pixel is considered and flagged as 'land'.
+                </listitem>
+                <listitem>
+                    With the textfields in this subpanel, the user can specify distinct thresholds for the tests above:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            NDVI threshold NDVIT_LAND: The default is 0.2, the valid interval is [0.0, 1.0]
+                        </listitem>
+                        <listitem>
+                            Temperature threshold TM6T_LAND: The default is 300.0, the valid interval is [200.0, 320.0]
+                        </listitem>
+                    </itemizedlist>
+                </listitem>
+                <listitem>
+                    'Season': With this radio button group (toggle button), the user can specify if he wants to
+                    apply the 'winter' or the 'summer' criterion in the temperature test above.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
+        <sect2 id="sum.processor.landsat.advanced">
+            <title>'Advanced Options' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
+                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
+                    resolution.
+                </listitem>
+                <listitem>
+                    'Compute 'Geometry' product only': If this checkbox is selected, the output product will be the same
+                    as the input product, but downscaled from the original TM resolution (30m) to the
+                    AE correction grid resolution as selected above.
+                    This option has the advantage that processing time can be saved since this product
+                    (a 'Geometry' product following the ATBD notation) needs to be
+                    computed only once and can then re-used as input for different AE correction runs with varying user
+                    options (such as test thresholds as outlined above).
+                </listitem>
+                <listitem>
+                    'Compute flag settings product only': If this checkbox is selected, only the flag bands
+                    are comoputed and written to the output product.
+                    This option has the advantage that the user can adjust the cloud/land test thresholds
+                    in several runs towards 'optimal' cloud/land masks without computing the AE correction.
+                    This may save computation time significantly since the AE correction needs to be performed
+                    only once in a final run with the 'full' product being written.
+                </listitem>
+            </itemizedlist>
+        </sect2>
+
     </sect1>
-
-    <sect1 id="sum.processor.pressure">
-        <title>'Cloud Products' Tab Pane</title>
-        The 'Cloud Products' provides options to write additional bands with GlobCover products.
-        (<xref linkend="figure.processor.cloudqwg" xrefstyle="select: label"/>):
-
-        <figure id="figure.processor.cloudqwg">
-			<title>'Cloud Products' Tab Pane</title>
-			<graphic scale="60" fileref="figures/cloudtab.png"/>
-		</figure>
-
-        This tab pane consists of the following components:
-        <itemizedlist mark='bullet'>
-            <listitem>
-                 'Blue Band Flags': If this checkbox is selected, the output product will contain
-                  a band with 'Blue Band' flags derived for each pixel.
-            </listitem>
-            <listitem>
-                 'Cloud Probability': If this checkbox is selected, the output product will contain
-                  a band with cloud probability derived for each pixel.
-            </listitem>
-            <listitem>
-                 'Combined Cloud Flags': If this checkbox is selected, the output product will contain
-                  a band with 'Combined Cloud' flags derived for each pixel.
-            </listitem>
-        </itemizedlist>
-        See section <xref linkend="sum.products.globcover" xrefstyle="select: label"/> for details on
-        these GlobCover products.
-    </sect1>
-
-    <sect1 id="sum.processor.globalbedo">
-        <title>'GlobAlbedo' Tab Pane</title>
-        The 'GlobAlbedo' tab pane provides options to write additional bands produced with the
-        GlobAlbedo cloud screening algorithm. This part is still under development.
-    </sect1>
-    
 
     <sect1 id="sum.processor.control">
         <title>Control Buttons</title>
 
-        From all IDEPIX tab panes, the following control buttons can be accessed:
+        <figure id="figure.processor.controlbuttons">
+            <title>ICOL+ control buttons</title>
+            <graphic scale="60" fileref="figures/controlbuttons.png"/>
+        </figure>
+
+        From all ICOL+ tab panes, the following control buttons can be accessed:
         <itemizedlist mark='bullet'>
             <listitem>
-                 'Run': If this button is clicked, the processor will start the computations.
+                'Run': If this button is clicked, the processor will start the computations.
             </listitem>
             <listitem>
-                 'Close': If this button is clicked, the IDEPIX dialog is closed.
+                'Close': If this button is clicked, the ICOL+ dialog is closed.
             </listitem>
             <listitem>
-                 'Help': If this button is clicked, this manual is displayed as online help.
+                'Help': If this button is clicked, this manual is displayed as BEAM help.
             </listitem>
         </itemizedlist>
-
-        <figure id="figure.processor.controlbuttons">
-			<title>IDEPIX control buttons</title>
-			<graphic scale="60" fileref="figures/controlbuttons.png"/>
-		</figure>
-
     </sect1>
 
     <sect1 id="sum.processor.gpt">
         <title>Processing from command line</title>
 
-        Since the IDEPIX processor makes use of the BEAM graph processing framework, it can be
+        Since the ICOL+ processor makes use of the BEAM graph processing framework, it can be
         used also as a command line tool outside BEAM-VISAT. The graph processing is invoked
         by the command
         <itemizedlist mark='bullet'>
             <listitem>
-                 ${BEAM-INSTALL-DIR}/bin/gpt
+                ${BEAM-INSTALL-DIR}/bin/gpt
             </listitem>
         </itemizedlist>
 
-        To obtain general help on the praph processing, use the command
+        To obtain general help on the graph processing, use the command
         <itemizedlist mark='bullet'>
             <listitem>
-                 ${BEAM-INSTALL-DIR}/bin/gpt -h
+                ${BEAM-INSTALL-DIR}/bin/gpt -h
             </listitem>
         </itemizedlist>
 
-        Specific help on the IDEPIX processor, can be obtained with
+        Specific help on the ICOL+ processor (MERIS or LANDSAT TM), can be obtained with
         <itemizedlist mark='bullet'>
             <listitem>
-                 ${BEAM-INSTALL-DIR}/bin/gpt -h idepix.ComputeChain
+                ${BEAM-INSTALL-DIR}/bin/gpt -h icol.Meris
+            </listitem>
+            <listitem>
+                ${BEAM-INSTALL-DIR}/bin/gpt -h icol.ThematicMapper
             </listitem>
         </itemizedlist>
         In this case, information on the usage and a list of all available parameters are given.
-        <!--(see <xref linkend="figure.processor.gpt" xrefstyle="select: label"/>).-->
+        (see <xref linkend="figure.processor.gpt" xrefstyle="select: label"/>).
 
 
-        <!--<figure id="figure.processor.gpt">-->
-			<!--<title>IDEPIX command line processing</title>-->
-			<!--<graphic scale="40" fileref="figures/mepix_gpt.png"/>-->
-		<!--</figure>-->
+        <figure id="figure.processor.gpt">
+        <title>ICOL+ command line processing</title>
+        <graphic scale="40" fileref="figures/icol_gpt.png"/>
+        </figure>
 
     </sect1>
+
 
 </chapter>

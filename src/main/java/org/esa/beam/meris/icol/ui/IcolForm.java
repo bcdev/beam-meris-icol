@@ -76,7 +76,7 @@ class IcolForm extends JTabbedPane {
     private JRadioButton reflectanceProductTypeButton;
     private ButtonGroup productTypeGroup;
     private ButtonGroup ctpGroup;
-    private JCheckBox nestedConvolutionCheckBox;
+//    private JCheckBox nestedConvolutionCheckBox;
     private JCheckBox openclConvolutionCheckBox;
     private JComboBox aeAreaComboBox;
     private int landsatResolutionValue;
@@ -185,7 +185,7 @@ class IcolForm extends JTabbedPane {
 
         bc.bind("aeArea", aeAreaComboBox);
 
-        bc.bind("reshapedConvolution", nestedConvolutionCheckBox);
+//        bc.bind("reshapedConvolution", nestedConvolutionCheckBox);
         bc.bind("openclConvolution", openclConvolutionCheckBox);
 
         bc.bind("productType", productTypeGroup);
@@ -256,7 +256,7 @@ class IcolForm extends JTabbedPane {
         addTab("I/O Parameters", ioTab);
         addTab("General Settings", processingParamTab);
         addTab("MERIS", merisParamTab);
-        addTab("Landsat TM", landsatParamTab);
+        addTab("LANDSAT TM", landsatParamTab);
 
         JPanel inputPanel = sourceProductSelector.createDefaultPanel();
         ioTab.add(inputPanel);
@@ -319,7 +319,7 @@ class IcolForm extends JTabbedPane {
         JPanel panel = new JPanel(layout);
         panel.setBorder(BorderFactory.createTitledBorder("RhoToa Product"));
 
-        panel.add(new JLabel("Bands included in the RhoToa product:"));
+        panel.add(new JLabel("Bands included in the rhoToa product:"));
         panel.add(rhoToa);
         panel.add(rhoToaRayleigh);
         panel.add(rhoToaAerosol);
@@ -565,9 +565,10 @@ class IcolForm extends JTabbedPane {
         openclConvolutionCheckBox.setSelected(false);
         panel.add(openclConvolutionCheckBox);
 
-        nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
-        nestedConvolutionCheckBox.setSelected(true);
-        panel.add(nestedConvolutionCheckBox);
+        // user option deactivated for final version, OD 2010/11/09:
+//        nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
+//        nestedConvolutionCheckBox.setSelected(true);
+//        panel.add(nestedConvolutionCheckBox);
 
         return panel;
     }
@@ -858,10 +859,10 @@ class IcolForm extends JTabbedPane {
         JPanel panel = new JPanel(layout);
         panel.setBorder(BorderFactory.createTitledBorder("Product Type Selection"));
 
-        reflectanceProductTypeButton = new JRadioButton("Compute Radiance Product");
+        reflectanceProductTypeButton = new JRadioButton("Compute radiance product");
         reflectanceProductTypeButton.setSelected(true);
         panel.add(reflectanceProductTypeButton);
-        rhoToaProductTypeButton = new JRadioButton("Compute RhoToa Product");
+        rhoToaProductTypeButton = new JRadioButton("Compute rhoToa product");
         rhoToaProductTypeButton.setSelected(false);
         panel.add(rhoToaProductTypeButton);
 

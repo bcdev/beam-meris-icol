@@ -68,6 +68,6 @@
             retrieve-class-name="section.head.marker"
             retrieve-position="first-including-carryover"
             retrieve-boundary="page-sequence"/>
-
+			
 </xsl:stylesheet>
  

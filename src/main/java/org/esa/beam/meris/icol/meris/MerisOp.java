@@ -56,16 +56,16 @@ import java.util.Map;
  * @version $Revision: 8083 $ $Date: 2010-01-25 19:08:29 +0100 (Mo, 25 Jan 2010) $
  */
 @SuppressWarnings({"FieldCanBeLocal"})
-@OperatorMetadata(alias = "IcolMeris",
+@OperatorMetadata(alias = "icol.Meris",
                   version = "1.1",
                   authors = "Marco Zuehlke, Olaf Danne",
                   copyright = "(c) 2007-2009 by Brockmann Consult",
-                  description = "Performs a correction of the adjacency effect, computes radiances and writes a Envisat N1 file.")
+                  description = "Performs a correction of the adjacency effect for MERIS L1b data.")
 public class MerisOp extends Operator {
 
-    @SourceProduct(description = "The source product.")
+    @SourceProduct(description = "The MERIS L1b source product.")
     Product sourceProduct;
-    @SourceProduct(optional = true, description = "The cloud product.")
+    @SourceProduct(optional = true, description = "The cloud mask product.")
     Product cloudMaskProduct;
 
     @TargetProduct(description = "The target product.")
@@ -76,23 +76,23 @@ public class MerisOp extends Operator {
     private String cloudMaskExpression;
 
     // CTP
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', a user defined cloud top pressure value will be used by AE correction algorithm.")
     private boolean useUserCtp = false;
-    @Parameter(interval = "[0.0, 1013.0]", defaultValue = "1013.0")
+    @Parameter(interval = "[0.0, 1013.0]", defaultValue = "1013.0", description = "User defined cloud top pressure value to be used by AE correction algorithm.")
     private double userCtp = 1013.0;
 
     // MerisAeAerosolOp
-    @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
+    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
     private boolean icolAerosolForWater = false;
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
     private boolean icolAerosolCase2 = false;
-    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0", description = "The Aerosol optical thickness reference wavelength.")
     private double userAerosolReferenceWavelength;
-    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
+    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1", description = "The Angstrom coefficient.")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength.")
     private double userAot;
 
     // MerisReflectanceCorrectionOp
@@ -110,15 +110,16 @@ public class MerisOp extends Operator {
     private boolean exportAlphaAot = true;
 
     // general
-    @Parameter(defaultValue = "0", valueSet = {"0", "1"})
+    @Parameter(defaultValue = "0", valueSet = {"0", "1"}, description = "Product type: Radiance product = 0; Rho TOA product = 1.")
     private int productType = 0;
-    @Parameter(defaultValue = "true")
-    private boolean reshapedConvolution = true;
-    @Parameter(defaultValue = "false")
+//    @Parameter(defaultValue = "true")
+    private boolean reshapedConvolution = true;  // currently no user option
+    @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
     private boolean openclConvolution = false;
-    @Parameter(defaultValue = "64")
+    @Parameter(defaultValue = "64", description = "The tile size used.")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+        description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
 
     // N1PatcherOp

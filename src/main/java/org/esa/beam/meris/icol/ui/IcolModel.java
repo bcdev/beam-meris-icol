@@ -48,7 +48,7 @@ public class IcolModel {
     private double userAot = 0.2;
 
     // General
-    @Parameter(defaultValue = "true")
+//    @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;
     @Parameter(defaultValue = "false")
     private boolean openclConvolution = false;
@@ -213,7 +213,7 @@ public class IcolModel {
 
     private void configGeneral(HashMap<String, Object> params) {
         params.put("tileSize", tileSize);
-        params.put("reshapedConvolution", reshapedConvolution);
+//        params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);
         params.put("aeArea", aeArea);
     }

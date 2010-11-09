@@ -30,11 +30,11 @@ import java.util.Map;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "ThematicMapper",
+@OperatorMetadata(alias = "icol.ThematicMapper",
         version = "1.1",
         authors = "Marco Zuehlke, Olaf Danne",
         copyright = "(c) 2007-2009 by Brockmann Consult",
-        description = "Performs a correction of the adjacency effect, computes radiances and writes an output file.")
+        description = "Performs a correction of the adjacency effect for LANDSAT TM L1b data.")
 public class TmOp extends TmBasisOp {
 
     // todo: we need the ORIGINAL source product (mandatory) and the geometry product (optional)
@@ -44,31 +44,27 @@ public class TmOp extends TmBasisOp {
     @TargetProduct(description = "The target product.")
     Product targetProduct;
 
-    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0", description = "The Aerosol optical thickness reference wavelength.")
     private double userAerosolReferenceWavelength;
-    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
+    @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1", description = "The Angstrom coefficient.")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at 550nm")
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength.")
     private double userAot;
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
     private boolean icolAerosolCase2 = false;
-    @Parameter(defaultValue = "true")
+    @Parameter(defaultValue = "true", description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
     private boolean icolAerosolForWater = true;
-    @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25")
+    @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25", description = "The surface pressure to be used by AE correction algorithm.")
     private double landsatUserPSurf;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0", description = "The TM band 6 temperature to be used by AE correction algorithm.")
     private double landsatUserTm60;
-    @Parameter(interval = "[0.01, 1.0]", defaultValue = "0.32")
+    @Parameter(interval = "[0.01, 1.0]", defaultValue = "0.32", description = "The ozone content to be used by AE correction algorithm.")
     private double landsatUserOzoneContent;
-    @Parameter(defaultValue="300", valueSet= {"300","1200"})
+    @Parameter(defaultValue="300", valueSet= {"300","1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
-//    @Parameter(defaultValue="06-AUG-2007 09:30:00")       // test!
-//    private String landsatStartTime;
-//    @Parameter(defaultValue="06-AUG-2007 09:40:00")
-//    private String landsatStopTime;
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', only the cloud and land flag bands will be computed.")
     private boolean landsatComputeFlagSettingsOnly = false;
-    @Parameter(defaultValue = "false")
+    @Parameter(defaultValue = "false", description = "If set to 'true', the source bands will only be downscaled to AE correction grid resolution.")
     private boolean landsatComputeToTargetGridOnly = false;
 //    @Parameter(defaultValue = "false")
 //    private boolean upscaleToTMFR = false;
@@ -81,40 +77,41 @@ public class TmOp extends TmBasisOp {
     private boolean landsatCloudFlagApplyNdsiFilter = true;
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3", description = "The cloud brightness threshold.")
     private double cloudBrightnessThreshold;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2", description = "The cloud NDVI threshold.")
     private double cloudNdviThreshold;
-    @Parameter(interval = "[0.0, 10.0]", defaultValue="3.0")
+    @Parameter(interval = "[0.0, 10.0]", defaultValue="3.0", description = "The cloud NDSI threshold.")
     private double cloudNdsiThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0", description = "The cloud TM band 6 temperature threshold.")
     private double cloudTM6Threshold;
 
     @Parameter(defaultValue="true")
     private boolean landsatLandFlagApplyNdviFilter = true;
     @Parameter(defaultValue="true")
     private boolean landsatLandFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2", description = "The land NDVIthreshold.")
     private double landNdviThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0")  // TBD!!
+    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0", description = "The land TM band 6 temperature threshold.")
     private double landTM6Threshold;
     @Parameter(defaultValue = "", valueSet = {TmConstants.LAND_FLAGS_SUMMER,
-            TmConstants.LAND_FLAGS_WINTER})
+            TmConstants.LAND_FLAGS_WINTER}, description = "The summer/winter option for TM band 6 temperature test.")
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 
     // general
 //    @Parameter(defaultValue="0", valueSet= {"0","1"})
 //    private int productType = 0;
     private int productType = 0;
-    @Parameter(defaultValue="true")
-    private boolean reshapedConvolution = true;
-    @Parameter(defaultValue="false")
+//    @Parameter(defaultValue="true")
+    private boolean reshapedConvolution = true;     // currently no user option
+    @Parameter(defaultValue="false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
     private boolean openclConvolution = false;      // currently not used in TM
     @Parameter(defaultValue="64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+        description = "The area where the AE correction will be applied.")
     private AeArea aeArea = AeArea.COASTAL_OCEAN;
-    @Parameter(defaultValue = "false", description = "export the aerosol and fresnel correction term as bands")
+    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
 
     // LandsatReflectanceConversionOp

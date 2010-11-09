@@ -6,5 +6,11 @@
 <map version="2.0">
 
     <mapID target="icolProcessor" url="icol/IcolProcessor.html"/>
+    <mapID target="icol" url="icol/Icol.html"/>
+    <mapID target="icolIndex" url="icol/index.html"/>
+    <mapID target="icolIntro" url="icol/ch01-introduction.html"/>
+    <mapID target="icolInstall" url="icol/ch02-installation.html"/>
+    <mapID target="icolProducts" url="icol/ch03-products.html"/>
+    <mapID target="icolGui" url="icol/ch04-processor.html"/>
 
 </map>

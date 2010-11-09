@@ -5,6 +5,12 @@
 <toc version="2.0" categoryclosedimage="folder" categoryopenimage="folder" topicimage="doc">
 
     <tocitem text="Data Processors">
-        <tocitem text="Icol Processor" target="icolProcessor"/>
+        <tocitem text="Icol Processor" target="icolProcessor">
+            <tocitem text="About / TOC" target="icolIndex"/>
+            <tocitem text="Introduction" target="icolIntro"/>
+            <tocitem text="Software Installation" target="icolInstall"/>
+            <tocitem text="Products" target="icolProducts"/>
+            <tocitem text="User Interface" target="icolGui"/>
+        </tocitem>
     </tocitem>
 </toc>

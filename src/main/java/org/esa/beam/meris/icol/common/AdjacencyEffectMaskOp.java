@@ -186,9 +186,9 @@ public class AdjacencyEffectMaskOp extends Operator {
                                                   subPm1(pm));
             }
 
-            Area costalArea = computeCoastalArea(pm, sourceRect, isLand, isCoastline);
+            Area coastalArea = computeCoastalArea(pm, sourceRect, isLand, isCoastline);
             boolean correctOverLand = aeArea.correctOverLand();
-            boolean correctInCoastalAreas = aeArea.correctCostalArea();
+            boolean correctInCoastalAreas = aeArea.correctCoastalArea();
             // todo: over land, apply AE algorithm everywhere except for cloud pixels.
             // even if land pixel is far away from water
             for (int y = relevantTragetRect.y; y < relevantTragetRect.y + relevantTragetRect.height; y++) {
@@ -206,14 +206,14 @@ public class AdjacencyEffectMaskOp extends Operator {
                         // if 'correctOverLand',  compute for both ocean and land ...
                         if (correctOverLand) {
                             // if 'correctInCoastalAreas',  check if pixel is in coastal area...
-                            if (correctInCoastalAreas && !costalArea.contains(x, y)) {
+                            if (correctInCoastalAreas && !coastalArea.contains(x, y)) {
                                 aeMask.setSample(x, y, 0);
                             } else {
                                 aeMask.setSample(x, y, 1);
                             }
                         } else {
                              if (isLand.getSampleBoolean(x, y) ||
-                                (correctInCoastalAreas && !costalArea.contains(x, y))) {
+                                (correctInCoastalAreas && !coastalArea.contains(x, y))) {
                                 aeMask.setSample(x, y, 0);
                             } else {
                                 aeMask.setSample(x, y, 1);
@@ -277,18 +277,18 @@ public class AdjacencyEffectMaskOp extends Operator {
 
     private Area computeCoastalArea(ProgressMonitor pm, Rectangle sourceRect, Tile land, Tile coastline) {
         Rectangle box = new Rectangle();
-        Area costalArea = new Area();
+        Area coastalArea = new Area();
         for (int y = sourceRect.y; y < sourceRect.y + sourceRect.height; y++) {
             for (int x = sourceRect.x; x < sourceRect.x + sourceRect.width; x++) {
                 if (isCoastline(land, coastline, x, y)) {
                     box.setBounds(x - aeWidth, y - aeWidth, 2 * aeWidth, 2 * aeWidth);
                     Area area2 = new Area(box);
-                    costalArea.add(area2);
+                    coastalArea.add(area2);
                 }
             }
             pm.worked(1);
         }
-        return costalArea;
+        return coastalArea;
     }
 
     private boolean isCoastline(Tile isLandTile, Tile coastline, int x, int y) {

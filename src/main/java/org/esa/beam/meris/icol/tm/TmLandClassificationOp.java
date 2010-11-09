@@ -140,7 +140,10 @@ public class TmLandClassificationOp extends TmBasisOp {
 
                     boolean isLand = isLand(x, y, targetTile);
                     targetTile.setSample(x, y, F_LANDCONS, isLand);
-                    targetTile.setSample(x, y, F_LOINLD, !isLand);
+
+                    // todo: define and implement inland water criterion if needed
+                    boolean isInlandWater = false;
+                    targetTile.setSample(x, y, F_LOINLD, isInlandWater);
                 }
                 pm.worked(1);
             }

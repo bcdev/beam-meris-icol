@@ -6,12 +6,8 @@
 %% Just use the original package and pass the options
 \RequirePackageWithOptions{docbook}
 
-
-\lhead[]{}
-\chead[]{}
-\rhead[]{}
 \lfoot[]{}
-\cfoot[]{}
+\cfoot[]{\DBKcopyright{}}
 \rfoot[]{}
 
 % Title page
@@ -19,15 +15,14 @@
 \def\DBKcover{
 \ifthenelse{\equal{\DBKedition}{}}{\def\edhead{}}{\def\edhead{Ed. \DBKedition}}
 
- % interligne double
- \setlength{\oldbaselineskip}{\baselineskip}
- \setlength{\baselineskip}{2\oldbaselineskip}
- \textsf{
+% interligne double
+\setlength{\oldbaselineskip}{\baselineskip}
+\setlength{\baselineskip}{2\oldbaselineskip}
+\textsf{
 \vfill
 \vspace{2.5cm}
 \begin{center}
-  \includegraphics{figures/BClogo}\\
-  \vspace{1cm}
+%  \includegraphics{orbiter-concept}\\
   \huge{\textbf{\DBKtitle}}\\ %
   \ifthenelse{\equal{\DBKsubtitle}{}}{}{
   % \underline{\ \ \ \ \ \ \ \ \ \ \ }\\ %
@@ -40,31 +35,16 @@
 \hspace{1cm}
 \vspace{1cm}
 \begin{center}
-\large
-Version \DBKreference{} \\
+\large 
+\DBKreference{} \\
 \vspace{0.5cm}
 \DBKpubdate{}
 \end{center}
 }
 
 % Format for the other pages
-
-\def\DBKcheadbody{%
-\begin{tabular}{
->{\raggedright}p{5.6cm} >{\centering}p{5.6cm} >{\raggedleft}p{5.6cm}} %
-\multirow{3}{*} {\parbox[c]{1em}{\includegraphics[height=1.8cm]{figures/BClogo}}} & &  \tabularnewline %
- & & {\DBKtitle} \tabularnewline %
-& & Version {\DBKreference{}} \tabularnewline %
-& & {\DBKpubdate{}}\tabularnewline %
-& & \tabularnewline %
-\end{tabular}%
-}
-
-
 \newpage
 \setlength{\baselineskip}{\oldbaselineskip}
-\chead[]{\DBKcheadbody}
+\chead[]{\DBKcheadfront}
 \lfoot[]{}
-\cfoot[]{\DBKcopyright{}}
-\rfoot[]{\textsf{\thepage}}
 }
