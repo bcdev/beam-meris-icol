@@ -28,8 +28,9 @@
 
         <para>
             In order to build up a reliable tool for the correction of the adjacency effect, the ICOL (= Improve
-            Contrast over Ocean and Land) prototype processor was developed as BEAM plugin. Although this prototype (ICOL1.0) has
-            proven  to retrieve results as expected from theory, it has some well-known limitations:
+            Contrast over Ocean and Land) prototype processor was developed as BEAM plugin. Although this prototype
+            (ICOL1.0) has
+            proven to retrieve results as expected from theory, it has some well-known limitations:
             <itemizedlist mark='bullet'>
                 <listitem>
                     Restricted to coastal areas over water (although the AE is known to exist as well over land)
@@ -48,13 +49,20 @@
                 </listitem>
             </itemizedlist>
             To overcome these limitations and to be able to apply the AE correction within operational processing
-            chains, an improved BEAM plugin (ICOL+) has been developed. With this processor, the AE correction is applicable
+            chains, an improved BEAM plugin (ICOL+) has been developed. With this processor, the AE correction is
+            applicable
             anywhere over ocean as well as over land and considers case 2 waters, clouds and sea ice. An improved
             convolution scheme (the core mathematical part of the AE corection) has been integrated to significantly
             speed up the processor. Moreover, it is possible with ICOL+ to apply the AE correction on Landsat TM data.
             This feature mainly serves as a demonstration for the general portability of the AE correction scheme
             to other instruments within future projects (e.g. related to the Sentinel missions). However, the full
-            correction scheme has been implemented as for MERIS and shown to provide results as expected.
+            correction scheme has been implemented as for MERIS and has shown to provide results as expected ([RD-2]).
+        </para>
+
+        <para>
+            This manual basically describes and illustrates how to use the application. For a detailed description of
+            the underlying algorithms see [RD-1], the technical realisation of the software package is outlined in
+            [RD-3].
         </para>
 
     </sect1>
@@ -80,14 +88,27 @@
     </sect1>
 
     <sect1 id="sum.introduction.acronymsAndNomenclature">
-        <title>Acronyms and Nomenclature</title>
-        <sect2 id="sum.introduction.acronyms">
-            <title>Acronyms</title>
+        <title>Acronyms</title>
 
             <para>
                 <itemizedlist mark='bullet'>
                     <listitem>
+                        AE - Adjacency Effect
+                    </listitem>
+                    <listitem>
+                        AOT - Aerosol Optical Thickness
+                    </listitem>
+                    <listitem>
+                        ATBD - Algorithm Theoretical Basis Document
+                    </listitem>
+                    <listitem>
                         BC - Brockmann Consult
+                    </listitem>
+                    <listitem>
+                        CTP - Cloud Top Pressure
+                    </listitem>
+                    <listitem>
+                        DEM - Digital Elevation Model
                     </listitem>
                     <listitem>
                         ESA - European Space Agency
@@ -96,17 +117,65 @@
                         ESTEC - European Space Technology and Research Centre
                     </listitem>
                     <listitem>
+                        FR - Full Resolution
+                    </listitem>
+                    <listitem>
+                        GPU - Graphics Processing Unit
+                    </listitem>
+                    <listitem>
+                        ICOL - Improved Contrast over Ocean and Land
+                    </listitem>
+                    <listitem>
+                        MERIS - Medium Resolution Imaging Spectrometer
+                    </listitem>
+                    <listitem>
+                        NDSI - Normalized Difference Snow Index
+                    </listitem>
+                    <listitem>
+                        NDVI - Normalized Difference Vegetation Index
+                    </listitem>
+                    <listitem>
+                        QWG - Quality Working Group
+                    </listitem>
+                    <listitem>
+                        RR - Reduced Resolution
+                    </listitem>
+                    <listitem>
+                        SoW - Statement of Work
+                    </listitem>
+                    <listitem>
                         SUM - Software User Manual
                     </listitem>
                     <listitem>
-                        TODO: continue
+                        TM - Thematic Mapper
+                    </listitem>
+                    <listitem>
+                        TOA - Top of Atmosphere
+                    </listitem>
+                    <listitem>
+                        TS - Technical Specification
+                    </listitem>
+                    <listitem>
+                        VVR - Verification and Validation Report
                     </listitem>
                 </itemizedlist>
             </para>
-        </sect2>
-        <sect2 id="sum.introduction.nomenclature">
-            <title>Nomenclature</title>
-        </sect2>
+    </sect1>
+
+    <sect1 id="sum.introduction.applicableDocuments">
+        <title>Applicable Documents</title>
+
+        <para>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    [AD-1] Development of a multi-mission adjacency effect correction for an operational implementation.
+                    ESA Statement of Work GMES-CLVL-EOPG-SW-08-0003, Issue 1.4.
+                </listitem>
+                <listitem>
+                    [AD-2] MERIS Level 2 Detailed Processing Model, PO-TN-MEL-GS-0006, 15 July 2009, Issue i8r0.
+                </listitem>
+            </itemizedlist>
+        </para>
     </sect1>
 
     <sect1 id="sum.introduction.referenceDocuments">
@@ -115,10 +184,16 @@
         <para>
             <itemizedlist mark='bullet'>
                 <listitem>
-                    [1] SoW
+                    [RD-1] ICOL+ ATBD. Version 1.0, ICOL+ project deliverable D4, 18 November 2010.
                 </listitem>
                 <listitem>
-                    [2] ...
+                    [RD-2] ICOL+ VVR. Version 1.0, ICOL+ project deliverable D8, 18 November 2010.
+                </listitem>
+                <listitem>
+                    [RD-3] ICOL+ TS. Version 1.0, ICOL+ project deliverable D10, 18 November 2010.
+                </listitem>
+                <listitem>
+                    [RD-4]  Khronos Group OpenCL online documentation: http://www.khronos.org/opencl/
                 </listitem>
             </itemizedlist>
         </para>

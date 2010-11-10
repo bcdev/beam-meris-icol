@@ -37,7 +37,7 @@
 
         <figure id="figure.installation.beammodules">
             <title>Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows XP)</title>
-            <graphic scale="60" fileref="figures/beammodules.png"/>
+            <graphic scale="40" fileref="figures/beammodules.png"/>
         </figure>
 
     </sect1>

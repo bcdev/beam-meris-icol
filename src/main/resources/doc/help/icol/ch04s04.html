@@ -1,0 +1,77 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>4.4. 'LANDSAT TM' Tab Pane</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="ch04.html" title="Chapter 4. ICOL+ User Interface"><link rel="prev" href="ch04s03.html" title="4.3. 'MERIS' Tab Pane"><link rel="next" href="ch04s05.html" title="4.5. Control Buttons"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.processor.landsat"></a>4.4. 'LANDSAT TM' Tab Pane</h2></div></div></div><div class="figure"><a name="figure.processor.landsat"></a><div class="figure-contents"><div><img src="figures/landsattab.png" alt="'LANDSAT TM' Tab Pane"></div></div><p class="title"><b>Figure 4.7. 'LANDSAT TM' Tab Pane</b></p></div><br class="figure-break">
+
+        This tab pane (<a class="xref" href="ch04s04.html#figure.processor.landsat" title="Figure 4.7. 'LANDSAT TM' Tab Pane">Figure 4.7</a>) consists of four subpanels.
+
+        <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.atmparams"></a>4.4.1. 'Atmospheric Parameters' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Ozone content (cm atm):' : A text field to enter the ozone content value to be used by the
+                    AE correction algorithm. The default is 0.32 cm atm, the valid interval is [0.01, 1.0].
+                </li><li style="list-style-type: disc">
+                    'Surface pressure (hPa):' : A text field to enter the surface pressure value to be used by the
+                    AE correction algorithm. The default is 1013.0 hPa, the valid interval is [300.0, 1060.0].
+                </li><li style="list-style-type: disc">
+                    'Surface TM apparent temperature (K):' : A text field to enter the ozone content value to be used by
+                    the
+                    AE correction algorithm. The default is 300 K, the valid interval is [200.0, 320.0].
+                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.cloudflag"></a>4.4.2. 'Cloud Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    With the checkboxes in this subpanel, the user can select subsequent tests
+                    (see also<a class="xref" href="ch03s02.html#sum.products.output.landsat" title="3.2.2. LANDSAT">Section 3.2.2</a>)
+                    to finally define a cloud flag:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            Brightness test ('passed' if TM3 &lt; BT)
+                        </li><li style="list-style-type: disc">
+                            NDVI test ('passed' if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                        </li><li style="list-style-type: disc">
+                            NDSI test ('passed' if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
+                        </li><li style="list-style-type: disc">
+                            Temperature test ('passed' if TM6 &lt; TM6T_CLOUD)
+                        </li></ul></div>
+                    If all selected tests are passed, the given pixel is considered and flagged as 'cloudy'.
+                </li><li style="list-style-type: disc">
+                    With the textfields in this subpanel, the user can specify distinct thresholds for the tests above:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            Brightness threshold BT: The default is 0.3, the valid interval is [0.0, 1.0]
+                        </li><li style="list-style-type: disc">
+                            NDVI threshold NDVIT_CLOUD: The default is 0.2, the valid interval is [0.0, 1.0]
+                        </li><li style="list-style-type: disc">
+                            NDSI threshold NDSIT: The default is 3.0, the valid interval is [0.0, 10.0]
+                        </li><li style="list-style-type: disc">
+                            Temperature threshold TM6T_CLOUD: The default is 300.0, the valid interval is [200.0, 320.0]
+                        </li></ul></div></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.landflag"></a>4.4.3. 'Land Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    With the checkboxes in this subpanel, the user can select subsequent tests
+                    (see also<a class="xref" href="ch03s02.html#sum.products.output.landsat" title="3.2.2. LANDSAT">Section 3.2.2</a>)
+                    to finally define a land flag:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            NDVI test ('passed' if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                        </li><li style="list-style-type: disc">
+                            Temperature test ('passed' if TM6 &gt; TM6T (summer), TM6 &lt; TM6T (winter))
+                        </li></ul></div>
+                    If all selected tests are passed, the given pixel is considered and flagged as 'land'.
+                </li><li style="list-style-type: disc">
+                    With the textfields in this subpanel, the user can specify distinct thresholds for the tests above:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            NDVI threshold NDVIT_LAND: The default is 0.2, the valid interval is [0.0, 1.0]
+                        </li><li style="list-style-type: disc">
+                            Temperature threshold TM6T_LAND: The default is 300.0, the valid interval is [200.0, 320.0]
+                        </li></ul></div></li><li style="list-style-type: disc">
+                    'Season': With this radio button group (toggle button), the user can specify if he wants to
+                    apply the 'winter' or the 'summer' criterion in the temperature test above.
+                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.advanced"></a>4.4.4. 'Advanced Options' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
+                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
+                    resolution.
+                </li><li style="list-style-type: disc">
+                    'Compute 'Geometry' product only': If this checkbox is selected, the output product will be the same
+                    as the input product, but downscaled from the original TM resolution (30m) to the
+                    AE correction grid resolution as selected above.
+                    This option has the advantage that processing time can be saved since this product
+                    (a 'Geometry' product following the ATBD notation) needs to be
+                    computed only once and can then re-used as input for different AE correction runs with varying user
+                    options (such as test thresholds as outlined above).
+                </li><li style="list-style-type: disc">
+                    'Compute flag settings product only': If this checkbox is selected, only the flag bands
+                    are comoputed and written to the output product.
+                    This option has the advantage that the user can adjust the cloud/land test thresholds
+                    in several runs towards 'optimal' cloud/land masks without computing the AE correction.
+                    This may save computation time significantly since the AE correction needs to be performed
+                    only once in a final run with the 'full' product being written.
+                </li></ul></div></div></div></body></html>

@@ -13,7 +13,7 @@
 
     <bookinfo>
         <issuenum revision="1">1.0</issuenum>
-        <date>05 October 2009</date>
+        <date>10 November 2010</date>
 
         <pubsnumber>1.0</pubsnumber>
 
@@ -33,10 +33,10 @@
             <email>olaf.danne@brockmann-consult.de</email>
         </author>
 
-        <pubdate>05 October 2009</pubdate>
+        <pubdate>10 November 2010</pubdate>
 
         <copyright>
-            <year>2009</year>
+            <year>2010</year>
             <holder>Brockmann Consult GmbH</holder>
         </copyright>
 
@@ -46,7 +46,7 @@
 				All other trademarks are acknowledged as the property of their respective owners.
             </para>
             <para>
-                Copyright 2007 - 2009 by the European Space Agency. All Rights Reserved. This document is subject to
+                Copyright 2010 by the European Space Agency. All Rights Reserved. This document is subject to
                 copyright protection. No portion may be copied without prior written consent from the European Space
                 Agency.
             </para>
@@ -55,7 +55,7 @@
         <revhistory>
 			<revision>
                 <revnumber>1.0</revnumber>
-                <date>05/10/09</date>
+                <date>10/11/10</date>
                 <authorinitials>O. Danne</authorinitials>
                 <revdescription>
                     <para>

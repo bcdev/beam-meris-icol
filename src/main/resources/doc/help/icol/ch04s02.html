@@ -1,0 +1,58 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>4.2. 'General Settings' Tab Pane</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="ch04.html" title="Chapter 4. ICOL+ User Interface"><link rel="prev" href="ch04.html" title="Chapter 4. ICOL+ User Interface"><link rel="next" href="ch04s03.html" title="4.3. 'MERIS' Tab Pane"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.processor.general"></a>4.2. 'General Settings' Tab Pane</h2></div></div></div><div class="figure"><a name="figure.processor.general"></a><div class="figure-contents"><div><img src="figures/generalsettingstab.png" alt="'General Settings' Tab Pane"></div></div><p class="title"><b>Figure 4.2. 'General Settings' Tab Pane</b></p></div><br class="figure-break">
+
+        This tab pane (<a class="xref" href="ch04s02.html#figure.processor.general" title="Figure 4.2. 'General Settings' Tab Pane">Figure 4.2</a>) consists of three
+        subpanels.
+
+        <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.processing"></a>4.2.1. 'Processing' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Where to apply the AE algorithm': This drop-down menu provides the following options where the
+                    AE algorithm shall be applied
+                    (see also<a class="xref" href="ch04s02.html#figure.processor.general.aeareas" title="Figure 4.3. Drop-down menu for the selection of the area to apply the AE correction">Figure 4.3</a>:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            Coastal regions over the ocean
+                        </li><li style="list-style-type: disc">
+                            Everywhere over the ocean
+                        </li><li style="list-style-type: disc">
+                            Coastal regions over ocean and land
+                        </li><li style="list-style-type: disc">
+                            Everywhere
+                        </li></ul></div></li></ul></div><div class="figure"><a name="figure.processor.general.aeareas"></a><div class="figure-contents"><div><img src="figures/aeApplyMenu.png" alt="Drop-down menu for the selection of the area to apply the AE correction"></div></div><p class="title"><b>Figure 4.3. Drop-down menu for the selection of the area to apply the AE correction</b></p></div><br class="figure-break"></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.aerosoltype"></a>4.2.2. 'Aerosol Type Determination' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Reference wavelength (nm)': A text field to enter the reference wavelength for Angstrom and
+                    AOT values below. The default is 550nm..
+                </li><li style="list-style-type: disc">
+                    'Angstrom': A text field to enter the Angstrom coefficient. The default is -1, the valid
+                    interval is [-2.1, -0.4].
+                </li><li style="list-style-type: disc">
+                    'AOT': A text field to enter the aerosol optical thickness. The default is 0.2, the valid
+                    interval is [0.0, 1.5].
+                </li><li style="list-style-type: disc">
+                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
+                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
+                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
+                    (same as over land).
+                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.advanced"></a>4.2.3. 'Advanced Options' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
+                    If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)
+                    is performed using OpenCL libraries. Under suitable conditions, this results in a significant
+                    speed-up
+                    of the processor. However, this option is based on a rather new technology, and the implementation
+                    in
+                    ICOL+
+                    is still somewhat experimental. There are the following limitations:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            Suitable GPU hardware must be integrated in the computer and properly be installed.
+                            In general, this procedure is machine- and platform-dependent and is completely separate
+                            from
+                            the
+                            ICOL+ installation.
+                        </li><li style="list-style-type: disc">
+                            The current implementation is applicable only for an aerosol type which is unique (constant)
+                            over the computed scene.
+                        </li><li style="list-style-type: disc">
+                            The efficiency of the procedure depends on the dimensions of the particular scene and is
+                            parameter-dependent. Currently, a set of constant, hard-coded parameters is being used
+                            which is very likely not perfect for many cases.
+                        </li></ul></div>
+                    A more detailed description of the OpenCL issue is beyond the scope of this manual. A good
+                    literature
+                    starting point is e.g. [RD-4].
+                </li></ul></div></div></div></body></html>

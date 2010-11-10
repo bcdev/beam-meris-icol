@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="no"?>
+<!DOCTYPE toc PUBLIC "-//Sun Microsystems Inc.//DTD JavaHelp TOC Version 1.0//EN" "http://java.sun.com/products/javahelp/toc_1_0.dtd">
+<toc version="1.0">
+  <tocitem target="sum" text="ICOL+ Software User Manual">
+    <tocitem target="sum.introduction" text="Introduction">
+      <tocitem target="sum.introduction.scope" text="Scope"/>
+      <tocitem target="sum.introduction.objectives" text="Objectives"/>
+      <tocitem target="sum.introduction.readerLevel" text="Reader Level"/>
+      <tocitem target="sum.introduction.acronymsAndNomenclature" text="Acronyms"/>
+      <tocitem target="sum.introduction.applicableDocuments" text="Applicable Documents"/>
+      <tocitem target="sum.introduction.referenceDocuments" text="Reference Documents"/>
+    </tocitem>
+    <tocitem target="sum.installation" text="Software Installation">
+      <tocitem target="sum.installation.plugin" text="ICOL+ as BEAM plugin"/>
+      <tocitem target="sum.installation.addons" text="Additional Requirements"/>
+    </tocitem>
+    <tocitem target="sum.products" text="ICOL+ Products">
+      <tocitem target="sum.products.input" text="Input Products"/>
+      <tocitem target="sum.products.output" text="Output Products">
+        <tocitem target="sum.products.output.meris" text="MERIS"/>
+        <tocitem target="sum.products.output.landsat" text="LANDSAT"/>
+      </tocitem>
+    </tocitem>
+    <tocitem target="sum.processor" text="ICOL+ User Interface">
+      <tocitem target="sum.processor.io" text="I/O Parameters Tab Pane"/>
+      <tocitem target="sum.processor.general" text="'General Settings' Tab Pane">
+        <tocitem target="sum.processor.general.processing" text="'Processing' Subpanel"/>
+        <tocitem target="sum.processor.general.aerosoltype" text="'Aerosol Type Determination' Subpanel"/>
+        <tocitem target="sum.processor.general.advanced" text="'Advanced Options' Subpanel"/>
+      </tocitem>
+      <tocitem target="sum.processor.meris" text="'MERIS' Tab Pane">
+        <tocitem target="sum.processor.meris.outputproduct" text="'Product Type Selection' Subpanel"/>
+        <tocitem target="sum.processor.meris.rhotoa" text="'RhoToa Product' Subpanel"/>
+        <tocitem target="sum.processor.meris.processing" text="'Processing' Subpanel"/>
+        <tocitem target="sum.processor.meris.ctp" text="'Cloud Top Pressure' Subpanel"/>
+        <tocitem target="sum.processor.meris.cloudmask" text="'Cloud Mask' Subpanel"/>
+      </tocitem>
+      <tocitem target="sum.processor.landsat" text="'LANDSAT TM' Tab Pane">
+        <tocitem target="sum.processor.landsat.atmparams" text="'Atmospheric Parameters' Subpanel"/>
+        <tocitem target="sum.processor.landsat.cloudflag" text="'Cloud Flag Settings' Subpanel"/>
+        <tocitem target="sum.processor.landsat.landflag" text="'Land Flag Settings' Subpanel"/>
+        <tocitem target="sum.processor.landsat.advanced" text="'Advanced Options' Subpanel"/>
+      </tocitem>
+      <tocitem target="sum.processor.control" text="Control Buttons"/>
+      <tocitem target="sum.processor.gpt" text="Processing from command line"/>
+    </tocitem>
+  </tocitem>
+</toc>

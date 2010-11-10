@@ -189,7 +189,7 @@
                     </itemizedlist>
                     A more detailed description of the OpenCL issue is beyond the scope of this manual. A good
                     literature
-                    starting point is e.g. [xxx].
+                    starting point is e.g. [RD-4].
                 </listitem>
             </itemizedlist>
         </sect2>
@@ -488,6 +488,5 @@
         </figure>
 
     </sect1>
-
 
 </chapter>

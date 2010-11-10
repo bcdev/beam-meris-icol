@@ -1,0 +1,57 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>3.2. Output Products</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="ch03.html" title="Chapter 3. ICOL+ Products"><link rel="prev" href="ch03.html" title="Chapter 3. ICOL+ Products"><link rel="next" href="ch04.html" title="Chapter 4. ICOL+ User Interface"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.products.output"></a>3.2. Output Products</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.products.output.meris"></a>3.2.1. MERIS</h3></div></div></div>
+
+            The MERIS L1c output products which can be derived using the ICOL+ processor are:
+            <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    MERIS L1c radiances: The MERIS radiances for bands 1-15 corrected for the adjacency effect.
+                    This product can be retrieved in either original .N1 format or BEAM DIMAP format (user option).
+                </li><li style="list-style-type: disc">
+                    MERIS L1c TOA reflectances: AE corrected radiances for bands 1-15 converted to TOA reflectances.
+                    This product is provided in BEAM DIMAP format.
+                    Within this product, the following quantities are optionally provided (user option):
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            TOA reflectances (bands 1-15) corrected for AE (Rayleigh part of correction only)
+                        </li><li style="list-style-type: disc">
+                            TOA reflectances (bands 1-15) corrected for AE (Rayleigh and aerosol parts of
+                            correction)
+                        </li><li style="list-style-type: disc">
+                            AE Rayleigh correction term (bands 1-15)
+                        </li><li style="list-style-type: disc">
+                            AE aerosol correction term (bands 1-15)
+                        </li><li style="list-style-type: disc">
+                            Angstrom coefficient and aerosol optical thickness at 865nm.
+                        </li></ul></div></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.products.output.landsat"></a>3.2.2. LANDSAT</h3></div></div></div>
+
+            The LANDSAT TM output products which can be derived using the ICOL+ processor are:
+            <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    LANDSAT TM L1c radiances: The LANDSAT TM radiances for bands 1-5 and 7 corrected for the
+                    adjacency
+                    effect.
+                    This product is provided in BEAM DIMAP format. It contains the same bands as the GEOTIFF input
+                    product.
+                </li><li style="list-style-type: disc">
+                    LANDSAT TM L1g radiances: The LANDSAT TM radiances for bands 1-7 downscaled to the AE correction
+                    grid.
+                    This product is provided in BEAM DIMAP format. Processing time can be saved if this product is
+                    computed once and then re-used as input for different AE correction processes with varying user
+                    options.
+                </li><li style="list-style-type: disc"><p>
+                        LANDSAT TM L1g flag bands: The LANDSAT TM cloud and land classification flags as used for
+                        the AE
+                        correction (i.e. downscaled to the AE correction grid).
+                        This product is provided in BEAM DIMAP format.
+                    </p><p>
+                        
+
+                        The coding of the cloud classification flag is listed in the following table:
+
+                        </p><div class="table"><a name="id457976"></a><p class="title"><b>Table 3.1. Cloud classification flags</b></p><div class="table-contents"><table summary="Cloud classification flags" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_CLOUD</td><td align="left">0</td><td align="left">Pixel was finally specified as cloudy (if all flags below are set)
+                                        </td></tr><tr><td align="left">F_BRIGHT</td><td align="left">1</td><td align="left">Brightness flag (set if TM3 &lt; BT)</td></tr><tr><td align="left">F_NDVI</td><td align="left">2</td><td align="left">NDVI flag (set if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                        </td></tr><tr><td align="left">F_NDSI</td><td align="left">4</td><td align="left">NDSI flag (set if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
+                                        </td></tr><tr><td align="left">F_TEMP</td><td align="left">8</td><td align="left">Temperature flag (set if TM6 &lt; TM6T_CLOUD)</td></tr></tbody></table></div></div><p><br class="table-break">
+                    </p><p>
+                        The coding of the land classification flag is listed in the following table:
+
+                        </p><div class="table"><a name="id487469"></a><p class="title"><b>Table 3.2. Land classification flags</b></p><div class="table-contents"><table summary="Land classification flags" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_LANDCONS</td><td align="left">0</td><td align="left">Pixel was classified as land</td></tr><tr><td align="left">F_LOINLD</td><td align="left">1</td><td align="left">Pixel was classified as inland waters (currently no algorithm implemented and set to false)
+                                        </td></tr><tr><td align="left">F_NDVI</td><td align="left">2</td><td align="left">NDVI flag (set if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                        </td></tr><tr><td align="left">F_TEMP</td><td align="left">8</td><td align="left">Temperature flag (set if TM6 &gt; TM6T_LAND (summer), TM6 &lt; TM6T_LAND (winter))</td></tr><tr><td align="left">F_ICE</td><td align="left">16</td><td align="left">Pixel was classified as ice (currently no algorithm implemented and set to false)</td></tr></tbody></table></div></div><p><br class="table-break">
+                    </p></li></ul></div></div></div></body></html>

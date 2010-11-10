@@ -1,0 +1,44 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>1.2. Objectives</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="ch01.html" title="Chapter 1. Introduction"><link rel="prev" href="ch01.html" title="Chapter 1. Introduction"><link rel="next" href="ch01s03.html" title="1.3. Reader Level"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.introduction.objectives"></a>1.2. Objectives</h2></div></div></div><p>In images retrieved from spectrometers such as MERIS, an increase in the radiances,
+            especially in the near infrared bands, can often be
+            observed over water and in the vicinity of vegetated coasts. The affected area can extend over
+            10km or even more. This increase is not (always) related to an increase in the aerosol optical
+            depth but is caused by the so-called adjacency effect. This effect results when photons are reflected
+            and scattered towards the sensor and where a substantial contrast exits between the target
+            and its surrounding. During processing of such measurements the correction schemes need to take
+            this effect into account, otherwise the increased radiance is erroneously associated with other
+            physical processes, and the derived geophysical quantities have an increased error.
+        </p><p>Observations over waters near to land surfaces, both for coastal and inland waters, are affected
+            because of the large contrast in the red and infrared part of the spectrum, where water is almost
+            black and vegetated areas are very bright. The effect is easier to illustrate in coastal waters because
+            it decreases from coastline to off-shore. This effect can best be studied in MERIS Full Resolution
+            images, but even in reduced resolution the adjacency effect can also clearly be seen.
+        </p><p>
+            In order to build up a reliable tool for the correction of the adjacency effect, the ICOL (= Improve
+            Contrast over Ocean and Land) prototype processor was developed as BEAM plugin. Although this prototype
+            (ICOL1.0) has
+            proven to retrieve results as expected from theory, it has some well-known limitations:
+            </p><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    Restricted to coastal areas over water (although the AE is known to exist as well over land)
+                </li><li style="list-style-type: disc">
+                    Restriction to case 1 waters
+                </li><li style="list-style-type: disc">
+                    No proper handling of clouds and sea ice
+                </li><li style="list-style-type: disc">
+                    Restricted to application on MERIS data only
+                </li><li style="list-style-type: disc">
+                    Slow processing
+                </li></ul></div><p>
+            To overcome these limitations and to be able to apply the AE correction within operational processing
+            chains, an improved BEAM plugin (ICOL+) has been developed. With this processor, the AE correction is
+            applicable
+            anywhere over ocean as well as over land and considers case 2 waters, clouds and sea ice. An improved
+            convolution scheme (the core mathematical part of the AE corection) has been integrated to significantly
+            speed up the processor. Moreover, it is possible with ICOL+ to apply the AE correction on Landsat TM data.
+            This feature mainly serves as a demonstration for the general portability of the AE correction scheme
+            to other instruments within future projects (e.g. related to the Sentinel missions). However, the full
+            correction scheme has been implemented as for MERIS and has shown to provide results as expected ([RD-2]).
+        </p><p>
+            This manual basically describes and illustrates how to use the application. For a detailed description of
+            the underlying algorithms see [RD-1], the technical realisation of the software package is outlined in
+            [RD-3].
+        </p></div></body></html>
