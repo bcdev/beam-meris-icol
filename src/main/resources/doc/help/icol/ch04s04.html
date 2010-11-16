@@ -60,18 +60,28 @@
                     if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
                     resolution.
                 </li><li style="list-style-type: disc">
-                    'Compute 'Geometry' product only': If this checkbox is selected, the output product will be the same
-                    as the input product, but downscaled from the original TM resolution (30m) to the
-                    AE correction grid resolution as selected above.
-                    This option has the advantage that processing time can be saved since this product
-                    (a 'Geometry' product following the ATBD notation) needs to be
-                    computed only once and can then re-used as input for different AE correction runs with varying user
-                    options (such as test thresholds as outlined above).
-                </li><li style="list-style-type: disc">
-                    'Compute flag settings product only': If this checkbox is selected, only the flag bands
-                    are comoputed and written to the output product.
-                    This option has the advantage that the user can adjust the cloud/land test thresholds
-                    in several runs towards 'optimal' cloud/land masks without computing the AE correction.
-                    This may save computation time significantly since the AE correction needs to be performed
-                    only once in a final run with the 'full' product being written.
-                </li></ul></div></div></div></body></html>
+                    'Output product type': With this radio button group (toggle button), the user can specify
+                    what kind of output he wants to write into the target product:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            'Full AE corrected product': The AE corrected product with all radiance bands.
+                        </li><li style="list-style-type: disc">
+                            'Flag bands only': Only the flag bands
+                            are comoputed and written to the output product.
+                            This option has the advantage that the user can adjust the cloud/land test thresholds
+                            in several runs towards 'optimal' cloud/land masks without computing the AE correction.
+                            This may save computation time significantly since the AE correction needs to be performed
+                            only once in a final run with the 'full' product being written.
+                        </li><li style="list-style-type: disc">
+                            'Geometry product only (input downscaled to AE correction grid)': The output product will be the same
+                            as the input product, but downscaled from the original TM resolution (30m) to the
+                            AE correction grid resolution as selected above.
+                            This option has the advantage that processing time can be saved
+                            for the 'Flag bands only' step described before,
+                            since this product
+                            (a 'Geometry' product following the ATBD notation) needs to be
+                            computed only once and can then re-used as input for different AE correction runs with
+                            varying user options (such as test thresholds as outlined above).
+                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as well, but
+                            in this case, of course, the AE corrected product cannot be upscaled to the
+                            TM resolution since the information from the original product is missing.
+                        </li></ul></div></li></ul></div></div></div></body></html>

@@ -62,12 +62,13 @@ public class TmOp extends TmBasisOp {
     private double landsatUserOzoneContent;
     @Parameter(defaultValue="300", valueSet= {"300","1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
+    @Parameter(defaultValue="0", valueSet= {"0","1","2"}, description =
+            "The output product: 0 = full AE corrected product; 1 = only the cloud and land flag bands will be computed; 2 = the source bands will only be downscaled to AE correction grid resolution.")
+    private int landsatOutputProductType;
     @Parameter(defaultValue = "false", description = "If set to 'true', only the cloud and land flag bands will be computed.")
     private boolean landsatComputeFlagSettingsOnly = false;
     @Parameter(defaultValue = "false", description = "If set to 'true', the source bands will only be downscaled to AE correction grid resolution.")
     private boolean landsatComputeToTargetGridOnly = false;
-//    @Parameter(defaultValue = "false")
-//    private boolean upscaleToTMFR = false;
 
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -99,11 +100,9 @@ public class TmOp extends TmBasisOp {
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 
     // general
-//    @Parameter(defaultValue="0", valueSet= {"0","1"})
-//    private int productType = 0;
     private int productType = 0;
-//    @Parameter(defaultValue="true")
     private boolean reshapedConvolution = true;     // currently no user option
+
     @Parameter(defaultValue="false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
     private boolean openclConvolution = false;      // currently not used in TM
     @Parameter(defaultValue="64")
@@ -150,7 +149,7 @@ public class TmOp extends TmBasisOp {
             geometryProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGeometryOp.class), geometryParameters, geometryInput);
         }
 
-        if (landsatComputeToTargetGridOnly) {
+        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_GEOMETRY) {
             targetProduct = geometryProduct;
             return;
         }
@@ -228,7 +227,7 @@ public class TmOp extends TmBasisOp {
         FlagCoding landFlagCoding = TmLandClassificationOp.createFlagCoding();
         FlagCoding cloudFlagCoding = TmCloudClassificationOp.createFlagCoding();
 
-        if (landsatComputeFlagSettingsOnly) {
+        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_FLAGS) {
             cloudProduct.getFlagCodingGroup().add(landFlagCoding);
             DebugUtils.addSingleDebugFlagBand(cloudProduct, landProduct, landFlagCoding, TmCloudClassificationOp.CLOUD_FLAGS);
             // if we only want to write the flag settings, we can stop here
@@ -447,8 +446,6 @@ public class TmOp extends TmBasisOp {
         }
 
         // upscale all bands to Tm full resolution
-//        if (upscaleToTMFR) {
-            // AE Rayleigh/Aerosol upscale:
         Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
         aeUpscaleInput.put("l1b", sourceProduct);
         aeUpscaleInput.put("geometry", geometryProduct);
@@ -456,10 +453,6 @@ public class TmOp extends TmBasisOp {
         Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
 
         targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
-//            targetProduct = correctionProduct;
-//        } else {
-//            targetProduct = correctionProduct;
-//        }
     }
 
     /**

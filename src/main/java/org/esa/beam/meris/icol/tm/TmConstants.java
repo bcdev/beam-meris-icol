@@ -33,6 +33,10 @@ public interface TmConstants {
     int LANDSAT5_GEOM_FR = 300;
     int LANDSAT5_GEOM_RR = 1200;
 
+    int OUTPUT_PRODUCT_TYPE_FULL = 0;
+    int OUTPUT_PRODUCT_TYPE_FLAGS = 1;
+    int OUTPUT_PRODUCT_TYPE_GEOMETRY = 2;
+
     String LANDSAT5_GASEOUS_TRANSMITTANCE_BAND_NAME = "gas_transmittance";
     String LANDSAT5_RAYLEIGH_SCATTERING_BAND_NAME = "rayleigh_scatt";
     String LANDSAT5_FRESNEL_REFLECTION_BAND_NAME = "fresnel_reflec";

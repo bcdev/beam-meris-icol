@@ -60,11 +60,8 @@ public class IcolModel {
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
     private int landsatTargetResolution = 0; // 300m
-//    @Parameter(defaultValue = "")
-//    // test values:
-//    private String landsatStartTime = "06-AUG-2007 09:30:00";
-//    @Parameter(defaultValue = "")
-//    private String landsatStopTime = "06-AUG-2007 09:40:00";
+    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2"})
+    private int landsatOutputProductType = TmConstants.OUTPUT_PRODUCT_TYPE_FULL; // standard product
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.32")
     private double landsatUserOzoneContent = TmConstants.DEFAULT_OZONE_CONTENT;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.0")
@@ -75,9 +72,6 @@ public class IcolModel {
     private boolean landsatComputeFlagSettingsOnly = false;
     @Parameter(defaultValue = "false")
     private boolean landsatComputeToTargetGridOnly = false;
-//    @Parameter(defaultValue = "false")
-//    private boolean upscaleToTMFR = false;
-
 
     @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -103,7 +97,6 @@ public class IcolModel {
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
     private double landNdviThreshold = TmConstants.DEFAULT_NDVI_LAND_THRESHOLD;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
-    // TBD!!
     private double landTM6Threshold = TmConstants.DEFAULT_TM6_LAND_THRESHOLD;
     @Parameter(defaultValue = "", valueSet = {TmConstants.LAND_FLAGS_SUMMER,
             TmConstants.LAND_FLAGS_WINTER})
@@ -138,6 +131,10 @@ public class IcolModel {
             landsatTargetResolutionValue = 1200;
         }
         return landsatTargetResolutionValue;
+    }
+
+    public int getLandsatOutputProductType() {
+        return landsatOutputProductType;
     }
 
     public PropertyContainer getPropertyContainer() {
@@ -188,14 +185,12 @@ public class IcolModel {
 
     private void configLandsatOp(HashMap<String, Object> params) {
         params.put("landsatTargetResolution", getLandsatTargetResolution());
-//        params.put("landsatStartTime", landsatStartTime);
-//        params.put("landsatStopTime", landsatStopTime);
+        params.put("landsatOutputProductType", getLandsatOutputProductType());
         params.put("landsatUserOzoneContent", landsatUserOzoneContent);
         params.put("landsatUserPSurf", landsatUserPSurf);
         params.put("landsatUserTm60", landsatUserTm60);
         params.put("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
         params.put("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
-//        params.put("upscaleToTMFR", upscaleToTMFR);
         params.put("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilter);
         params.put("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilter);
         params.put("landsatCloudFlagApplyNdsiFilter", landsatCloudFlagApplyNdsiFilter);
@@ -213,7 +208,6 @@ public class IcolModel {
 
     private void configGeneral(HashMap<String, Object> params) {
         params.put("tileSize", tileSize);
-//        params.put("reshapedConvolution", reshapedConvolution);
         params.put("openclConvolution", openclConvolution);
         params.put("aeArea", aeArea);
     }

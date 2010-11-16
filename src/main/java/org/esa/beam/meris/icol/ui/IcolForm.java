@@ -76,23 +76,21 @@ class IcolForm extends JTabbedPane {
     private JRadioButton reflectanceProductTypeButton;
     private ButtonGroup productTypeGroup;
     private ButtonGroup ctpGroup;
-//    private JCheckBox nestedConvolutionCheckBox;
     private JCheckBox openclConvolutionCheckBox;
     private JComboBox aeAreaComboBox;
-    private int landsatResolutionValue;
     private ButtonGroup landsatResolutionGroup;
     private JRadioButton landsatResolution300Button;
     private JRadioButton landsatResolution1200Button;
     private JLabel userCtpLabel;
     private boolean userCtpSelected;
-//    private JFormattedTextField landsatStartTimeValue;
-    //    private JFormattedTextField landsatStopTimeValue;
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
-    private JCheckBox landsatComputeFlagSettingsOnly;
-    private JCheckBox landsatComputeToTargetGridOnly;
-//    private JCheckBox upscaleToTMFR;
+
+    private ButtonGroup landsatOutputProductTypeGroup;
+    private JRadioButton landsatOutputProductTypeStandardButton;
+    private JRadioButton landsatOutputProductTypeGeometryButton;
+    private JRadioButton landsatOutputProductTypeFlagsButton;
 
     private JCheckBox landsatCloudFlagApplyBrightnessFilterCheckBox;
     private JCheckBox landsatCloudFlagApplyNdsiFilterCheckBox;
@@ -107,7 +105,6 @@ class IcolForm extends JTabbedPane {
     private JCheckBox landsatLandFlagApplyTemperatureFilterCheckBox;
     private JFormattedTextField landNdviThresholdValue;
     private JFormattedTextField landTM6ThresholdValue;
-    private String landsatSeasonValue;
     private ButtonGroup landsatSeasonGroup;
     private JRadioButton landsatWinterButton;
     private JRadioButton landsatSummerButton;
@@ -185,7 +182,6 @@ class IcolForm extends JTabbedPane {
 
         bc.bind("aeArea", aeAreaComboBox);
 
-//        bc.bind("reshapedConvolution", nestedConvolutionCheckBox);
         bc.bind("openclConvolution", openclConvolutionCheckBox);
 
         bc.bind("productType", productTypeGroup);
@@ -193,14 +189,10 @@ class IcolForm extends JTabbedPane {
         bc.bind("cloudMaskProduct", cloudProductSelector.getProductNameComboBox());
 
         bc.bind("landsatTargetResolution", landsatResolutionGroup);
-//        bc.bind("landsatStartTime", landsatStartTimeValue);
-//        bc.bind("landsatStopTime", landsatStopTimeValue);
+        bc.bind("landsatOutputProductType", landsatOutputProductTypeGroup);
         bc.bind("landsatUserOzoneContent", landsatOzoneContentValue);
         bc.bind("landsatUserPSurf", landsatPSurfValue);
         bc.bind("landsatUserTm60", landsatTM60Value);
-        bc.bind("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
-        bc.bind("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
-//        bc.bind("upscaleToTMFR", upscaleToTMFR);
 
         bc.bind("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilterCheckBox);
         bc.bind("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilterCheckBox);
@@ -451,9 +443,6 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-//        layout.setColumnWeightX(0, 0.1);
-//        layout.setColumnWeightX(1, 1);
-//        layout.setColumnWeightX(2, 0.1);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
         layout.setColumnWeightX(2, 1);
@@ -510,10 +499,6 @@ class IcolForm extends JTabbedPane {
         panel.add(aeAreaComboBox);
         panel.add(new JLabel());
 
-//        icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
-//        icolAerosolCase2CheckBox.setSelected(false);
-//		panel.add(icolAerosolCase2CheckBox);
-
         return panel;
     }
 
@@ -530,13 +515,6 @@ class IcolForm extends JTabbedPane {
         JPanel panel = new JPanel(layout);
 
         panel.setBorder(BorderFactory.createTitledBorder("Processing"));
-
-//        aeAreaComboBox = new JComboBox();
-//        aeAreaComboBox.setRenderer(new AeAreaRenderer());
-//        panel.add(new JLabel("Where to apply the AE algorithm:"));
-//        panel.add(new JLabel());
-//        panel.add(aeAreaComboBox);
-//        panel.add(new JLabel());
 
         icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
         icolAerosolCase2CheckBox.setSelected(false);
@@ -565,11 +543,6 @@ class IcolForm extends JTabbedPane {
         openclConvolutionCheckBox.setSelected(false);
         panel.add(openclConvolutionCheckBox);
 
-        // user option deactivated for final version, OD 2010/11/09:
-//        nestedConvolutionCheckBox = new JCheckBox("Use simplified convolution scheme");
-//        nestedConvolutionCheckBox.setSelected(true);
-//        panel.add(nestedConvolutionCheckBox);
-
         return panel;
     }
 
@@ -579,7 +552,6 @@ class IcolForm extends JTabbedPane {
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
-//        layout.setColumnWeightX(1, 0.5);
         layout.setColumnWeightX(1, 0.1);
         layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
@@ -772,8 +744,10 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
-        layout.setCellPadding(4, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(3, 0, new Insets(10, 24, 0, 0));
+        layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(5, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(6, 0, new Insets(0, 48, 0, 0));
 
         JPanel panel = new JPanel(layout);
 
@@ -806,46 +780,67 @@ class IcolForm extends JTabbedPane {
         landsatResolution300Button.addActionListener(landsatResolutionListener);
         landsatResolution1200Button.addActionListener(landsatResolutionListener);
 
-        landsatComputeToTargetGridOnly = new JCheckBox(
-                "Compute 'Geometry' product only (input downscaled to AE correction grid)");
-        landsatComputeToTargetGridOnly.setSelected(false);
-        panel.add(landsatComputeToTargetGridOnly);
+
+        panel.add(new JLabel("Output product type:"));
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatComputeFlagSettingsOnly = new JCheckBox("Compute flag settings product only");
-        landsatComputeFlagSettingsOnly.setSelected(false);
-        panel.add(landsatComputeFlagSettingsOnly);
+        landsatOutputProductTypeStandardButton= new JRadioButton("Full AE corrected product");
+        landsatOutputProductTypeStandardButton.setSelected(true);
+        panel.add(landsatOutputProductTypeStandardButton);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatOutputProductTypeFlagsButton = new JRadioButton("Flag bands only");
+        landsatOutputProductTypeFlagsButton.setSelected(false);
+        panel.add(landsatOutputProductTypeFlagsButton);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatOutputProductTypeGeometryButton = new JRadioButton("Geometry product only (input downscaled to AE correction grid)");
+        landsatOutputProductTypeGeometryButton.setSelected(false);
+        panel.add(landsatOutputProductTypeGeometryButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-//            upscaleToTMFR = new JCheckBox("Upscale Radiance/RhoToa product to TM FR (30m)");
-//            upscaleToTMFR.setSelected(false);
-//            panel.add(upscaleToTMFR);
-//            panel.add(new JLabel(""));
+        landsatOutputProductTypeGroup= new ButtonGroup();
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeStandardButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeFlagsButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeGeometryButton);
+
+        ActionListener landsatOutputProductTypeListenerListener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateLandsatOutputProductTypeSettings();
+            }
+        };
+        landsatOutputProductTypeStandardButton.addActionListener(landsatOutputProductTypeListenerListener);
+        landsatOutputProductTypeFlagsButton.addActionListener(landsatOutputProductTypeListenerListener);
+        landsatOutputProductTypeGeometryButton.addActionListener(landsatOutputProductTypeListenerListener);
 
         panel.add(new JPanel());
 
         return panel;
     }
 
-
     private void updateLandsatResolutionSettings() {
-        if (landsatResolution300Button.isSelected()) {
-            landsatResolutionValue = 300;
-            landsatResolution1200Button.setSelected(false);
-        } else {
-            landsatResolutionValue = 1200;
-            landsatResolution1200Button.setSelected(true);
+            landsatResolution1200Button.setSelected(!landsatResolution300Button.isSelected());
+    }
+
+    private void updateLandsatOutputProductTypeSettings() {
+        if (landsatOutputProductTypeStandardButton.isSelected()) {
+            landsatOutputProductTypeFlagsButton.setSelected(false);
+            landsatOutputProductTypeGeometryButton.setSelected(false);
+        } else if (landsatOutputProductTypeFlagsButton.isSelected()) {
+            landsatOutputProductTypeFlagsButton.setSelected(false);
+            landsatOutputProductTypeGeometryButton.setSelected(false);
+        }  else {
+            landsatOutputProductTypeStandardButton.setSelected(false);
+            landsatOutputProductTypeGeometryButton.setSelected(false);
         }
     }
 
     private void updateLandsatSeasonSettings() {
         if (landsatWinterButton.isSelected()) {
-            landsatSeasonValue = TmConstants.LAND_FLAGS_WINTER;
             landsatSummerButton.setSelected(false);
         } else {
-            landsatSeasonValue = TmConstants.LAND_FLAGS_SUMMER;
             landsatWinterButton.setSelected(false);
         }
     }

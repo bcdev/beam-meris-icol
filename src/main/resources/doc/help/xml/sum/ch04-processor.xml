@@ -37,6 +37,30 @@
             <listitem>
                 Input product file: Select the input product file by pressing the file selection button to invoke
                 a standard file dialog.
+                <itemizedlist mark='bullet'>
+                    <listitem>
+                        MERIS: Select a L1 product given in .N1 or BEAM-DIMAP format
+                    </listitem>
+                    <listitem>
+                        LANDSAT TM: Select a L1 product given in GEOTIFF (original product) or BEAM-DIMAP format
+                        ('Geometry' product, see <xref linkend="sum.products.input" xrefstyle="select: label"/>).
+                        A large number of Landsat TM products in GEOTIFF format can be found at the USGS
+                        Earth Explorer site ([RD-5]). To process TM GEOTIFF data in ICOL, do the following steps:
+                        <itemizedlist mark='bullet'>
+                            <listitem>
+                                The data from [RD-5]usually come
+                                in gzipped format named like 'LT5...tar.gz'. If so, unpack this archive.
+                            </listitem>
+                            <listitem>
+                                The unpacked product should consist of seven single .tif files and two metafiles with suffixes
+                                '_MTL.txt' and '_GCP.txt'.
+                            </listitem>
+                            <listitem>
+                                Select the file '..._MTL.txt' as input file.
+                            </listitem>
+                        </itemizedlist>
+                    </listitem>
+                </itemizedlist>
             </listitem>
             <listitem>
                 Output product file: Select the output product file by typing the product filename into the text
@@ -109,7 +133,7 @@
                 <listitem>
                     'Where to apply the AE algorithm': This drop-down menu provides the following options where the
                     AE algorithm shall be applied
-                    (see also<xref linkend="figure.processor.general.aeareas" xrefstyle="select: label"/>:
+                    (see also<xref linkend="figure.processor.general.aeareas" xrefstyle="select: label"/>):
                     <itemizedlist mark='bullet'>
                         <listitem>
                             Coastal regions over the ocean
@@ -407,21 +431,35 @@
                     resolution.
                 </listitem>
                 <listitem>
-                    'Compute 'Geometry' product only': If this checkbox is selected, the output product will be the same
-                    as the input product, but downscaled from the original TM resolution (30m) to the
-                    AE correction grid resolution as selected above.
-                    This option has the advantage that processing time can be saved since this product
-                    (a 'Geometry' product following the ATBD notation) needs to be
-                    computed only once and can then re-used as input for different AE correction runs with varying user
-                    options (such as test thresholds as outlined above).
-                </listitem>
-                <listitem>
-                    'Compute flag settings product only': If this checkbox is selected, only the flag bands
-                    are comoputed and written to the output product.
-                    This option has the advantage that the user can adjust the cloud/land test thresholds
-                    in several runs towards 'optimal' cloud/land masks without computing the AE correction.
-                    This may save computation time significantly since the AE correction needs to be performed
-                    only once in a final run with the 'full' product being written.
+                    'Output product type': With this radio button group (toggle button), the user can specify
+                    what kind of output he wants to write into the target product:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            'Full AE corrected product': The AE corrected product with all radiance bands.
+                        </listitem>
+                        <listitem>
+                            'Flag bands only': Only the flag bands
+                            are comoputed and written to the output product.
+                            This option has the advantage that the user can adjust the cloud/land test thresholds
+                            in several runs towards 'optimal' cloud/land masks without computing the AE correction.
+                            This may save computation time significantly since the AE correction needs to be performed
+                            only once in a final run with the 'full' product being written.
+                        </listitem>
+                        <listitem>
+                            'Geometry product only (input downscaled to AE correction grid)': The output product will be the same
+                            as the input product, but downscaled from the original TM resolution (30m) to the
+                            AE correction grid resolution as selected above.
+                            This option has the advantage that processing time can be saved
+                            for the 'Flag bands only' step described before,
+                            since this product
+                            (a 'Geometry' product following the ATBD notation) needs to be
+                            computed only once and can then re-used as input for different AE correction runs with
+                            varying user options (such as test thresholds as outlined above).
+                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as well, but
+                            in this case, of course, the AE corrected product cannot be upscaled to the
+                            TM resolution since the information from the original product is missing.
+                        </listitem>
+                    </itemizedlist>
                 </listitem>
             </itemizedlist>
         </sect2>
