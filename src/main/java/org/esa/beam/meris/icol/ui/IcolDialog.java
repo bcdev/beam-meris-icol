@@ -76,17 +76,12 @@ public class IcolDialog extends SingleTargetProductDialog {
             return false;
         }
         final String productType = sourceProduct.getProductType();
-        final String productName = sourceProduct.getName();
-        final int productNumBands = sourceProduct.getBandGroup().getNodeCount();
         // input product must be either:
         //    - MERIS L1b
         //    - Landsat TM5 GeoTIFF  (L1T)
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
-                !(productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) &&
-//                        productName.startsWith(TmConstants.LANDSAT_INSTRUMENT_NAME_PREFIX) &&
-//                        productNumBands == 7) &&
                 !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
