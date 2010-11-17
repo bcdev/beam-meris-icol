@@ -105,7 +105,6 @@ public class IcolDialog extends SingleTargetProductDialog {
         Product outputProduct = null;
         final Product sourceProduct = model.getSourceProduct();
         String productType = sourceProduct.getProductType();
-        final String productName = sourceProduct.getName();
         if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) ||
             (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
                 (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
