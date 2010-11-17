@@ -105,6 +105,9 @@
                         BC - Brockmann Consult
                     </listitem>
                     <listitem>
+                        BEAM - Basic ERS &amp; Envisat (A)ATSR and Meris Toolbox
+                    </listitem>
+                    <listitem>
                         CTP - Cloud Top Pressure
                     </listitem>
                     <listitem>
@@ -118,6 +121,9 @@
                     </listitem>
                     <listitem>
                         FR - Full Resolution
+                    </listitem>
+                    <listitem>
+                        GPF - Graph Processing Framework
                     </listitem>
                     <listitem>
                         GPU - Graphics Processing Unit

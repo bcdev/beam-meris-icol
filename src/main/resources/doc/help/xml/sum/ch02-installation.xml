@@ -8,7 +8,7 @@
             in advance:
             <itemizedlist mark='bullet'>
                 <listitem>
-                    BEAM, version 4.8 or higher
+                    BEAM, version 4.8
                 </listitem>
             </itemizedlist>
             The BEAM software can be obtained from the BEAM download page
@@ -16,7 +16,8 @@
         </para>
 
         <para>
-            The ICOL+ software delivery consists of two jar files, the ICOL main module
+            The ICOL+ software delivery consists of three jar files: the ICOL main module, an updated BEAM 4.8 GPF
+            module containing ICOL relevant bug fixes,
             and the OpenCL modules, which provide additional Java classes which are optionally used by ICOL+
             for accelerating purpose in case that a proper GPU is installed in the computer:
             <itemizedlist mark='bullet'>
@@ -24,15 +25,18 @@
                     beam-meris-icol-2.5.jar
                 </listitem>
                 <listitem>
+                    beam-gpf-4.8.1-SNAPSHOT.jar
+                </listitem>
+                <listitem>
                     opencl_jars.zip
                 </listitem>
             </itemizedlist>
-            The beam-meris-icol-2.5.jar files needs to be copied into the 'modules' folder of the BEAM
+            The files beam-meris-icol-2.5.jar and beam-gpf-4.8.1-SNAPSHOT.jar need to be copied into the 'modules' folder of the BEAM
             installation (<xref linkend="figure.installation.beammodules" xrefstyle="select: label"/>).
             The opencl_jars.zip files needs to be unpacked into the 'lib' folder of the BEAM
             installation.
-            Note that existing versions of ICOL jar files (e.g. ICOL1.0) need to be replaced/overwritten to
-            avoid version conflicts of Java classes.
+            Note that existing versions of BEAM and ICOL jar files (e.g. ICOL1.0) need to be replaced/overwritten to
+            avoid version conflicts of Java classes. I.e., this is true for the file beam-gpf-4.8.jar.
         </para>
 
         <figure id="figure.installation.beammodules">

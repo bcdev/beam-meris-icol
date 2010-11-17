@@ -2,23 +2,26 @@
             As a BEAM plugin, the ICOL+ processor needs the following software to be installed
             in advance:
             </p><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                    BEAM, version 4.8 or higher
+                    BEAM, version 4.8
                 </li></ul></div><p>
             The BEAM software can be obtained from the BEAM download page
             (www.brockmann-consult.de/beam).
         </p><p>
-            The ICOL+ software delivery consists of two jar files, the ICOL main module
+            The ICOL+ software delivery consists of three jar files: the ICOL main module, an updated BEAM 4.8 GPF
+            module containing ICOL relevant bug fixes,
             and the OpenCL modules, which provide additional Java classes which are optionally used by ICOL+
             for accelerating purpose in case that a proper GPU is installed in the computer:
             </p><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     beam-meris-icol-2.5.jar
                 </li><li style="list-style-type: disc">
+                    beam-gpf-4.8.1-SNAPSHOT.jar
+                </li><li style="list-style-type: disc">
                     opencl_jars.zip
                 </li></ul></div><p>
-            The beam-meris-icol-2.5.jar files needs to be copied into the 'modules' folder of the BEAM
+            The files beam-meris-icol-2.5.jar and beam-gpf-4.8.1-SNAPSHOT.jar need to be copied into the 'modules' folder of the BEAM
             installation (<a class="xref" href="ch02.html#figure.installation.beammodules" title="Figure 2.1. Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows XP)">Figure 2.1</a>).
             The opencl_jars.zip files needs to be unpacked into the 'lib' folder of the BEAM
             installation.
-            Note that existing versions of ICOL jar files (e.g. ICOL1.0) need to be replaced/overwritten to
-            avoid version conflicts of Java classes.
+            Note that existing versions of BEAM and ICOL jar files (e.g. ICOL1.0) need to be replaced/overwritten to
+            avoid version conflicts of Java classes. I.e., this is true for the file beam-gpf-4.8.jar.
         </p><div class="figure"><a name="figure.installation.beammodules"></a><div class="figure-contents"><div><img src="figures/beammodules.png" alt="Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows XP)"></div></div><p class="title"><b>Figure 2.1. Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows XP)</b></p></div><br class="figure-break"></div></div></body></html>
