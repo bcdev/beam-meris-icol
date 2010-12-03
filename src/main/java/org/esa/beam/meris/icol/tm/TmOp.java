@@ -65,10 +65,6 @@ public class TmOp extends TmBasisOp {
     @Parameter(defaultValue="0", valueSet= {"0","1","2"}, description =
             "The output product: 0 = full AE corrected product; 1 = only the cloud and land flag bands will be computed; 2 = the source bands will only be downscaled to AE correction grid resolution.")
     private int landsatOutputProductType;
-    @Parameter(defaultValue = "false", description = "If set to 'true', only the cloud and land flag bands will be computed.")
-    private boolean landsatComputeFlagSettingsOnly = false;
-    @Parameter(defaultValue = "false", description = "If set to 'true', the source bands will only be downscaled to AE correction grid resolution.")
-    private boolean landsatComputeToTargetGridOnly = false;
 
     @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -95,7 +91,7 @@ public class TmOp extends TmBasisOp {
     private double landNdviThreshold;
     @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0", description = "The land TM band 6 temperature threshold.")
     private double landTM6Threshold;
-    @Parameter(defaultValue = "", valueSet = {TmConstants.LAND_FLAGS_SUMMER,
+    @Parameter(defaultValue = TmConstants.LAND_FLAGS_SUMMER, valueSet = {TmConstants.LAND_FLAGS_SUMMER,
             TmConstants.LAND_FLAGS_WINTER}, description = "The summer/winter option for TM band 6 temperature test.")
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 

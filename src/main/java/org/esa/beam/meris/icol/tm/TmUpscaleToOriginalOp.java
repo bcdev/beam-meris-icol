@@ -95,6 +95,29 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                 }
             }
         }
+
+        for (int i=1; i<=7; i++) {
+            if (i != 6) {
+                // these bands only exist in "RS debug mode"
+                upscaleDebugBand("rho_ag_bracket", xScale, yScale, i);
+                upscaleDebugBand("rho_raec_bracket", xScale, yScale, i);
+            }
+        }
+
+    }
+
+    private void upscaleDebugBand(String bandName, float xScale, float yScale, int i) {
+        Band debugSrcBand = correctedProduct.getBand(bandName + "_" + i);
+        Band debugTargetBand = targetProduct.addBand(bandName + "_" + i, ProductData.TYPE_FLOAT32);
+        RenderedImage debugSrcImage = debugSrcBand.getSourceImage();
+        RenderedOp upscaledDebugSrcImage = ScaleDescriptor.create(debugSrcImage,
+                                                          xScale,
+                                                          yScale,
+                                                          0.0f, 0.0f,
+                                                          Interpolation.getInstance(
+                                                                  Interpolation.INTERP_BILINEAR),
+                                                          null);
+        debugTargetBand.setSourceImage(upscaledDebugSrcImage);
     }
 
     public static class Spi extends OperatorSpi {

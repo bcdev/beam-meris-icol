@@ -68,10 +68,6 @@ public class IcolModel {
     private double landsatUserPSurf = TmConstants.DEFAULT_SURFACE_PRESSURE;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "288.0")
     private double landsatUserTm60 = TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE;
-    @Parameter(defaultValue = "false")
-    private boolean landsatComputeFlagSettingsOnly = false;
-    @Parameter(defaultValue = "false")
-    private boolean landsatComputeToTargetGridOnly = false;
 
     @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -98,7 +94,7 @@ public class IcolModel {
     private double landNdviThreshold = TmConstants.DEFAULT_NDVI_LAND_THRESHOLD;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
     private double landTM6Threshold = TmConstants.DEFAULT_TM6_LAND_THRESHOLD;
-    @Parameter(defaultValue = "", valueSet = {TmConstants.LAND_FLAGS_SUMMER,
+    @Parameter(defaultValue = TmConstants.LAND_FLAGS_SUMMER, valueSet = {TmConstants.LAND_FLAGS_SUMMER,
             TmConstants.LAND_FLAGS_WINTER})
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 
@@ -189,8 +185,6 @@ public class IcolModel {
         params.put("landsatUserOzoneContent", landsatUserOzoneContent);
         params.put("landsatUserPSurf", landsatUserPSurf);
         params.put("landsatUserTm60", landsatUserTm60);
-        params.put("landsatComputeFlagSettingsOnly", landsatComputeFlagSettingsOnly);
-        params.put("landsatComputeToTargetGridOnly", landsatComputeToTargetGridOnly);
         params.put("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilter);
         params.put("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilter);
         params.put("landsatCloudFlagApplyNdsiFilter", landsatCloudFlagApplyNdsiFilter);
