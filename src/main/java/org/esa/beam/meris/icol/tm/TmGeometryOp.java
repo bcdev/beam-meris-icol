@@ -91,8 +91,8 @@ public class TmGeometryOp extends TmBasisOp {
 
         aveBlock = landsatTargetResolution / (2 * LANDSAT_ORIGINAL_RESOLUTION);
 
-        int sceneWidth = sourceProduct.getSceneRasterWidth() / (2 * aveBlock + 1) + 1;
-        int sceneHeight = sourceProduct.getSceneRasterHeight() / (2 * aveBlock + 1) + 1;
+        int sceneWidth = sourceProduct.getSceneRasterWidth() / (2 * aveBlock);
+        int sceneHeight = sourceProduct.getSceneRasterHeight() / (2 * aveBlock);
 
         final String productType;
         if (landsatTargetResolution == TmConstants.LANDSAT5_GEOM_FR) {
@@ -172,7 +172,7 @@ public class TmGeometryOp extends TmBasisOp {
             int y1 = sourceRectangle.y;
             int y2 = sourceRectangle.y + sourceRectangle.height - 1;
 
-            int aveSize = 2 * aveBlock + 1;
+            int aveSize = 2 * aveBlock;
             for (int iSrcY = y1 + aveBlock; iSrcY <= y2 + aveBlock; iSrcY += aveSize) {
                 for (int iSrcX = x1 + aveBlock; iSrcX <= x2 + aveBlock; iSrcX += aveSize) {
                     int iTarX = ((iSrcX - x1 - aveBlock) / aveSize);
@@ -244,8 +244,6 @@ public class TmGeometryOp extends TmBasisOp {
         final int minY = Math.max(0, iTarY - aveBlock);
         final int maxX = Math.min(sourceProduct.getSceneRasterWidth() - 1, iTarX + aveBlock);
         final int maxY = Math.min(sourceProduct.getSceneRasterHeight() - 1, iTarY + aveBlock);
-//        final int maxX = Math.min(radianceTile.getWidth()-1,iTarX+aveBlock);
-//        final int maxY = Math.min(radianceTile.getHeight()-1,iTarY+aveBlock);
 
         for (int iy = minY; iy <= maxY; iy++) {
             for (int ix = minX; ix <= maxX; ix++) {
