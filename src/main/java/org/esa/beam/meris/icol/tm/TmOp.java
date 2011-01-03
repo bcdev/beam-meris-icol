@@ -427,19 +427,23 @@ public class TmOp extends TmBasisOp {
         correctionProduct.getFlagCodingGroup().add(landFlagCoding);
         DebugUtils.addSingleDebugFlagBand(correctionProduct, landProduct, landFlagCoding, TmLandClassificationOp.LAND_FLAGS);
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+            DebugUtils.addRad2ReflDebugBands(correctionProduct, conversionProduct);
             DebugUtils.addRayleighCorrDebugBands(correctionProduct, rayleighProduct);
-            DebugUtils.addSingleDebugBand(correctionProduct, ctpProduct, TmConstants.LANDSAT5_CTP_BAND_NAME);
-            DebugUtils.addSingleDebugBand(correctionProduct, aemaskRayleighProduct, AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH);
-            DebugUtils.addSingleDebugBand(correctionProduct, aemaskAerosolProduct, AdjacencyEffectMaskOp.AE_MASK_AEROSOL);
-            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
-            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
-            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_1");
-            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_2");
-            DebugUtils.addSingleDebugBand(correctionProduct, cloudDistanceProduct, CloudDistanceOp.CLOUD_DISTANCE);
+//            DebugUtils.addSingleDebugBand(correctionProduct, ctpProduct, TmConstants.LANDSAT5_CTP_BAND_NAME);
+//            DebugUtils.addSingleDebugBand(correctionProduct, aemaskRayleighProduct, AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH);
+//            DebugUtils.addSingleDebugBand(correctionProduct, aemaskAerosolProduct, AdjacencyEffectMaskOp.AE_MASK_AEROSOL);
+//            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
+//            DebugUtils.addSingleDebugBand(correctionProduct, zmaxProduct, ZmaxOp.ZMAX + "_2");
+//            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_1");
+//            DebugUtils.addSingleDebugBand(correctionProduct, coastDistanceProduct, CoastDistanceOp.COAST_DISTANCE + "_2");
+//            DebugUtils.addSingleDebugBand(correctionProduct, cloudDistanceProduct, CloudDistanceOp.CLOUD_DISTANCE);
             DebugUtils.addAeRayleighProductDebugBands(correctionProduct, aeRayProduct);
             DebugUtils.addAeAerosolProductDebugBands(correctionProduct, aeAerProduct);
-            DebugUtils.addAeTotalProductDebugBands(correctionProduct, aeTotalProduct);
+//            DebugUtils.addAeTotalProductDebugBands(correctionProduct, aeTotalProduct);
         }
+
+        // test:
+//        targetProduct = correctionProduct;
 
         // upscale all bands to Tm full resolution
         Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);

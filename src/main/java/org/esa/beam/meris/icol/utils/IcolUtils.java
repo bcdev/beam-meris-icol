@@ -47,6 +47,6 @@ public class IcolUtils {
     }
 
     public static double convertAOT(double aot, double alpha, double referenceWavelength, double destinationWavelength) {
-        return aot * Math.pow(destinationWavelength / referenceWavelength, -1.0 * alpha);
+        return aot * Math.pow(destinationWavelength / referenceWavelength, 1.0 * alpha);
     }
 }

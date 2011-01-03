@@ -126,10 +126,6 @@ public class TmCloudClassificationOp extends TmBasisOp {
                     final float tm5 = reflectanceTile[3].getSampleFloat(x, y);
                     final float tm6 = reflectanceTile[4].getSampleFloat(x, y);
 
-                    if (x == 120 && y == 80) {
-                        System.out.println("");
-                    }
-
                     if (landsatCloudFlagApplyBrightnessFilter) {
                         boolean isBright =  (tm3 > cloudBrightnessThreshold);
                         targetTile.setSample(x, y, F_BRIGHT, isBright);

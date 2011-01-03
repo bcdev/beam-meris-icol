@@ -282,6 +282,7 @@ public class TmAeAerosolOp extends TmBasisOp {
         try {
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
                 for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
+
                     double rho_13 = 0.0;
                     double rho_12 = 0.0;
                     if (instrument.toUpperCase().equals("MERIS")) {
@@ -375,13 +376,13 @@ public class TmAeAerosolOp extends TmBasisOp {
                         // otherwise apply user input (as always over land)
                         // begin 'old' case 1 water --> todo: clarify how to handle for Landsat
                         double rhoBrrBracket865 = 0.0;
-                        double rhoBrrBracket705 = 0.0;
+//                        double rhoBrrBracket705 = 0.0;
                         if (instrument.toUpperCase().equals("MERIS")) {
                             rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
-                            rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
+//                            rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
                         } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
                             rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, TmConstants.LANDSAT5_RADIANCE_4_BAND_INDEX);
-                            rhoBrrBracket705 = rhoBrrBracket865; // TBD
+//                            rhoBrrBracket705 = rhoBrrBracket865; // TBD
                         }
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             // icolAerosolForWater = true only for MERIS
@@ -411,7 +412,8 @@ public class TmAeAerosolOp extends TmBasisOp {
                             }
                         } else {
                             aot = userAot865;
-                            searchIAOT = MathUtils.floorInt(aot * 10);
+//                            searchIAOT = MathUtils.floorInt(aot * 10);
+                            searchIAOT = MathUtils.floorInt(aot * 10) + 1;  // RS, 21/12/2010
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
                                 AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
@@ -421,7 +423,7 @@ public class TmAeAerosolOp extends TmBasisOp {
                                 rhoa = rhoa0 * corrFac;
                                 // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0) s.a.
                                 rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
-                                rhoBrr705[iiaot] = rhoa + rhoBrrBracket705 * rv.tds * (rv.tus - Math.exp(-taua / muv));
+//                                rhoBrr705[iiaot] = rhoa + rhoBrrBracket705 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                             }
                         }
                         // end old case 1 water
@@ -458,8 +460,10 @@ public class TmAeAerosolOp extends TmBasisOp {
                                 AerosolScatteringFunctions.RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1 = 0.0;
-                                aerosol1 = (roAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - roAerMean * rv1.sa));
-                                aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
+                                final double downwellingTransmittanceTerm = rv1.tds / (1.0 - roAerMean * rv1.sa);
+                                aerosol1 = (roAerMean - rhoRaecIwvl) * downwellingTransmittanceTerm;
+                                final double upwellingTransmittanceTerm = rv1.tus - Math.exp(-taua1 / muv);
+                                aerosol1 = upwellingTransmittanceTerm * aerosol1;
 
                                 final double fresnel1 = rv1.rhoa * paerFB * r1s * (zmaxPart + zmaxCloudPart);
                                 final double aea1 = aerosol1 - fresnel1;

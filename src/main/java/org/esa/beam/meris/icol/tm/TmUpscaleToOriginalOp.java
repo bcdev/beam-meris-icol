@@ -96,11 +96,14 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
             }
         }
 
-        for (int i=1; i<=7; i++) {
-            if (i != 6) {
-                // these bands only exist in "RS debug mode"
-                upscaleDebugBand("rho_ag_bracket", xScale, yScale, i);
-                upscaleDebugBand("rho_raec_bracket", xScale, yScale, i);
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals(
+                "RS")) {
+            for (int i = 1; i <= 7; i++) {
+                if (i != 6) {
+                    // these bands only exist in "RS debug mode"
+                    upscaleDebugBand("rho_ag_bracket", xScale, yScale, i);
+                    upscaleDebugBand("rho_raec_bracket", xScale, yScale, i);
+                }
             }
         }
 
