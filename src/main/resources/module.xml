@@ -1,20 +1,40 @@
 <module>
     <manifestVersion>1.0.0</manifestVersion>
     <symbolicName>beam-meris-icol</symbolicName>
-    <version>2.5-SNAPSHOT</version>
+    <version>2.5</version>
     <name>MERIS ICOL Processor</name>
 
-    <description>
-     The ICOL processor is used to correct for the adjacency effect 
-     (increased radiance due to scattering and reflection of photons) in MERIS L1B data.
+    <description><![CDATA[
+            <p>The purpose of the ICOL processor is to correct for the adjacency effect (increased radiance
+            due to scattering and reflection of photons) in MERIS and Landsat TM L1B data.</p>
+
+            <p>The most important improvements of this new version of the processor ('ICOL+') are:
+               <ul>
+                <li>The algorithm has been extended for application over land and over case 2 waters</li>
+                <li>Clouds and sea ice are considered.</li>
+                <li>The processor can be used for both MERIS and Landsat TM L1B data.</li>
+            </ul>
+            </p>
+
+            <p>Algorithm: R. Santer (LISE, France)</p>
+            <p>Software: O.Danne, M.Zuehlke, T.Storm (Brockmann Consult)</p>
+
+            <p>Documentation:</p>
+            <ul>
+                <li><a href="http://github.com/downloads/bcdev/beam-meris-icol/ICOL_ATBD.pdf">ICOL+ ATBD for MERIS and Landsat TM</a></li>
+                <li><a href="http://github.com/downloads/bcdev/beam-meris-icol/ICOL_VVR.pdf">ICOL+ Verification and Validation Report </a></li>
+                <li><a href="http://github.com/downloads/bcdev/beam-meris-icol/ICOL_SUM.pdf">ICOL+ Software User Manual</a></li>
+            </ul>
+        ]]>
     </description>
 
     <vendor>Brockmann Consult GmbH</vendor>
     <contactAddress>Max Planck Str.2, 21502 Geesthacht (Germany)</contactAddress>
-    <copyright>(C) 2008 by Brockmann Consult GmbH</copyright>
+    <copyright>(C) 2011 by Brockmann Consult GmbH</copyright>
     <url>http://envisat.esa.int/beam</url>
+    <url>http://www.brockmann-consult.de</url>
     <licenseUrl>http://www.gnu.org/licenses/gpl.html</licenseUrl>
-    
+
     <changelog>
         <![CDATA[
             <p>Changes in 1.1<br/>
