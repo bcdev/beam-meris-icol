@@ -25,8 +25,6 @@ import org.esa.beam.util.math.MathUtils;
 import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
-
 /**
  * Operator for cloud distance computation for AE correction.
  *
@@ -34,12 +32,13 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "CloudDistance",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zühlke, Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Cloud distance computation.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Marco Zühlke, Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Cloud distance computation.")
 public class CloudDistanceOp extends Operator {
+
     public static final String CLOUD_DISTANCE = "cloud_distance";
     public static final int NO_DATA_VALUE = -1;
 
@@ -50,7 +49,7 @@ public class CloudDistanceOp extends Operator {
     private RectangleExtender rectCalculator;
     private GeoCoding geocoding;
 
-    @SourceProduct(alias="source")
+    @SourceProduct(alias = "source")
     private Product sourceProduct;
     @SourceProduct(alias = "cloud")
     private Product cloudProduct;
@@ -59,11 +58,12 @@ public class CloudDistanceOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-    	targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "cloud_distance_"+ sourceProduct.getName(), "CLOUDD");
+        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct,
+                                                              "cloud_distance_" + sourceProduct.getName(), "CLOUDD");
 
         final String productType = sourceProduct.getProductType();
         int sourceExtend;
-        if (productType.indexOf("_RR") > -1) {
+        if (productType.contains("_RR")) {
             sourceExtend = SOURCE_EXTEND_RR;
         } else {
             sourceExtend = SOURCE_EXTEND_FR;
@@ -74,19 +74,21 @@ public class CloudDistanceOp extends Operator {
         band.setNoDataValueUsed(true);
 
         geocoding = sourceProduct.getGeoCoding();
-        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()),
-                                               sourceExtend, sourceExtend);
+        rectCalculator = new RectangleExtender(
+                new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()),
+                sourceExtend, sourceExtend);
     }
 
     @Override
     public void computeTile(Band band, Tile cloudDistance, ProgressMonitor pm) throws OperatorException {
 
-    	Rectangle targetRectangle = cloudDistance.getRectangle();
+        Rectangle targetRectangle = cloudDistance.getRectangle();
         Rectangle sourceRectangle = rectCalculator.extend(targetRectangle);
         pm.beginTask("Processing frame...", targetRectangle.height);
         try {
-        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, subPm1(pm));
-            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle, subPm1(pm));
+            Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
+                                     targetRectangle);
+            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), sourceRectangle);
 
             PixelPos startPix = new PixelPos();
             for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
@@ -99,10 +101,10 @@ public class CloudDistanceOp extends Operator {
 
                         cloudDistance.setSample(x, y, computeDistance(startPix, startGeoPos, saaRad, cloudFlags));
                     } else {
-                    	cloudDistance.setSample(x, y, NO_DATA_VALUE);
+                        cloudDistance.setSample(x, y, NO_DATA_VALUE);
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {
@@ -142,10 +144,11 @@ public class CloudDistanceOp extends Operator {
         final Rectangle isCloudRect = cloudFlags.getRectangle();
         ShapeRasterizer.LinePixelVisitor visitor = new ShapeRasterizer.LinePixelVisitor() {
 
+            @Override
             public void visit(int x, int y) {
                 if (result.get() == null &&
-                        isCloudRect.contains(x, y) &&
-                        cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD)) {
+                    isCloudRect.contains(x, y) &&
+                    cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD)) {
                     result.set(new PixelPos(x, y));
                 }
             }
@@ -161,6 +164,7 @@ public class CloudDistanceOp extends Operator {
 
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(CloudDistanceOp.class);
         }

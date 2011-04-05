@@ -18,29 +18,27 @@ import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
 
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
-
 /**
  * @author Olaf Danne
  * @version $Revision: $ $Date:  $
  */
 @OperatorMetadata(alias = "Meris.BrrCloud",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Sets BRR values to RS proposal in case of clouds.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Sets BRR values to RS proposal in case of clouds.")
 public class MerisBrrCloudOp extends Operator {
 
-    @SourceProduct(alias="l1b")
+    @SourceProduct(alias = "l1b")
     private Product l1bProduct;
-    @SourceProduct(alias="brr")
+    @SourceProduct(alias = "brr")
     private Product brrProduct;
-    @SourceProduct(alias="refl")
+    @SourceProduct(alias = "refl")
     private Product rad2reflProduct;
-    @SourceProduct(alias="cloud")
+    @SourceProduct(alias = "cloud")
     private Product cloudProduct;
-    @SourceProduct(alias="land")
+    @SourceProduct(alias = "land")
     private Product landProduct;
 
     @TargetProduct
@@ -55,7 +53,7 @@ public class MerisBrrCloudOp extends Operator {
 
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
         for (String bandName : brrProduct.getBandNames()) {
-            if(!brrProduct.getBand(bandName).isFlagBand()) {
+            if (!brrProduct.getBand(bandName).isFlagBand()) {
                 Band targetBand = ProductUtils.copyBand(bandName, brrProduct, targetProduct);
                 if (!bandName.startsWith("brr")) {
                     targetBand.setSourceImage(brrProduct.getBand(bandName).getSourceImage());
@@ -76,14 +74,16 @@ public class MerisBrrCloudOp extends Operator {
         try {
             final int bandNumber = band.getSpectralBandIndex() + 1;
 
-            Tile brrTile = getSourceTile(brrProduct.getBand("brr_" + bandNumber), rectangle, subPm1(pm));
-            Tile rad2reflTile = getSourceTile(rad2reflProduct.getBand("rho_toa_" + bandNumber), rectangle, subPm1(pm));
-            Tile isInvalid = getSourceTile(invalidBand, rectangle, subPm1(pm));
+            Tile brrTile = getSourceTile(brrProduct.getBand("brr_" + bandNumber), rectangle);
+            Tile rad2reflTile = getSourceTile(rad2reflProduct.getBand("rho_toa_" + bandNumber), rectangle);
+            Tile isInvalid = getSourceTile(invalidBand, rectangle);
 
-            Tile surfacePressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), rectangle, subPm1(pm));
-            Tile cloudTopPressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), rectangle, subPm1(pm));
-            Tile cloudFlagsTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle, subPm1(pm));
-            Tile landFlagsTile = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle, subPm1(pm));
+            Tile surfacePressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE),
+                                                     rectangle);
+            Tile cloudTopPressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP),
+                                                      rectangle);
+            Tile cloudFlagsTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle);
+            Tile landFlagsTile = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
@@ -106,7 +106,7 @@ public class MerisBrrCloudOp extends Operator {
                         }
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {
@@ -115,6 +115,7 @@ public class MerisBrrCloudOp extends Operator {
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(MerisBrrCloudOp.class);
         }

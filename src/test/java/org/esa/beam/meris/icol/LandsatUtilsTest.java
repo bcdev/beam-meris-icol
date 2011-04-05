@@ -1,16 +1,15 @@
 package org.esa.beam.meris.icol;
 
-import junit.framework.TestCase;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.TiePointGrid;
-import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
-import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.l2auxdata.L2AuxData;
+import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 
 /**
  * @author Olaf Danne
@@ -33,33 +32,33 @@ public class LandsatUtilsTest extends TestCase {
     }
 
     public void testGetSunZenith() {
-       // take test data from Meris L1b product tie point grid...
-       int doy = 158;
-       double gmt = 9.54;
-       GeoPos geoPos = new GeoPos(55.766f, 13.913f);
-       double sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
-       assertEquals(36.986, sunZenith, 0.3);
+        // take test data from Meris L1b product tie point grid...
+        int doy = 158;
+        double gmt = 9.54;
+        GeoPos geoPos = new GeoPos(55.766f, 13.913f);
+        double sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
+        assertEquals(36.986, sunZenith, 0.3);
 
-       doy = 164;
-       gmt = 8.5;
-       geoPos = new GeoPos(32.067326f, 27.566187f);
-       sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
-       assertEquals(23.72154, sunZenith, 0.3);
+        doy = 164;
+        gmt = 8.5;
+        geoPos = new GeoPos(32.067326f, 27.566187f);
+        sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
+        assertEquals(23.72154, sunZenith, 0.3);
     }
 
     public void testGetSunAzimuth() {
-       // take test data from Meris L1b product tie point grid...
-       int doy = 158;
-       double gmt = 9.54;
-       GeoPos geoPos = new GeoPos(55.766f, 13.913f);
-       double sunAzimuth = LandsatUtils.getSunAngles(geoPos, doy, gmt).getAzimuth();
-       assertEquals(143.711, sunAzimuth, 0.3);
+        // take test data from Meris L1b product tie point grid...
+        int doy = 158;
+        double gmt = 9.54;
+        GeoPos geoPos = new GeoPos(55.766f, 13.913f);
+        double sunAzimuth = LandsatUtils.getSunAngles(geoPos, doy, gmt).getAzimuth();
+        assertEquals(143.711, sunAzimuth, 0.3);
 
-       doy = 164;
-       gmt = 8.5;
-       geoPos = new GeoPos(32.067326f, 27.566187f);
-       sunAzimuth = LandsatUtils.getSunAngles(geoPos, doy, gmt).getAzimuth();
-       assertEquals(105.69186, sunAzimuth, 0.3);
+        doy = 164;
+        gmt = 8.5;
+        geoPos = new GeoPos(32.067326f, 27.566187f);
+        sunAzimuth = LandsatUtils.getSunAngles(geoPos, doy, gmt).getAzimuth();
+        assertEquals(105.69186, sunAzimuth, 0.3);
 
     }
 
@@ -106,12 +105,12 @@ public class LandsatUtilsTest extends TestCase {
             testProduct.setEndTime(ProductData.UTC.parse("06-AUG-2006 09:40:00"));
             // we need to set up an SZA tie point grid to read successfully...
             float[] tiePoints = new float[2500];
-            for (int i=0; i<2500; i++) {
+            for (int i = 0; i < 2500; i++) {
                 tiePoints[i] = 1.0f;
             }
-            TiePointGrid tpg = new TiePointGrid("sun_zenith",50,50,0.0f,0.0f,10.0f,10.0f,tiePoints);
+            TiePointGrid tpg = new TiePointGrid("sun_zenith", 50, 50, 0.0f, 0.0f, 10.0f, 10.0f, tiePoints);
             testProduct.addTiePointGrid(tpg);
-            L2AuxData auxdata = L2AuxdataProvider.getInstance().getAuxdata(testProduct);
+            L2AuxData auxdata = L2AuxDataProvider.getInstance().getAuxdata(testProduct);
             assertNotNull(auxdata);
         } catch (Exception e) {
             fail(e.getMessage());

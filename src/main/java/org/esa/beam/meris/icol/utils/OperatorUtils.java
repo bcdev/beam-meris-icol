@@ -1,8 +1,6 @@
 package org.esa.beam.meris.icol.utils;
 
 import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.core.SubProgressMonitor;
-import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -10,13 +8,9 @@ import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.meris.icol.Instrument;
-import org.esa.beam.meris.icol.tm.TmConstants;
-import org.esa.beam.meris.icol.tm.TmGaseousCorrectionOp;
 import org.esa.beam.util.ProductUtils;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.Rectangle;
 import java.util.Map;
 
 
@@ -30,11 +24,13 @@ public class OperatorUtils {
     public static Product createCompatibleProduct(Product sourceProduct, String name, String type) {
         return createCompatibleProduct(sourceProduct, name, type, false);
     }
+
     /**
      * Creates a new product with the same size.
      * Copies geocoding and the start and stop time.
      */
-    public static Product createCompatibleProduct(Product sourceProduct, String name, String type, boolean includeTiepoints) {
+    public static Product createCompatibleProduct(Product sourceProduct, String name, String type,
+                                                  boolean includeTiepoints) {
         final int sceneWidth = sourceProduct.getSceneRasterWidth();
         final int sceneHeight = sourceProduct.getSceneRasterHeight();
 
@@ -65,8 +61,9 @@ public class OperatorUtils {
             }
         }
     }
-    
-    public static Band[] addBandGroup(Product srcProduct, int numSrcBands, int[] bandsToSkip, Product targetProduct, String targetPrefix, double noDataValue, boolean compactTargetArray) {
+
+    public static Band[] addBandGroup(Product srcProduct, int numSrcBands, int[] bandsToSkip, Product targetProduct,
+                                      String targetPrefix, double noDataValue, boolean compactTargetArray) {
         int numTargetBands = numSrcBands;
         if (compactTargetArray && bandsToSkip.length > 0) {
             numTargetBands -= bandsToSkip.length;
@@ -91,10 +88,16 @@ public class OperatorUtils {
         }
         return targetBands;
     }
-    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, Instrument instrument , Rectangle rect, ProgressMonitor pm) throws OperatorException {
-        return getSourceTiles(op, srcProduct, bandPrefix,instrument.numSpectralBands, instrument.bandsToSkip, rect, pm);
+
+    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, Instrument instrument,
+                                        Rectangle rect, ProgressMonitor pm) throws OperatorException {
+        return getSourceTiles(op, srcProduct, bandPrefix, instrument.numSpectralBands, instrument.bandsToSkip, rect,
+                              pm);
     }
-    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands, int[] bandsToSkip, Rectangle rect, ProgressMonitor pm) throws OperatorException {
+
+    public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands,
+                                        int[] bandsToSkip, Rectangle rect, ProgressMonitor pm) throws
+                                                                                               OperatorException {
         Tile[] tiles = new Tile[numBands];
         for (int i = 0; i < tiles.length; i++) {
             if (!IcolUtils.isIndexToSkip(i, bandsToSkip)) {
@@ -121,7 +124,4 @@ public class OperatorUtils {
         return tiles;
     }
 
-    public static ProgressMonitor subPm1(ProgressMonitor pm) {
-        return SubProgressMonitor.create(pm, 1);
-    }
 }

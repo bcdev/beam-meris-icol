@@ -23,11 +23,9 @@ import org.esa.beam.util.RectangleExtender;
 import org.esa.beam.util.ShapeRasterizer;
 import org.esa.beam.util.math.MathUtils;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 /**
  * Operator for coast distance computation for AE correction.
@@ -36,12 +34,13 @@ import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "CoastDistance",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne, Marco Zuehlke",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Coast distance computation.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne, Marco Zuehlke",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Coast distance computation.")
 public class CoastDistanceOp extends Operator {
+
     public static final String COAST_DISTANCE = "coast_distance";
     public static final int NO_DATA_VALUE = -1;
 
@@ -57,9 +56,9 @@ public class CoastDistanceOp extends Operator {
     private Band isWaterBand;
     private Band[] distanceBands;
 
-    @SourceProduct(alias="source")
+    @SourceProduct(alias = "source")
     private Product sourceProduct;
-    @SourceProduct(alias="land")
+    @SourceProduct(alias = "land")
     private Product landProduct;
     @TargetProduct
     private Product targetProduct;
@@ -75,7 +74,8 @@ public class CoastDistanceOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-    	targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, COAST_DISTANCE + "_" + sourceProduct.getName(), "COASTD");
+        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct,
+                                                              COAST_DISTANCE + "_" + sourceProduct.getName(), "COASTD");
 
         final String productType = sourceProduct.getProductType();
         if (productType.indexOf("_RR") > -1) {
@@ -86,14 +86,16 @@ public class CoastDistanceOp extends Operator {
         distanceBands = new Band[numDistances];
         noDataDistances = new int[numDistances];
         for (int i = 0; i < numDistances; i++) {
-            Band band = targetProduct.addBand(COAST_DISTANCE + "_" + (i+1), ProductData.TYPE_INT32);
+            Band band = targetProduct.addBand(COAST_DISTANCE + "_" + (i + 1), ProductData.TYPE_INT32);
             band.setNoDataValue(NO_DATA_VALUE);
             band.setNoDataValueUsed(true);
             distanceBands[i] = band;
             noDataDistances[i] = NO_DATA_VALUE;
         }
         geocoding = sourceProduct.getGeoCoding();
-        rectCalculator = new RectangleExtender(new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), sourceExtend, sourceExtend);
+        rectCalculator = new RectangleExtender(
+                new Rectangle(sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight()), sourceExtend,
+                sourceExtend);
 
         BandMathsOp bandMathOpLand = BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandMathOpLand.getTargetProduct().getBandAt(0);
@@ -104,14 +106,16 @@ public class CoastDistanceOp extends Operator {
     }
 
     @Override
-    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws OperatorException {
+    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRectangle, ProgressMonitor pm) throws
+                                                                                                             OperatorException {
         Rectangle sourceRectangle = rectCalculator.extend(targetRectangle);
         pm.beginTask("Processing frame...", targetRectangle.height + 3);
         try {
-        	Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRectangle, subPm1(pm));
-        	Tile isLand = getSourceTile(isLandBand, sourceRectangle, subPm1(pm));
-        	Tile isWater = getSourceTile(isWaterBand, sourceRectangle, subPm1(pm));
-            
+            Tile saa = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
+                                     targetRectangle);
+            Tile isLand = getSourceTile(isLandBand, sourceRectangle);
+            Tile isWater = getSourceTile(isWaterBand, sourceRectangle);
+
             Tile[] distanceTiles = new Tile[numDistances];
             for (int i = 0; i < numDistances; i++) {
                 Band band = distanceBands[i];
@@ -120,8 +124,8 @@ public class CoastDistanceOp extends Operator {
             Tile[] waterPixelMasks = new Tile[numDistances];
             Tile[] landPixelMasks = new Tile[numDistances];
             for (int i = 0; i < numDistances; i++) {
-                waterPixelMasks[i] = (i%2 == 0) ? isLand : isWater;
-                landPixelMasks[i] = (i%2 == 0) ? isWater : isLand;
+                waterPixelMasks[i] = (i % 2 == 0) ? isLand : isWater;
+                landPixelMasks[i] = (i % 2 == 0) ? isWater : isLand;
             }
 
             PixelPos startPix = new PixelPos();
@@ -148,7 +152,7 @@ public class CoastDistanceOp extends Operator {
                         distanceTiles[i].setSample(x, y, distances[i]);
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {
@@ -174,12 +178,12 @@ public class CoastDistanceOp extends Operator {
         } else {
             final PixelPos[] pixelPos = findMaskPixels(startPix, lineEndPix, masks);
             int[] distances = new int[numDistances];
-                for (int i = 0; i < distances.length; i++) {
-                    final PixelPos endPix = pixelPos[i];
-                    if (endPix != null) {
-                        distances[i] = (int) NavigationUtils.distanceInMeters(geocoding, startPix, endPix);
-                    } else {
-                        distances[i] = NO_DATA_VALUE;
+            for (int i = 0; i < distances.length; i++) {
+                final PixelPos endPix = pixelPos[i];
+                if (endPix != null) {
+                    distances[i] = (int) NavigationUtils.distanceInMeters(geocoding, startPix, endPix);
+                } else {
+                    distances[i] = NO_DATA_VALUE;
                 }
             }
             return distances;
@@ -200,6 +204,7 @@ public class CoastDistanceOp extends Operator {
 
 
     private static class ZmaxPixelVisitor implements ShapeRasterizer.LinePixelVisitor {
+
         private final Tile[] masks;
         private final Rectangle maskRect;
         final PixelPos[] results;
@@ -216,12 +221,13 @@ public class CoastDistanceOp extends Operator {
             return results;
         }
 
+        @Override
         public void visit(int x, int y) {
             final int i = index.get();
             if (i < masks.length &&
-                    results[i] == null &&
-                    maskRect.contains(x, y) &&
-                    masks[i].getSampleBoolean(x, y)) {
+                results[i] == null &&
+                maskRect.contains(x, y) &&
+                masks[i].getSampleBoolean(x, y)) {
                 results[index.getAndIncrement()] = new PixelPos(x, y);
             }
         }
@@ -229,6 +235,7 @@ public class CoastDistanceOp extends Operator {
 
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(CoastDistanceOp.class);
         }

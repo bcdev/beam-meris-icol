@@ -13,15 +13,15 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.HelperFunctions;
 import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
-import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
+import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.gpf.operators.standard.BandMathsOp;
 
 import java.awt.Rectangle;
 import java.util.Map;
@@ -83,7 +83,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     @Override
     public void initialize() throws OperatorException {
         try {
-            auxData = L2AuxdataProvider.getInstance().getAuxdata(sourceProduct);
+            auxData = L2AuxDataProvider.getInstance().getAuxdata(sourceProduct);
             rayleighCorrection = new TmRayleighCorrection(auxData);
         } catch (Exception e) {
             throw new OperatorException("could not load L2Auxdata", e);
@@ -115,7 +115,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
     private Band[] addBandGroup(String prefix) {
         return OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
-                new int[]{}, targetProduct, prefix, NO_DATA_VALUE, false);
+                                          new int[]{}, targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     public static FlagCoding createFlagCoding(int bandLength) {
@@ -129,19 +129,28 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     }
 
     @Override
-    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
+    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws
+                                                                                                       OperatorException {
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
-            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
-            Tile vzaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle, pm);
-            Tile saaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), rectangle, pm);
-            Tile vaaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), rectangle, pm);
-            Tile altitudeTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME), rectangle, pm);
-            Tile scattAngleTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SCATTERING_ANGLE_BAND_NAME), rectangle, pm);
+            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
+                                         rectangle, pm);
+            Tile vzaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME),
+                                         rectangle, pm);
+            Tile saaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
+                                         rectangle, pm);
+            Tile vaaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME),
+                                         rectangle, pm);
+            Tile altitudeTile = getSourceTile(
+                    sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME), rectangle, pm);
+            Tile scattAngleTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SCATTERING_ANGLE_BAND_NAME),
+                                                rectangle, pm);
 
             Tile[] rhoNg = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
             for (int i = 0; i < rhoNg.length; i++) {
-                rhoNg[i] = getSourceTile(fresnelProduct.getBand(TmGaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + (i + 1)), rectangle, pm);
+                rhoNg[i] = getSourceTile(
+                        fresnelProduct.getBand(TmGaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + (i + 1)), rectangle,
+                        pm);
             }
             Tile isLandCons = getSourceTile(isLandBand, rectangle, pm);
 
@@ -188,7 +197,9 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
                     for (int iy = y; iy <= yWinEnd; iy++) {
                         for (int ix = x; ix <= xWinEnd; ix++) {
-                            if (rhoNg[0].getSampleFloat(ix, iy) != BAD_VALUE && (correctWater || isLandCons.getSampleBoolean(ix, iy))) {
+                            if (rhoNg[0].getSampleFloat(ix,
+                                                        iy) != BAD_VALUE && (correctWater || isLandCons.getSampleBoolean(
+                                    ix, iy))) {
                                 correctPixel = true;
                                 do_corr[iy - y][ix - x] = true;
                             } else {
@@ -208,7 +219,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                         final double sinv = Math.sin(vzaRad);
                         final double mus = Math.cos(szaRad);
                         final double muv = Math.cos(vzaRad);
-                        final double deltaAzimuth = HelperFunctions.computeAzimuthDifference(vaaTile.getSampleFloat(x, y), saaTile.getSampleFloat(x, y));
+                        final double deltaAzimuth = HelperFunctions.computeAzimuthDifference(
+                                vaaTile.getSampleFloat(x, y), saaTile.getSampleFloat(x, y));
                         final double cosScattAngle = scattAngleTile.getSampleFloat(x, y);
 
                         /*
@@ -223,7 +235,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                         if (cloudProduct != null) {
                             final boolean isCloud = cloudFlags.getSampleBit(x, y, TmCloudClassificationOp.F_CLOUD);
                             if (isCloud) {
-                                final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) / userPSurf;
+                                final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x,
+                                                                                                        y) / userPSurf;
                                 press = press * pressureCorrectionCloud;
                             }
                         }
@@ -238,7 +251,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                         }
 
                         /* Rayleigh reflectance*/
-                        rayleighCorrection.ref_rayleigh(deltaAzimuth, szaTile.getSampleFloat(x, y), vzaTile.getSampleFloat(x, y), mus, muv,
+                        rayleighCorrection.ref_rayleigh(deltaAzimuth, szaTile.getSampleFloat(x, y),
+                                                        vzaTile.getSampleFloat(x, y), mus, muv,
                                                         airMass, phaseR, tauR, rhoR);
 
                         /* Rayleigh transmittance */
@@ -255,9 +269,9 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                                      bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
                                     // apply single scattering approximation
                                     // ICOL D4 ATBD eqs. 26a-c
-                                    rhoR[bandId] = 3.0*tauR[bandId]*(1.0 + cosScattAngle*cosScattAngle)/(16.0*mus*muv);
-                                    transRs[bandId] = Math.exp(-tauR[bandId]/(2.0*mus));
-                                    transRv[bandId] = Math.exp(-tauR[bandId]/(2.0*muv));
+                                    rhoR[bandId] = 3.0 * tauR[bandId] * (1.0 + cosScattAngle * cosScattAngle) / (16.0 * mus * muv);
+                                    transRs[bandId] = Math.exp(-tauR[bandId] / (2.0 * mus));
+                                    transRv[bandId] = Math.exp(-tauR[bandId] / (2.0 * muv));
                                     sphAlbR[bandId] = tauR[bandId];
                                 }
                                 if (do_corr[iy - y][ix - x]) {
@@ -270,7 +284,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                                         rayleigh_refl[bandId].setSample(ix, iy, rhoR[bandId]);
                                         if (brr[bandId].getSampleFloat(ix, iy) <= 0.) {
                                             /* set annotation flag for reflectance product - v4.2 */
-                                            brrFlags.setSample(ix, iy, bandId , true);
+                                            brrFlags.setSample(ix, iy, bandId, true);
                                         }
                                     }
                                     if (exportRayCoeffs) {
@@ -301,6 +315,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
      * It provides operator meta-data and is a factory for new operator instances.
      */
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(TmRayleighCorrectionOp.class);
         }

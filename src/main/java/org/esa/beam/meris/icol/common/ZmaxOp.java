@@ -18,11 +18,9 @@ import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.math.MathUtils;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 /**
  * Operator providing Zmax for land or cloud contribution in AE correction.
@@ -63,7 +61,7 @@ public class ZmaxOp extends Operator {
         int numZmax = distanceProduct.getNumBands();
         distanceBandMap = new HashMap<Band, Band>(numZmax);
         for (int i = 0; i < numZmax; i++) {
-            Band zmaxBand = targetProduct.addBand(ZMAX + "_" + (i+1), ProductData.TYPE_FLOAT32);
+            Band zmaxBand = targetProduct.addBand(ZMAX + "_" + (i + 1), ProductData.TYPE_FLOAT32);
             zmaxBand.setNoDataValue(NO_DATA_VALUE);
             zmaxBand.setNoDataValueUsed(true);
 
@@ -71,7 +69,7 @@ public class ZmaxOp extends Operator {
             if (numZmax == 1) {
                 distBand = distanceProduct.getBand(distanceBandName);
             } else {
-                distBand = distanceProduct.getBand(distanceBandName + "_" + (i+1));
+                distBand = distanceProduct.getBand(distanceBandName + "_" + (i + 1));
             }
             distanceBandMap.put(zmaxBand, distBand);
         }
@@ -86,11 +84,12 @@ public class ZmaxOp extends Operator {
 
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
-            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, subPm1(pm));
-            Tile aeMask = getSourceTile(aeMaskBand, targetRect, subPm1(pm));
+            Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
+                                     targetRect);
+            Tile aeMask = getSourceTile(aeMaskBand, targetRect);
 
             Band distanceBand = distanceBandMap.get(zmaxBand);
-            Tile distance = getSourceTile(distanceBand, targetRect, subPm1(pm));
+            Tile distance = getSourceTile(distanceBand, targetRect);
             double distanceNoDataValue = distanceBand.getNoDataValue();
 
             PixelPos pPix = new PixelPos();
@@ -108,21 +107,21 @@ public class ZmaxOp extends Operator {
                     }
                     zmax.setSample(x, y, zMaxValue);
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {
             pm.done();
         }
     }
-    
+
     public static double computeZmaxPart(Tile[] zmaxTiles, int x, int y, double scaleHeight) {
         double zmaxPart = computeZmaxPart(zmaxTiles[0], x, y, scaleHeight);
         for (int i = 1; i < zmaxTiles.length; i++) {
             // the current ICOL only has one additional Zmax, but in principle we need to
             // switch between addition and subtraction of additional term:
             // transition land-->water: add, water-->land: subtract
-            zmaxPart += Math.pow(-1.0, i*1.0)*computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
+            zmaxPart += Math.pow(-1.0, i * 1.0) * computeZmaxPart(zmaxTiles[i], x, y, scaleHeight);
         }
         return zmaxPart;
     }
@@ -142,7 +141,7 @@ public class ZmaxOp extends Operator {
             Tile[] tiles = new Tile[zmaxProduct.getNumBands()];
             for (int i = 0; i < tiles.length; i++) {
                 final Band band = zmaxProduct.getBandAt(i);
-                tiles[i] = op.getSourceTile(band, targetRect, subPm1(pm));
+                tiles[i] = op.getSourceTile(band, targetRect);
             }
             return tiles;
         } finally {
@@ -150,11 +149,12 @@ public class ZmaxOp extends Operator {
         }
     }
 
-    public static Tile getSourceTile(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
-        return op.getSourceTile(zmaxProduct.getBand(ZMAX + "_1"), targetRect, pm);
+    public static Tile getSourceTile(Operator op, Product zmaxProduct, Rectangle targetRect) {
+        return op.getSourceTile(zmaxProduct.getBand(ZMAX + "_1"), targetRect);
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(ZmaxOp.class);
         }

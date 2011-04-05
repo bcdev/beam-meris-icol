@@ -190,7 +190,7 @@ public class AdjacencyEffectRayleighOp extends Operator {
             Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect,
                                      pm);
             Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-            Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
+            Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
             Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
             Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
             Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect, pm);
@@ -216,8 +216,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
             Tile[] aeRayTiles = OperatorUtils.getTargetTiles(targetTiles, aeRayBands);
             Tile[] rhoAeRcTiles = OperatorUtils.getTargetTiles(targetTiles, rhoAeRcBands);
             Tile[] rhoAgBracket = null;
-            final boolean isRSAdditionalOutputBands = System.getProperty( "additionalOutputBands") != null &&
-                                                      System.getProperty( "additionalOutputBands").equals("RS");
+            final boolean isRSAdditionalOutputBands = System.getProperty("additionalOutputBands") != null &&
+                                                      System.getProperty("additionalOutputBands").equals("RS");
             if (isRSAdditionalOutputBands) {
                 rhoAgBracket = OperatorUtils.getTargetTiles(targetTiles, rhoAgBracketBands);
             }
@@ -267,7 +267,7 @@ public class AdjacencyEffectRayleighOp extends Operator {
                                     tmpRhoRayBracket = means[b];
                                 }
                                 // rayleigh contribution without AE (tmpRhoRayBracket)
-                                
+
                                 // over water, compute the rayleigh contribution to the AE
                                 float rhoAgValue = rhoAg[b].getSampleFloat(x, y);
                                 float transRupValue = transRup[b].getSampleFloat(x, y);
@@ -277,8 +277,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
 
                                 double aeRayRay = (transRupValue - Math
                                         .exp(-tauRValue / muV))
-                                        * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
-                                        (1d - tmpRhoRayBracket * sphAlbValue));
+                                                  * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
+                                                                                       (1d - tmpRhoRayBracket * sphAlbValue));
 
                                 double aeRayFresnelLand = 0.0d;
                                 if (zmaxPart != 0) {
@@ -330,6 +330,7 @@ public class AdjacencyEffectRayleighOp extends Operator {
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(AdjacencyEffectRayleighOp.class);
         }

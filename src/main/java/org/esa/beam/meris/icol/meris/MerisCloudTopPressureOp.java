@@ -18,8 +18,6 @@ import org.esa.beam.meris.cloud.CloudTopPressureOp;
 
 import java.awt.Rectangle;
 
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
-
 /**
  * Operator for cloud top pressure computation for AE correction.
  *
@@ -68,7 +66,7 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 1);
         try {
-            Tile isInvalid = getSourceTile(invalidBand, rect, subPm1(pm));
+            Tile isInvalid = getSourceTile(invalidBand, rect);
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
                     if (isInvalid.getSampleBoolean(x, y)) {
@@ -77,7 +75,7 @@ public class MerisCloudTopPressureOp extends MerisBasisOp {
                         targetTile.setSample(x, y, userCtp);
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {

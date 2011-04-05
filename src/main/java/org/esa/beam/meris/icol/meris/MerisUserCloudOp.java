@@ -18,14 +18,12 @@ import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
 
-import static org.esa.beam.meris.icol.utils.OperatorUtils.*;
-
 @OperatorMetadata(alias = "Meris.UserCloud",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zühlke",
-        copyright = "(c) 2010 by Brockmann Consult",
-        description = "Operator for user cloud masking.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Marco Zühlke",
+                  copyright = "(c) 2010 by Brockmann Consult",
+                  description = "Operator for user cloud masking.")
 public class MerisUserCloudOp extends Operator {
 
     @SourceProduct
@@ -45,7 +43,8 @@ public class MerisUserCloudOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        targetProduct = OperatorUtils.createCompatibleProduct(cloudClassification, "user_cloud", cloudClassification.getProductType());
+        targetProduct = OperatorUtils.createCompatibleProduct(cloudClassification, "user_cloud",
+                                                              cloudClassification.getProductType());
 
         ProductUtils.copyFlagBands(cloudClassification, targetProduct);
         cloudClassificationBand = cloudClassification.getBand(CloudClassificationOp.CLOUD_FLAGS);
@@ -58,7 +57,7 @@ public class MerisUserCloudOp extends Operator {
 
         BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(cloudMaskExpression, cloudMask);
         isCloudyBand = baOp.getTargetProduct().getBandAt(0);
-        
+
     }
 
     @Override
@@ -67,18 +66,18 @@ public class MerisUserCloudOp extends Operator {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 2);
         try {
-            Tile isCloudyTile = getSourceTile(isCloudyBand, rect, subPm1(pm));
-            Tile cloudClassificationTile = getSourceTile(cloudClassificationBand, rect, subPm1(pm));
+            Tile isCloudyTile = getSourceTile(isCloudyBand, rect);
+            Tile cloudClassificationTile = getSourceTile(cloudClassificationBand, rect);
             for (int y = rect.y; y < rect.y + rect.height; y++) {
-				for (int x = rect.x; x < rect.x + rect.width; x++) {
+                for (int x = rect.x; x < rect.x + rect.width; x++) {
                     int cloudFlags = cloudClassificationTile.getSampleInt(x, y);
                     boolean isCloudy = isCloudyTile.getSampleBoolean(x, y);
                     cloudFlags = setFlagValue(cloudFlags, CloudClassificationOp.F_CLOUD, isCloudy);
                     targetTile.setSample(x, y, cloudFlags);
-				}
-                checkForCancellation(pm);
-				pm.worked(1);
-			}
+                }
+                checkForCancellation();
+                pm.worked(1);
+            }
         } finally {
             pm.done();
         }
@@ -89,6 +88,7 @@ public class MerisUserCloudOp extends Operator {
     }
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(MerisUserCloudOp.class);
         }

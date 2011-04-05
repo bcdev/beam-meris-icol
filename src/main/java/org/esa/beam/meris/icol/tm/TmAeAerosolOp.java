@@ -46,18 +46,19 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Landsat5.AEAerosol",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Contribution of aerosol to the adjacency effect (Landsat5).")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Contribution of aerosol to the adjacency effect (Landsat5).")
 public class TmAeAerosolOp extends TmBasisOp {
+
     public static final String AOT_FLAGS = "aot_flags";
 
     //vertical scale height
     private static final double HA = 3000;
     private static final double AE_AOT_THRESHOLD = 0.01;
-    
+
     private Band isLandBand;
 
     @SourceProduct(alias = "l1b")
@@ -70,9 +71,9 @@ public class TmAeAerosolOp extends TmBasisOp {
     private Product zmaxProduct;
     @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias = "cloud", optional=true)
+    @SourceProduct(alias = "cloud", optional = true)
     private Product cloudProduct;
-    @SourceProduct(alias = "ctp", optional=true)
+    @SourceProduct(alias = "ctp", optional = true)
     private Product ctpProduct;
     @SourceProduct(alias = "zmaxCloud")
     private Product zmaxCloudProduct;
@@ -88,12 +89,13 @@ public class TmAeAerosolOp extends TmBasisOp {
     private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength")
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2",
+               description = "The aerosol optical thickness at reference wavelength")
     private double userAot;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
-    @Parameter(defaultValue="false")
+    @Parameter(defaultValue = "false")
     private boolean reshapedConvolution;
     @Parameter
     private String landExpression;
@@ -137,7 +139,7 @@ public class TmAeAerosolOp extends TmBasisOp {
         // are finally clarified
         if (instrument.toUpperCase().equals("MERIS")) {
             numSpectralBands = EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS;
-            bandsToSkip = new int[]{10,14};
+            bandsToSkip = new int[]{10, 14};
         } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
             numSpectralBands = TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS;
             bandsToSkip = new int[]{5};
@@ -153,7 +155,8 @@ public class TmAeAerosolOp extends TmBasisOp {
         aotBand = targetProduct.addBand("aot", ProductData.TYPE_FLOAT32);
 
         rhoAeAcBands = addBandGroup("rho_ray_aeac", -1);
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals(
+                "RS")) {
             rhoRaecBracketBands = addBandGroup("rho_raec_bracket", -1);
             rhoRaecDiffBands = addBandGroup("rho_raec_diff", -1);
         }
@@ -183,12 +186,13 @@ public class TmAeAerosolOp extends TmBasisOp {
         aerosolScatteringFunctions = new AerosolScatteringFunctions();
 
         BandMathsOp bandArithmeticOp =
-            BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
+                BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
     }
 
     private Band[] addBandGroup(String prefix, double noDataValue) {
-        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip, targetProduct, prefix, noDataValue, false);
+        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip, targetProduct, prefix, noDataValue,
+                                          false);
     }
 
     private Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands) {
@@ -221,17 +225,21 @@ public class TmAeAerosolOp extends TmBasisOp {
 
 
     @Override
-    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws OperatorException {
+    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
+                                                                                                        OperatorException {
         Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
 
-        Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
+        Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect,
+                                 pm);
         Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-        Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-        Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
+        Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect,
+                                 pm);
+        Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect,
+                                 pm);
 
         Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
         Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-        Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
+        Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
         Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
 
         Tile[] rhoRaec = getRhoRaecTiles(pm, sourceRect, instrument);
@@ -248,7 +256,8 @@ public class TmAeAerosolOp extends TmBasisOp {
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals(
+                "RS")) {
             rhoRaecBracket = getTargetTiles(targetTiles, rhoRaecBracketBands);
             rhoRaecDiffRaster = getTargetTiles(targetTiles, rhoRaecDiffBands);
         }
@@ -264,11 +273,14 @@ public class TmAeAerosolOp extends TmBasisOp {
         Tile cloudFlags = null;
         if (cloudProduct != null) {
             if (instrument.toUpperCase().equals("MERIS")) {
-                surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), targetRect, pm);
-                cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect, pm);
+                surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE),
+                                                targetRect, pm);
+                cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect,
+                                                 pm);
                 cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
             } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
-                cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT5_CTP_BAND_NAME), targetRect, pm);
+                cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT5_CTP_BAND_NAME), targetRect,
+                                                 pm);
                 cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
             }
         }
@@ -304,10 +316,10 @@ public class TmAeAerosolOp extends TmBasisOp {
                             double pressureCorrectionCloud = 1.0;
                             if (instrument.toUpperCase().equals("MERIS")) {
                                 pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) /
-                                        surfacePressure.getSampleDouble(x, y);
+                                                          surfacePressure.getSampleDouble(x, y);
                             } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
                                 pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) /
-                                        userPSurf;
+                                                          userPSurf;
                             }
                             // cloud height
                             double zCloud = 8.0 * Math.log(1.0 / pressureCorrectionCloud);
@@ -319,10 +331,13 @@ public class TmAeAerosolOp extends TmBasisOp {
                         double alpha;
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             // RS, 04/12/09:
-                            final double rho_4 = rhoRaec[TmConstants.LANDSAT5_RADIANCE_4_BAND_INDEX].getSampleFloat(x, y);
-                            final double rho_3 = rhoRaec[TmConstants.LANDSAT5_RADIANCE_3_BAND_INDEX].getSampleFloat(x, y);
+                            final double rho_4 = rhoRaec[TmConstants.LANDSAT5_RADIANCE_4_BAND_INDEX].getSampleFloat(x,
+                                                                                                                    y);
+                            final double rho_3 = rhoRaec[TmConstants.LANDSAT5_RADIANCE_3_BAND_INDEX].getSampleFloat(x,
+                                                                                                                    y);
                             final double epsilon = rho_3 / rho_4;
-                            alpha = Math.log(epsilon) / Math.log(TmConstants.LANDSAT5_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS[2] /
+                            alpha = Math.log(epsilon) / Math.log(
+                                    TmConstants.LANDSAT5_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS[2] /
                                     TmConstants.LANDSAT5_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS[3]);
                         } else {
                             alpha = userAlpha;
@@ -381,14 +396,20 @@ public class TmAeAerosolOp extends TmBasisOp {
                             rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
 //                            rhoBrrBracket705 = convolver.convolveSample(x, y, iaer, Constants.bb705);
                         } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
-                            rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, TmConstants.LANDSAT5_RADIANCE_4_BAND_INDEX);
+                            rhoBrrBracket865 = convolver.convolveSample(x, y, iaer,
+                                                                        TmConstants.LANDSAT5_RADIANCE_4_BAND_INDEX);
 //                            rhoBrrBracket705 = rhoBrrBracket865; // TBD
                         }
                         if (!isLand.getSampleBoolean(x, y) && icolAerosolForWater) {
                             // icolAerosolForWater = true only for MERIS
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab,
+                                                                                                        sza.getSampleFloat(
+                                                                                                                x, y),
+                                                                                                        vza.getSampleFloat(
+                                                                                                                x, y),
+                                                                                                        phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
@@ -406,7 +427,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                             if (searchIAOT != -1) {
                                 aot = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
-                                        rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * 0.1;
+                                                                                rhoBrr865[searchIAOT + 1],
+                                                                                searchIAOT + 1, rho_13) * 0.1;
                             } else {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
@@ -416,10 +438,15 @@ public class TmAeAerosolOp extends TmBasisOp {
                             searchIAOT = MathUtils.floorInt(aot * 10) + 1;  // RS, 21/12/2010
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab,
+                                                                                                        sza.getSampleFloat(
+                                                                                                                x, y),
+                                                                                                        vza.getSampleFloat(
+                                                                                                                x, y),
+                                                                                                        phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
-                                corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart- zmaxCloudPart));
+                                corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                                 rhoa = rhoa0 * corrFac;
                                 // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0) s.a.
                                 rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
@@ -430,7 +457,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                         alphaIndexTile.setSample(x, y, iaer);
                         alphaTile.setSample(x, y, alpha);
-                        aotTile.setSample(x, y, IcolUtils.convertAOT(aot, alpha, 865.0, userAerosolReferenceWavelength));
+                        aotTile.setSample(x, y,
+                                          IcolUtils.convertAOT(aot, alpha, 865.0, userAerosolReferenceWavelength));
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < numSpectralBands; iwvl++) {
@@ -457,7 +485,13 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                AerosolScatteringFunctions.RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer,
+                                                                                                         pab,
+                                                                                                         sza.getSampleFloat(
+                                                                                                                 x, y),
+                                                                                                         vza.getSampleFloat(
+                                                                                                                 x, y),
+                                                                                                         phi);
 
                                 double aerosol1 = 0.0;
                                 final double downwellingTransmittanceTerm = rv1.tds / (1.0 - roAerMean * rv1.sa);
@@ -475,7 +509,13 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 //Compute the aerosols functions for the second aot
                                 final double taua2 = 0.1 * (searchIAOT + 1) * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                AerosolScatteringFunctions.RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                AerosolScatteringFunctions.RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer,
+                                                                                                         pab,
+                                                                                                         sza.getSampleFloat(
+                                                                                                                 x, y),
+                                                                                                         vza.getSampleFloat(
+                                                                                                                 x, y),
+                                                                                                         phi);
 
                                 double aea2 = (roAerMean - rhoRaecIwvl) * (rv2.tds / (1.0 - roAerMean * rv2.sa));
                                 aea2 = (rv2.tus - Math.exp(-taua2 / muv)) * aea2;
@@ -483,7 +523,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 //AOT INTERPOLATION to get AE_aer
                                 double aea = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], aea1,
-                                        rhoBrr865[searchIAOT + 1], aea2, rho_13);
+                                                                                       rhoBrr865[searchIAOT + 1], aea2,
+                                                                                       rho_13);
 
                                 if (isCloud) {
                                     aea *= rhoCloudCorrFac;
@@ -493,7 +534,8 @@ public class TmAeAerosolOp extends TmBasisOp {
 
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl - (float) aea);
 
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (System.getProperty("additionalOutputBands") != null && System.getProperty(
+                                        "additionalOutputBands").equals("RS")) {
                                     rhoRaecBracket[iwvl].setSample(x, y, roAerMean);
                                     rhoRaecDiffRaster[iwvl].setSample(x, y, rhoRaecIwvl - aerosol1 + fresnel1);
                                 }
@@ -503,7 +545,8 @@ public class TmAeAerosolOp extends TmBasisOp {
                                     rhoRaecIwvl *= rhoCloudCorrFac;
                                 }
                                 rhoAeAcRaster[iwvl].setSample(x, y, rhoRaecIwvl);
-                                if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                                if (System.getProperty("additionalOutputBands") != null && System.getProperty(
+                                        "additionalOutputBands").equals("RS")) {
                                     rhoRaecBracket[iwvl].setSample(x, y, -1f);
                                 }
                             }
@@ -514,7 +557,8 @@ public class TmAeAerosolOp extends TmBasisOp {
                                 continue;
                             }
                             rhoAeAcRaster[iwvl].setSample(x, y, rhoRaec[iwvl].getSampleFloat(x, y));
-                            if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+                            if (System.getProperty("additionalOutputBands") != null && System.getProperty(
+                                    "additionalOutputBands").equals("RS")) {
                                 rhoRaecBracket[iwvl].setSample(x, y, -1f);
                             }
                         }

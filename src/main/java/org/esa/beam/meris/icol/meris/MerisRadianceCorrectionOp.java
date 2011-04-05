@@ -31,14 +31,12 @@ import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
-import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
+import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
-
-import static org.esa.beam.meris.icol.utils.OperatorUtils.subPm1;
 
 
 /**
@@ -75,7 +73,7 @@ public class MerisRadianceCorrectionOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
         try {
-            auxData = L2AuxdataProvider.getInstance().getAuxdata(l1bProduct);
+            auxData = L2AuxDataProvider.getInstance().getAuxdata(l1bProduct);
         } catch (Exception e) {
             throw new OperatorException("could not load L2Auxdata", e);
         }
@@ -111,13 +109,11 @@ public class MerisRadianceCorrectionOp extends Operator {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 4);
         try {
-            Tile sourceTile = getSourceTile(l1bProduct.getBand(band.getName()), rect, subPm1(pm));
-            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + 1), rect,
-                                         subPm1(pm));
+            Tile sourceTile = getSourceTile(l1bProduct.getBand(band.getName()), rect);
+            Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + 1), rect);
             Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
-                                               rect, subPm1(pm));
-            Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect,
-                                           subPm1(pm));
+                                               rect);
+            Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect);
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -130,7 +126,7 @@ public class MerisRadianceCorrectionOp extends Operator {
                     l1Flag = BitSetter.setFlag(l1Flag, 3, aeApplied); // set SUSPECT, if ae applied
                     targetTile.setSample(x, y, l1Flag);
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {
@@ -144,12 +140,11 @@ public class MerisRadianceCorrectionOp extends Operator {
         try {
             final int bandNumber = band.getSpectralBandIndex() + 1;
 
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rect,
-                                     subPm1(pm));
+            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rect);
             Tile detectorIndexTile = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME),
-                                                   rect, subPm1(pm));
-            Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rect, subPm1(pm));
-            Tile rhoToaCorrTile = getSourceTile(rhoToaProduct.getBand("rho_toa_AEAC_" + bandNumber), rect, subPm1(pm));
+                                                   rect);
+            Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rect);
+            Tile rhoToaCorrTile = getSourceTile(rhoToaProduct.getBand("rho_toa_AEAC_" + bandNumber), rect);
 
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 for (int x = rect.x; x < rect.x + rect.width; x++) {
@@ -174,7 +169,7 @@ public class MerisRadianceCorrectionOp extends Operator {
                         targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } finally {

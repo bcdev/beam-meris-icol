@@ -95,7 +95,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
     private Product zmaxProduct;
     @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias = "rayaercconv", optional=true)
+    @SourceProduct(alias = "rayaercconv", optional = true)
     private Product ray1bconvProduct;
     @SourceProduct(alias = "cloud", optional = true)
     private Product cloudProduct;
@@ -113,14 +113,15 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
     private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength")
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2",
+               description = "The aerosol optical thickness at reference wavelength")
     private double userAot;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
     private int iaerConv;
     @Parameter(defaultValue = "true")
     private boolean reshapedConvolution;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean openclConvolution = true;
     @Parameter
     private String landExpression;
@@ -174,7 +175,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         aotBand = targetProduct.addBand("aot", ProductData.TYPE_FLOAT32);
 
         rhoAeAcBands = addBandGroup("rho_ray_aeac");
-        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals(
+                "RS")) {
             rhoRaecBracketBands = addBandGroup("rho_raec_bracket");
             rhoRaecDiffBands = addBandGroup("rho_raec_diff");
         }
@@ -212,7 +214,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     private Band[] addBandGroup(String prefix) {
         return OperatorUtils.addBandGroup(l1bProduct, EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                targetProduct, prefix, NO_DATA_VALUE, false);
+                                          targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     private FlagCoding createFlagCoding() {
@@ -245,7 +247,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
 
     @Override
-    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws OperatorException {
+    public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
+                                                                                                        OperatorException {
         Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
 
         Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
@@ -260,12 +263,14 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         Tile zmaxCloud = null;
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
-                EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
+                                                      EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                                                      sourceRect, pm);
 
         Tile[] rhoRaecConv = null;
         if (openclConvolution && ray1bconvProduct != null) {
             rhoRaecConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "rho_ray_aerc_conv",
-                    EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip, sourceRect, pm);
+                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                                                       sourceRect, pm);
         }
 
         RhoBracketAlgo.Convolver convolver = null;
@@ -280,7 +285,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
         Tile[] rhoRaecBracket = null;
         Tile[] rhoRaecDiffRaster = null;
-        
+
         final boolean debugMode = System.getProperty("additionalOutputBands") != null && System.getProperty(
                 "additionalOutputBands").equals("RS");
 
@@ -299,7 +304,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         Tile cloudTopPressure = null;
         Tile cloudFlags = null;
         if (cloudProduct != null) {
-            surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), targetRect, pm);
+            surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), targetRect,
+                                            pm);
             cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect, pm);
             cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
         }
@@ -317,7 +323,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                         if (isCloud) {
                             final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) /
-                                    surfacePressure.getSampleDouble(x, y);
+                                                                   surfacePressure.getSampleDouble(x, y);
                             // cloud height
                             double zCloud = 8.0 * Math.log(1.0 / pressureCorrectionCloud);
                             rhoCloudCorrFac = Math.exp(-zCloud / HA);
@@ -326,15 +332,19 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         // attempt to optimise
-                        if(vza == null || sza ==null || vaa == null || saa == null || isLand == null || zmaxs == null ||
-                           zmaxCloud == null || convolver == null ) {
-                            vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect, pm);
-                            sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
-                            vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect, pm);
-                            saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect, pm);
+                        if (vza == null || sza == null || vaa == null || saa == null || isLand == null || zmaxs == null ||
+                            zmaxCloud == null || convolver == null) {
+                            vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME),
+                                                targetRect, pm);
+                            sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
+                                                targetRect, pm);
+                            vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME),
+                                                targetRect, pm);
+                            saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
+                                                targetRect, pm);
                             isLand = getSourceTile(isLandBand, sourceRect, pm);
                             zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
-                            zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect, pm);
+                            zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
                             convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
                         }
                         // end of optimisation attempt
@@ -356,7 +366,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                         // first, compute <RO_AER> at 865 and 705nm
                         double rhoBrrBracket865;
                         if (openclConvolution && ray1bconvProduct != null) {
-                                rhoBrrBracket865 = rhoRaecConv[12].getSampleFloat(x, y);
+                            rhoBrrBracket865 = rhoRaecConv[12].getSampleFloat(x, y);
                         } else {
                             rhoBrrBracket865 = convolver.convolveSample(x, y, iaer, Constants.bb865);
                         }
@@ -379,7 +389,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                         double thetaf = Math.acos(csf) * MathUtils.RTOD;
 
                         double pab = aerosolScatteringFunctions.aerosolPhase(thetab, iaer);
-                        double tauaConst = 0.1 * Math.pow((550.0 / 865.0), ((iaer-1) / 10.0));
+                        double tauaConst = 0.1 * Math.pow((550.0 / 865.0), ((iaer - 1) / 10.0));
                         double paerFB = aerosolScatteringFunctions.aerosolPhaseFB(thetaf, thetab, iaer);
 
                         double zmaxPart = ZmaxOp.computeZmaxPart(zmaxs, x, y, HA);
@@ -402,7 +412,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                             corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y),
+                                                                             vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
@@ -415,7 +426,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                             if (searchIAOT != -1) {
                                 aot = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
-                                                                               rhoBrr865[searchIAOT + 1], searchIAOT + 1, rho_13) * 0.1;
+                                                                                rhoBrr865[searchIAOT + 1],
+                                                                                searchIAOT + 1, rho_13) * 0.1;
                             } else {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
@@ -425,7 +437,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                             corrFac = 1.0 + paerFB * (r1v + r1s * (1.0 - zmaxPart - zmaxCloudPart));
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
-                                RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y),
+                                                                             vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
@@ -466,7 +479,9 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab,
+                                                                              sza.getSampleFloat(x, y),
+                                                                              vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1 = (rhoAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - rhoAerMean * rv1.sa));
                                 aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
@@ -481,7 +496,9 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                                 //Compute the aerosols functions for the second aot
                                 final double taua2 = 0.1 * (searchIAOT + 1) * Math.pow((550.0 / wvl), (iaer / 10.0));
-                                RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab, sza.getSampleFloat(x, y), vza.getSampleFloat(x, y), phi);
+                                RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab,
+                                                                              sza.getSampleFloat(x, y),
+                                                                              vza.getSampleFloat(x, y), phi);
 
                                 double aerosol2 = (rhoAerMean - rhoRaecIwvl) * (rv2.tds / (1.0 - rhoAerMean * rv2.sa));
                                 aerosol2 = (rv2.tus - Math.exp(-taua2 / muv)) * aerosol2;
@@ -489,7 +506,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                                 //AOT INTERPOLATION to get AE_aer
                                 double aea = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], aea1,
-                                                                                      rhoBrr865[searchIAOT + 1], aerosol2, rho_13);
+                                                                                       rhoBrr865[searchIAOT + 1],
+                                                                                       aerosol2, rho_13);
 
                                 if (isCloud) {
                                     aea *= rhoCloudCorrFac;

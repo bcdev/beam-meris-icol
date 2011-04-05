@@ -25,13 +25,13 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
-import org.esa.beam.meris.l2auxdata.L2AuxdataProvider;
+import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 
 import java.awt.Rectangle;
 
@@ -45,25 +45,25 @@ import java.awt.Rectangle;
 public class ReverseOp extends MerisBasisOp {
 
     private transient L2AuxData auxData;
-    
-    @SourceProduct(alias="l1b")
+
+    @SourceProduct(alias = "l1b")
     private Product l1bProduct;
-    @SourceProduct(alias="gascor")
+    @SourceProduct(alias = "gascor")
     private Product gasCorProduct;
-    @SourceProduct(alias="ae_ray")
+    @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol")
+    @SourceProduct(alias = "ae_aerosol")
     private Product aeAerosolProduct;
-    @SourceProduct(alias="aemask")
+    @SourceProduct(alias = "aemask")
     private Product aemaskProduct;
-    
+
     @TargetProduct
     private Product targetProduct;
-    
+
     @Override
     public void initialize() throws OperatorException {
         try {
-            auxData = L2AuxdataProvider.getInstance().getAuxdata(l1bProduct);
+            auxData = L2AuxDataProvider.getInstance().getAuxdata(l1bProduct);
         } catch (Exception e) {
             throw new OperatorException("could not load L2Auxdata", e);
         }
@@ -71,45 +71,50 @@ public class ReverseOp extends MerisBasisOp {
         targetProduct = createCompatibleProduct(l1bProduct, "MER", "MER_L1N");
         Band[] sourceBands = l1bProduct.getBands();
         for (Band srcBand : sourceBands) {
-        	if (srcBand.getName().startsWith("radiance")) {
-        		ProductUtils.copyBand(srcBand.getName(), l1bProduct, targetProduct);
-        	}
-		}
+            if (srcBand.getName().startsWith("radiance")) {
+                ProductUtils.copyBand(srcBand.getName(), l1bProduct, targetProduct);
+            }
+        }
     }
-    
+
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
 
-    	Rectangle rectangle = targetTile.getRectangle();
+        Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height);
         try {
-			int bandId = band.getSpectralBandIndex();
-			if (bandId == -1) {
-				return;
-			} else if (bandId == 10|| bandId== 14) {
-				Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" +  (bandId + 1)), rectangle, pm);
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-						targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
-					}
-					pm.worked(1);
-				}
-			} else {
-				int bandNumber = bandId + 1;
-			
-				Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-				Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-				
-				Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle, pm);
-				Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle, pm);
-			
-				Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
-				Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
-				Tile detectorIndex = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME), rectangle, pm);
-				Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" +  bandNumber), rectangle, pm);
+            int bandId = band.getSpectralBandIndex();
+            if (bandId == -1) {
+                return;
+            } else if (bandId == 10 || bandId == 14) {
+                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + (bandId + 1)), rectangle, pm);
+                for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                    for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                        targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
+                    }
+                    pm.worked(1);
+                }
+            } else {
+                int bandNumber = bandId + 1;
 
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                Tile gasCor = getSourceTile(
+                        gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                        pm);
+                Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
+                                        rectangle, pm);
+
+                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
+
+                Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
+                                         rectangle, pm);
+                Tile detectorIndex = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME),
+                                                   rectangle, pm);
+                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rectangle, pm);
+
+                for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                    for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         if (detectorIndex.getSampleInt(x, y) != -1) {
                             double radiance = 0;
                             double gasCorValue = gasCor.getSampleDouble(x, y);
@@ -122,8 +127,9 @@ public class ReverseOp extends MerisBasisOp {
                                     double rhoToa = corrected * tgValue;
 
                                     radiance = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) *
-                                            auxData.detector_solar_irradiance[bandNumber-1][detectorIndex.getSampleInt(x, y)]) /
-                                            (Math.PI * auxData.seasonal_factor);
+                                                auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex.getSampleInt(
+                                                        x, y)]) /
+                                               (Math.PI * auxData.seasonal_factor);
                                 }
                             }
                             if (radiance == 0) {
@@ -131,12 +137,12 @@ public class ReverseOp extends MerisBasisOp {
                             }
                             targetTile.setSample(x, y, radiance);
                         } else {
-                           targetTile.setSample(x, y, -1);
+                            targetTile.setSample(x, y, -1);
                         }
-					}
-					pm.worked(1);
-				}
-			}
+                    }
+                    pm.worked(1);
+                }
+            }
         } catch (Exception e) {
             throw new OperatorException(e);
         } finally {
@@ -146,6 +152,7 @@ public class ReverseOp extends MerisBasisOp {
 
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(ReverseOp.class, "Meris.IcolReverse");
         }
