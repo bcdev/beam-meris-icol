@@ -1,5 +1,6 @@
 package org.esa.beam.meris.icol.ui;
 
+import com.bc.ceres.binding.PropertyContainer;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.Binding;
 import com.bc.ceres.swing.binding.BindingContext;
@@ -7,6 +8,7 @@ import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
 import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import com.bc.jexp.ParseException;
 import com.bc.jexp.Term;
+import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.dataio.envisat.EnvisatProductReader;
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
@@ -23,8 +25,6 @@ import org.esa.beam.meris.icol.tm.TmConstants;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -43,14 +43,13 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
 
 class IcolForm extends JTabbedPane {
-
-    private static final String N1 = "N1";
 
     private JCheckBox rhoToa;
     private JCheckBox rhoToaRayleigh;
@@ -67,13 +66,11 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField aerosolReferenceWavelengthValue;
     private JFormattedTextField angstroemValue;
     private JFormattedTextField aotValue;
-    private TargetProductSelector targetProductSelector;
+    private final TargetProductSelector targetProductSelector;
     private SourceProductSelector sourceProductSelector;
     private SourceProductSelector cloudProductSelector;
-    private ComboBoxModel comboBoxModelRhoToa;
-    private ComboBoxModel comboBoxModelN1;
     private JRadioButton rhoToaProductTypeButton;
-    private JRadioButton reflectanceProductTypeButton;
+    private JRadioButton radianceProductTypeButton;
     private ButtonGroup productTypeGroup;
     private ButtonGroup ctpGroup;
     private JCheckBox openclConvolutionCheckBox;
@@ -82,7 +79,6 @@ class IcolForm extends JTabbedPane {
     private JRadioButton landsatResolution300Button;
     private JRadioButton landsatResolution1200Button;
     private JLabel userCtpLabel;
-    private boolean userCtpSelected;
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
@@ -112,51 +108,62 @@ class IcolForm extends JTabbedPane {
     private final AppContext appContext;
     private final BindingContext bc;
 
-    public IcolForm(AppContext appContext, IcolModel icolModel, TargetProductSelector targetProductSelector) {
+    IcolForm(AppContext appContext, IcolModel icolModel, TargetProductSelector targetProductSelector) {
         this.appContext = appContext;
         bc = new BindingContext(icolModel.getPropertyContainer());
         this.targetProductSelector = targetProductSelector;
-        JComboBox targetFormatComboBox = targetProductSelector.getFormatNameComboBox();
-        comboBoxModelRhoToa = targetFormatComboBox.getModel();
-        comboBoxModelN1 = createN1ComboboxModel(targetFormatComboBox);
         sourceProductSelector = new SourceProductSelector(appContext,
                                                           "Input-Product (MERIS L1b or Landsat 5 TM L1G GeoTIFF):");
         cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();
         sourceComboBox.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateProductTypeSettings();
+                if (isEnvisatSourceProduct(
+                        IcolForm.this.sourceProductSelector.getSelectedProduct()) && radianceProductTypeButton.isSelected()) {
+                    final PropertyContainer pc = IcolForm.this.targetProductSelector.getModel().getValueContainer();
+                    pc.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
+                }
             }
         });
-        targetFormatComboBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                updateProductFormatChange();
-            }
-        });
+        targetProductSelector.getModel().getValueContainer().addPropertyChangeListener("formatName",
+                                                                                       new PropertyChangeListener() {
+                                                                                           @Override
+                                                                                           public void propertyChange(
+                                                                                                   PropertyChangeEvent evt) {
+                                                                                               updateProductFormatChange();
+                                                                                           }
+                                                                                       });
         bindComponents();
         updateUIStates();
-    }
-
-    private ComboBoxModel createN1ComboboxModel(JComboBox targetFormatComboBox) {
-        DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-        comboBoxModel.addElement(N1);
-        int itemCount = targetFormatComboBox.getItemCount();
-        for (int i = 0; i < itemCount; i++) {
-            comboBoxModel.addElement(targetFormatComboBox.getItemAt(i));
-        }
-        return comboBoxModel;
     }
 
     public void prepareShow() {
         sourceProductSelector.initProducts();
         cloudProductSelector.initProducts();
+        setRhoToaBandSelectionPanelEnabled(rhoToaProductTypeButton.isSelected());
         updateProductTypeSettings();
     }
 
     public void prepareHide() {
         sourceProductSelector.releaseProducts();
         cloudProductSelector.releaseProducts();
+    }
+
+    boolean isEnvisatSourceProduct(Product sourceProduct) {
+        if (sourceProduct != null) {
+            ProductReader productReader = sourceProduct.getProductReader();
+            if ((productReader instanceof EnvisatProductReader)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean isEnvisatOutputFormatSelected() {
+        return targetProductSelector.getModel().getFormatName().equals(EnvisatConstants.ENVISAT_FORMAT_NAME);
     }
 
     private void bindComponents() {
@@ -322,15 +329,6 @@ class IcolForm extends JTabbedPane {
         return panel;
     }
 
-    private void setRhoToaBandSelectionPanelEnabled(boolean enabled) {
-        rhoToa.setEnabled(enabled);
-        rhoToaRayleigh.setEnabled(enabled);
-        rhoToaAerosol.setEnabled(enabled);
-        aeRayleigh.setEnabled(enabled);
-        aeAerosol.setEnabled(enabled);
-        alphaAot.setEnabled(enabled);
-    }
-
     private JPanel createCTPPanel() {
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
@@ -366,6 +364,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JPanel());
 
         ActionListener ctpActionListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateCtpUIstate();
             }
@@ -387,6 +386,7 @@ class IcolForm extends JTabbedPane {
         subPanel.add(textField, BorderLayout.CENTER);
         final JButton etcButton = new JButton("...");
         etcButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 ProductExpressionPane expressionPane;
                 Product currentProduct = cloudProductSelector.getSelectedProduct();
@@ -434,7 +434,7 @@ class IcolForm extends JTabbedPane {
     }
 
     private void updateCtpUIstate() {
-        userCtpSelected = userCtp.isSelected();
+        boolean userCtpSelected = userCtp.isSelected();
         userCtpLabel.setEnabled(userCtpSelected);
         ctpValue.setEnabled(userCtpSelected);
     }
@@ -723,6 +723,7 @@ class IcolForm extends JTabbedPane {
         landsatSeasonGroup.add(landsatWinterButton);
 
         ActionListener landsatSeasonListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateLandsatSeasonSettings();
             }
@@ -773,6 +774,7 @@ class IcolForm extends JTabbedPane {
         landsatResolutionGroup.add(landsatResolution1200Button);
 
         ActionListener landsatResolutionListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateLandsatResolutionSettings();
             }
@@ -785,7 +787,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatOutputProductTypeStandardButton= new JRadioButton("Full AE corrected product");
+        landsatOutputProductTypeStandardButton = new JRadioButton("Full AE corrected product");
         landsatOutputProductTypeStandardButton.setSelected(true);
         panel.add(landsatOutputProductTypeStandardButton);
         panel.add(new JLabel(""));
@@ -795,18 +797,20 @@ class IcolForm extends JTabbedPane {
         panel.add(landsatOutputProductTypeFlagsButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
-        landsatOutputProductTypeGeometryButton = new JRadioButton("Geometry product only (input downscaled to AE correction grid)");
+        landsatOutputProductTypeGeometryButton = new JRadioButton(
+                "Geometry product only (input downscaled to AE correction grid)");
         landsatOutputProductTypeGeometryButton.setSelected(false);
         panel.add(landsatOutputProductTypeGeometryButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatOutputProductTypeGroup= new ButtonGroup();
+        landsatOutputProductTypeGroup = new ButtonGroup();
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeStandardButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeFlagsButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeGeometryButton);
 
         ActionListener landsatOutputProductTypeListenerListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateLandsatOutputProductTypeSettings();
             }
@@ -821,17 +825,14 @@ class IcolForm extends JTabbedPane {
     }
 
     private void updateLandsatResolutionSettings() {
-            landsatResolution1200Button.setSelected(!landsatResolution300Button.isSelected());
+        landsatResolution1200Button.setSelected(!landsatResolution300Button.isSelected());
     }
 
     private void updateLandsatOutputProductTypeSettings() {
-        if (landsatOutputProductTypeStandardButton.isSelected()) {
+        if (landsatOutputProductTypeStandardButton.isSelected() || landsatOutputProductTypeFlagsButton.isSelected()) {
             landsatOutputProductTypeFlagsButton.setSelected(false);
             landsatOutputProductTypeGeometryButton.setSelected(false);
-        } else if (landsatOutputProductTypeFlagsButton.isSelected()) {
-            landsatOutputProductTypeFlagsButton.setSelected(false);
-            landsatOutputProductTypeGeometryButton.setSelected(false);
-        }  else {
+        } else {
             landsatOutputProductTypeStandardButton.setSelected(false);
             landsatOutputProductTypeGeometryButton.setSelected(false);
         }
@@ -854,53 +855,39 @@ class IcolForm extends JTabbedPane {
         JPanel panel = new JPanel(layout);
         panel.setBorder(BorderFactory.createTitledBorder("Product Type Selection"));
 
-        reflectanceProductTypeButton = new JRadioButton("Compute radiance product");
-        reflectanceProductTypeButton.setSelected(true);
-        panel.add(reflectanceProductTypeButton);
+        radianceProductTypeButton = new JRadioButton("Compute radiance product");
+        radianceProductTypeButton.setSelected(true);
+        panel.add(radianceProductTypeButton);
         rhoToaProductTypeButton = new JRadioButton("Compute rhoToa product");
         rhoToaProductTypeButton.setSelected(false);
         panel.add(rhoToaProductTypeButton);
 
         productTypeGroup = new ButtonGroup();
-        productTypeGroup.add(reflectanceProductTypeButton);
+        productTypeGroup.add(radianceProductTypeButton);
         productTypeGroup.add(rhoToaProductTypeButton);
 
         ActionListener productTypeListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateProductTypeSettings();
             }
         };
         rhoToaProductTypeButton.addActionListener(productTypeListener);
-        reflectanceProductTypeButton.addActionListener(productTypeListener);
-
+        radianceProductTypeButton.addActionListener(productTypeListener);
         return panel;
     }
 
+    private void setRhoToaBandSelectionPanelEnabled(boolean enabled) {
+        rhoToa.setEnabled(enabled);
+        rhoToaRayleigh.setEnabled(enabled);
+        rhoToaAerosol.setEnabled(enabled);
+        aeRayleigh.setEnabled(enabled);
+        aeAerosol.setEnabled(enabled);
+        alphaAot.setEnabled(enabled);
+    }
+
     private void updateProductTypeSettings() {
-        JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
-        if (rhoToaProductTypeButton.isSelected()) {
-            formatNameComboBox.setModel(comboBoxModelRhoToa);
-            setRhoToaBandSelectionPanelEnabled(true);
-        } else {
-            // Radiance product
-            boolean n1 = false;
-            Product sourceProduct = sourceProductSelector.getSelectedProduct();
-            if (sourceProduct != null) {
-                File fileLocation = sourceProduct.getFileLocation();
-                ProductReader productReader = sourceProduct.getProductReader();
-                if (fileLocation != null &&
-                    fileLocation.getName().endsWith("N1") &&
-                    productReader instanceof EnvisatProductReader) {
-                    n1 = true;
-                }
-            }
-            if (n1) {
-                formatNameComboBox.setModel(comboBoxModelN1);
-            } else {
-                formatNameComboBox.setModel(comboBoxModelRhoToa);
-            }
-            setRhoToaBandSelectionPanelEnabled(false);
-        }
+        setRhoToaBandSelectionPanelEnabled(rhoToaProductTypeButton.isSelected());
         Product sourceProduct = sourceProductSelector.getSelectedProduct();
         final TargetProductSelectorModel selectorModel = targetProductSelector.getModel();
         if (sourceProduct != null) {
@@ -919,20 +906,18 @@ class IcolForm extends JTabbedPane {
     }
 
     private void updateProductFormatChange() {
-        JComboBox formatNameComboBox = targetProductSelector.getFormatNameComboBox();
-        String selectedItem = (String) formatNameComboBox.getSelectedItem();
-        if (selectedItem.equals(N1)) {
+        if (isEnvisatOutputFormatSelected()) {
             JCheckBox saveToFileCheckBox = targetProductSelector.getSaveToFileCheckBox();
             saveToFileCheckBox.setSelected(true);
             saveToFileCheckBox.setEnabled(false);
 
-            reflectanceProductTypeButton.setSelected(true);
+            radianceProductTypeButton.setSelected(true);
             rhoToaProductTypeButton.setEnabled(false);
         } else {
             targetProductSelector.setEnabled(true);
-
             rhoToaProductTypeButton.setEnabled(true);
         }
+        setRhoToaBandSelectionPanelEnabled(rhoToaProductTypeButton.isSelected());
     }
 
     private static class AeAreaRenderer extends DefaultListCellRenderer {

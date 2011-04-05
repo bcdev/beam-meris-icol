@@ -23,14 +23,12 @@ import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.ui.SingleTargetProductDialog;
-import org.esa.beam.framework.gpf.ui.TargetProductSelector;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.meris.icol.meris.MerisOp;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.tm.TmOp;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -43,18 +41,19 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 public class IcolDialog extends SingleTargetProductDialog {
-    
+
     public static final String TITLE = "ICOL Processor - v2.5-SNAPSHOT";
     private IcolForm form;
     private IcolModel model;
 
-    public IcolDialog(AppContext appContext)  {
-        super(appContext, TITLE, "icolProcessor");
-        
+    public IcolDialog(AppContext appContext) {
+        super(appContext, TITLE, ID_APPLY_CLOSE_HELP, "icolProcessor",
+              TargetProductSelectorModel.createEnvisatTargetProductSelectorModel());
+
         model = new IcolModel();
         form = new IcolForm(appContext, model, getTargetProductSelector());
     }
-    
+
     @Override
     public int show() {
         form.prepareShow();
@@ -67,7 +66,7 @@ public class IcolDialog extends SingleTargetProductDialog {
         form.prepareHide();
         super.hide();
     }
-    
+
     @Override
     protected boolean verifyUserInput() {
         Product sourceProduct = model.getSourceProduct();
@@ -75,14 +74,20 @@ public class IcolDialog extends SingleTargetProductDialog {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM source product.");
             return false;
         }
+        if (form.isEnvisatOutputFormatSelected() && !form.isEnvisatSourceProduct(sourceProduct)) {
+            showErrorDialog("If " + EnvisatConstants.ENVISAT_FORMAT_NAME + " is selected as output format the " +
+                            "source product must be in the same format.");
+            return false;
+        }
+
         final String productType = sourceProduct.getProductType();
         // input product must be either:
         //    - MERIS L1b
         //    - Landsat TM5 GeoTIFF  (L1T)
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
-                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
-                !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+            !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+            !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
         }
@@ -90,10 +95,10 @@ public class IcolDialog extends SingleTargetProductDialog {
             String[] tiePointGridNames = sourceProduct.getTiePointGridNames();
             List<String> gridNames = Arrays.asList(tiePointGridNames);
             if (!gridNames.contains(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME) ||
-                    !gridNames.contains(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME) ||
-                    !gridNames.contains(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME) ||
-                    !gridNames.contains(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME)) {
-                showErrorDialog("The specify MERIS L1b source product doesn't contain tiepoints");
+                !gridNames.contains(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME) ||
+                !gridNames.contains(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME) ||
+                !gridNames.contains(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME)) {
+                showErrorDialog("The specify MERIS L1b source product doesn't contain tie-points");
                 return false;
             }
         }
@@ -107,22 +112,20 @@ public class IcolDialog extends SingleTargetProductDialog {
         String productType = sourceProduct.getProductType();
         if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) ||
             (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
-                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+            (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             outputProduct = createLandsat5Product();
         } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
         }
         return outputProduct;
     }
-    
+
     private Product createLandsat5Product() throws OperatorException {
         final Product sourceProduct = model.getSourceProduct();
         Map<String, Object> parameters = model.getLandsat5Parameters();
-        Product targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmOp.class)
-              ,parameters, sourceProduct);
-        return targetProduct;
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(TmOp.class), parameters, sourceProduct);
     }
-    
+
     private Product createMerisOp() throws Exception {
         Map<String, Product> sourceProducts = new HashMap<String, Product>(2);
         Map<String, Object> parameters = model.getMerisParameters();
@@ -132,28 +135,13 @@ public class IcolDialog extends SingleTargetProductDialog {
             sourceProducts.put("cloudMaskProduct", cloudProduct);
         }
         addN1PathParamters(parameters);
-        Product targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisOp.class)
-              ,parameters, sourceProducts);
-        return targetProduct;
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisOp.class), parameters, sourceProducts);
     }
-    
+
     public void addN1PathParamters(Map<String, Object> parameter) throws Exception {
         TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
-        TargetProductSelector targetProductSelector = getTargetProductSelector();
-        String formatName = (String) targetProductSelector.getFormatNameComboBox().getSelectedItem();
-        if (formatName.equals("N1")) {
-            String productName = targetProductSelectorModel.getProductName();
-            String n1Productname;
-            if (productName.endsWith(".N1")) {
-                n1Productname = productName;
-                productName = productName.substring(0, productName.length() - ".N1".length());
-                targetProductSelectorModel.getValueContainer().setValue("productName", productName);
-            } else {
-                n1Productname = productName + ".N1";
-            }
-            File patchedN1File = new File(targetProductSelectorModel.getProductDir(), n1Productname);
-            parameter.put("patchedFile", patchedN1File);
-            targetProductSelectorModel.setFormatName("BEAM-DIMAP");
+        if (form.isEnvisatOutputFormatSelected()) {
+            parameter.put("patchedFile", targetProductSelectorModel.getProductFile());
         }
     }
 }
