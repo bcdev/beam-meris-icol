@@ -43,7 +43,7 @@
                     </listitem>
                     <listitem>
                         LANDSAT TM: Select a L1 product given in GEOTIFF (original product) or BEAM-DIMAP format
-                        ('Geometry' product, see <xref linkend="sum.products.input" xrefstyle="select: label"/>).
+                        ('Geometry' product, see<xref linkend="sum.products.input" xrefstyle="select: label"/>).
                         A large number of Landsat TM products in GEOTIFF format can be found at the USGS
                         Earth Explorer site ([RD-5]). To process TM GEOTIFF data in ICOL, do the following steps:
                         <itemizedlist mark='bullet'>
@@ -52,7 +52,8 @@
                                 in gzipped format named like 'LT5...tar.gz'. If so, unpack this archive.
                             </listitem>
                             <listitem>
-                                The unpacked product should consist of seven single .tif files and two metafiles with suffixes
+                                The unpacked product should consist of seven single .tif files and two metafiles with
+                                suffixes
                                 '_MTL.txt' and '_GCP.txt'.
                             </listitem>
                             <listitem>
@@ -83,7 +84,8 @@
                                 NETCDF
                             </listitem>
                             <listitem>
-                                N1 (in case the input product is a .N1 file and the output product has been selected
+                                ENVISAT (in case the input product is a .N1 file and the output product has been
+                                selected
                                 as 'Radiance Product' (see below). In this case, the output product contains the
                                 same bands as the input N1 product. This allows the AE corrected product to be re-used
                                 as input for many other BEAM processors (such as Case 2 Regional) within a processing
@@ -244,7 +246,7 @@
 
         <sect2 id="sum.processor.meris.rhotoa">
             <title>'RhoToa Product' Subpanel</title>
-             <itemizedlist mark='bullet'>
+            <itemizedlist mark='bullet'>
                 <listitem>
                     Bands included in the rhoToa product: With the checkboxes in this subpanel, the user can select
                     additional quantities
@@ -446,7 +448,8 @@
                             only once in a final run with the 'full' product being written.
                         </listitem>
                         <listitem>
-                            'Geometry product only (input downscaled to AE correction grid)': The output product will be the same
+                            'Geometry product only (input downscaled to AE correction grid)': The output product will be
+                            the same
                             as the input product, but downscaled from the original TM resolution (30m) to the
                             AE correction grid resolution as selected above.
                             This option has the advantage that processing time can be saved
@@ -455,7 +458,8 @@
                             (a 'Geometry' product following the ATBD notation) needs to be
                             computed only once and can then re-used as input for different AE correction runs with
                             varying user options (such as test thresholds as outlined above).
-                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as well, but
+                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as
+                            well, but
                             in this case, of course, the AE corrected product cannot be upscaled to the
                             TM resolution since the information from the original product is missing.
                         </listitem>
@@ -517,12 +521,12 @@
             </listitem>
         </itemizedlist>
         In this case, information on the usage and a list of all available parameters are given.
-        (see <xref linkend="figure.processor.gpt" xrefstyle="select: label"/>).
+        (see<xref linkend="figure.processor.gpt" xrefstyle="select: label"/>).
 
 
         <figure id="figure.processor.gpt">
-        <title>ICOL+ command line processing</title>
-        <graphic scale="40" fileref="figures/icol_gpt.png"/>
+            <title>ICOL+ command line processing</title>
+            <graphic scale="40" fileref="figures/icol_gpt.png"/>
         </figure>
 
     </sect1>
