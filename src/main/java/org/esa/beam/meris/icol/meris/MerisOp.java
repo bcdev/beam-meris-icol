@@ -26,7 +26,6 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
@@ -44,7 +43,6 @@ import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,23 +74,30 @@ public class MerisOp extends Operator {
     private String cloudMaskExpression;
 
     // CTP
-    @Parameter(defaultValue = "false", description = "If set to 'true', a user defined cloud top pressure value will be used by AE correction algorithm.")
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', a user defined cloud top pressure value will be used by AE correction algorithm.")
     private boolean useUserCtp = false;
-    @Parameter(interval = "[0.0, 1013.0]", defaultValue = "1013.0", description = "User defined cloud top pressure value to be used by AE correction algorithm.")
+    @Parameter(interval = "[0.0, 1013.0]", defaultValue = "1013.0",
+               description = "User defined cloud top pressure value to be used by AE correction algorithm.")
     private double userCtp = 1013.0;
 
     // MerisAeAerosolOp
-    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
-    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
     private boolean icolAerosolForWater = false;
-    @Parameter(defaultValue = "false", description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
     private boolean icolAerosolCase2 = false;
-    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0", description = "The Aerosol optical thickness reference wavelength.")
+    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0",
+               description = "The Aerosol optical thickness reference wavelength.")
     private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1", description = "The Angstrom coefficient.")
     private double userAlpha;
-    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength.")
+    @Parameter(interval = "[0, 1.5]", defaultValue = "0.2",
+               description = "The aerosol optical thickness at reference wavelength.")
     private double userAot;
 
     // MerisReflectanceCorrectionOp
@@ -110,21 +115,19 @@ public class MerisOp extends Operator {
     private boolean exportAlphaAot = true;
 
     // general
-    @Parameter(defaultValue = "0", valueSet = {"0", "1"}, description = "Product type: Radiance product = 0; Rho TOA product = 1.")
+    @Parameter(defaultValue = "0", valueSet = {"0", "1"},
+               description = "Product type: Radiance product = 0; Rho TOA product = 1.")
     private int productType = 0;
-//    @Parameter(defaultValue = "true")
+    //    @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;  // currently no user option
-    @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', the convolution shall be computed on GPU device if available.")
     private boolean openclConvolution = false;
     @Parameter(defaultValue = "64", description = "The tile size used.")
     private int tileSize = 64;
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
-        description = "The area where the AE correction will be applied.")
+               description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
-
-    // N1PatcherOp
-    @Parameter(description = "The file to which the patched L1b product is written.")
-    private File patchedFile;
 
     @Override
     public void initialize() throws OperatorException {
@@ -216,12 +219,8 @@ public class MerisOp extends Operator {
 //                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
                 // end test
             }
-            if (patchedFile != null) {
-                targetProduct = createN1Product(reverseRadianceProduct);
-            } else {
-                targetProduct = reverseRadianceProduct;
-//                targetProduct = constProduct;
-            }
+            targetProduct = reverseRadianceProduct;
+//            targetProduct = constProduct;
         } else if (productType == 1) {
             targetProduct = finalRhoToaProduct;
         }
@@ -259,8 +258,10 @@ public class MerisOp extends Operator {
         }
 
         // (i) AE mask
-        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct, AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH);
-        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct, AdjacencyEffectMaskOp.AE_MASK_AEROSOL);
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskRayleighProduct,
+                                      AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH);
+        DebugUtils.addSingleDebugBand(reverseRadianceProduct, aemaskAerosolProduct,
+                                      AdjacencyEffectMaskOp.AE_MASK_AEROSOL);
 
         // (iv) zMax
         DebugUtils.addSingleDebugBand(reverseRadianceProduct, zmaxProduct, ZmaxOp.ZMAX + "_1");
@@ -274,16 +275,6 @@ public class MerisOp extends Operator {
 
         DebugUtils.addAeRayleighProductDebugBands(reverseRadianceProduct, aeRayProduct);
         DebugUtils.addAeAerosolProductDebugBands(reverseRadianceProduct, aeAerProduct);
-    }
-
-    private Product createN1Product(Product reverseRadianceProduct) {
-        Map<String, Product> n1PatcherInput = new HashMap<String, Product>(2);
-        n1PatcherInput.put("n1", sourceProduct);
-        n1PatcherInput.put("input", reverseRadianceProduct);
-        Map<String, Object> n1Params = new HashMap<String, Object>(1);
-        n1Params.put("patchedFile", patchedFile);
-        return GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
-                                 n1PatcherInput);
     }
 
     private Product createReverseRadianceProduct(Product gasProduct, Product aemaskAerosolProduct, Product aeAerProduct,
@@ -371,11 +362,13 @@ public class MerisOp extends Operator {
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         Product aeAerProduct;
         if (icolAerosolCase2 && icolAerosolForWater) {
-            aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAdjacencyEffectAerosolCase2Op.class), aeAerosolParams,
+            aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAdjacencyEffectAerosolCase2Op.class),
+                                             aeAerosolParams,
                                              aeAerInput);
         } else {
             aeAerosolParams.put("openclConvolution", openclConvolution);
-            aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAdjacencyEffectAerosolOp.class), aeAerosolParams,
+            aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisAdjacencyEffectAerosolOp.class),
+                                             aeAerosolParams,
                                              aeAerInput);
         }
         return aeAerProduct;
@@ -429,7 +422,8 @@ public class MerisOp extends Operator {
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
         aeRayParams.put("openclConvolution", openclConvolution);
         aeRayParams.put("instrument", Instrument.MERIS);
-        return GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectRayleighOp.class), aeRayParams, aeRayInput);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectRayleighOp.class), aeRayParams,
+                                 aeRayInput);
     }
 
     private Product createBrrConvolveProduct(Product brrCloudProduct) {

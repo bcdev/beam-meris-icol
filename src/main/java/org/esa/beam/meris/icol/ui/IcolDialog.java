@@ -25,6 +25,7 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.ui.SingleTargetProductDialog;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
+import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.icol.meris.MerisOp;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.tm.TmOp;
@@ -134,14 +135,21 @@ public class IcolDialog extends SingleTargetProductDialog {
         if (cloudProduct != null && parameters.get("cloudMaskExpression") != null) {
             sourceProducts.put("cloudMaskProduct", cloudProduct);
         }
-        addN1PathParamters(parameters);
-        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisOp.class), parameters, sourceProducts);
+        final Product merisProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisOp.class), parameters,
+                                                       sourceProducts);
+        if (form.isEnvisatOutputFormatSelected()) {
+            Map<String, Product> n1PatcherInput = new HashMap<String, Product>(2);
+            n1PatcherInput.put("n1", model.getSourceProduct());
+            n1PatcherInput.put("input", merisProduct);
+            Map<String, Object> n1Params = new HashMap<String, Object>(1);
+            n1Params.put("patchedFile", getTargetProductSelector().getModel().getProductFile());
+            return GPF.createProduct(OperatorSpi.getOperatorAlias(N1PatcherOp.class), n1Params,
+                                     n1PatcherInput);
+        } else {
+            return merisProduct;
+
+        }
+
     }
 
-    public void addN1PathParamters(Map<String, Object> parameter) throws Exception {
-        TargetProductSelectorModel targetProductSelectorModel = getTargetProductSelector().getModel();
-        if (form.isEnvisatOutputFormatSelected()) {
-            parameter.put("patchedFile", targetProductSelectorModel.getProductFile());
-        }
-    }
 }

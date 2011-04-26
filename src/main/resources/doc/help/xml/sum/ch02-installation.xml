@@ -8,7 +8,7 @@
             in advance:
             <itemizedlist mark='bullet'>
                 <listitem>
-                    BEAM, version 4.8
+                    BEAM, version 4.9
                 </listitem>
             </itemizedlist>
             The BEAM software can be obtained from the BEAM download page
@@ -16,8 +16,7 @@
         </para>
 
         <para>
-            The ICOL+ software delivery consists of three jar files: the ICOL main module, an updated BEAM 4.8 GPF
-            module containing ICOL relevant bug fixes,
+            The ICOL+ software delivery consists of two files: the ICOL main module
             and the OpenCL modules, which provide additional Java classes which are optionally used by ICOL+
             for accelerating purpose in case that a proper GPU is installed in the computer:
             <itemizedlist mark='bullet'>
@@ -25,22 +24,20 @@
                     beam-meris-icol-2.5.jar
                 </listitem>
                 <listitem>
-                    beam-gpf-4.8.1-SNAPSHOT.jar
-                </listitem>
-                <listitem>
                     opencl_jars.zip
                 </listitem>
             </itemizedlist>
-            The files beam-meris-icol-2.5.jar and beam-gpf-4.8.1-SNAPSHOT.jar need to be copied into the 'modules' folder of the BEAM
+            The file beam-meris-icol-2.5.jar needs to be copied into the 'modules' folder of the BEAM
             installation (<xref linkend="figure.installation.beammodules" xrefstyle="select: label"/>).
             The opencl_jars.zip files needs to be unpacked into the 'lib' folder of the BEAM
             installation.
-            Note that existing versions of BEAM and ICOL jar files (e.g. ICOL1.0) need to be replaced/overwritten to
-            avoid version conflicts of Java classes. I.e., this is true for the file beam-gpf-4.8.jar.
+            Note that existing versions of these jar files need to be replaced/overwritten.
+            There should not be more than one jar file for each of these modules in the
+            'modules' folder!
         </para>
 
         <figure id="figure.installation.beammodules">
-            <title>Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows XP)</title>
+            <title>Installation of ICOL+ jar files in BEAM modules and lib folder (shown for Windows 7)</title>
             <graphic scale="40" fileref="figures/beammodules.png"/>
         </figure>
 
@@ -56,20 +53,26 @@
                     MERIS L2 Auxdata module
                 </listitem>
                 <listitem>
-                    GETASSE30 DEM (required for LANDSAT TM processing)
+                    MERIS Bottom of Rayleigh Reflectance (BRR) Processor
+                </listitem>
+                <listitem>
+                    MERIS Surface Directional Reflectance (SDR) Processor
                 </listitem>
                 <listitem>
                     GETASSE30 DEM reader (required for LANDSAT TM processing)
                 </listitem>
+                <listitem>
+                    GETASSE30 DEM (required for LANDSAT TM processing)
+                </listitem>
             </itemizedlist>
-            The MERIS L2 Auxdata and the GETASSE30 DEM reader can be installed with the
+            The MERIS L2 Auxdata, the both processor modules and the GETASSE30 DEM reader can be installed with the
             BEAM module manager. See BEAM help documentation for details
             (http://www.brockmann-consult.de/beam/doc/help/visat/ModuleManager.html).
             The GETASSE30 DEM can be downloaded from the BEAM download page. See also
             BEAM help documentation
-            (http://www.brockmann-consult.de/beam/ doc/help/visat/GETASSE30ElevationModel.html).
+            (http://www.brockmann-consult.de/beam/doc/help/visat/GETASSE30ElevationModel.html).
         </para>
     </sect1>
 
-    
+
 </chapter>

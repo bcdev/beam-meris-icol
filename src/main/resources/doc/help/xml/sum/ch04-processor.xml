@@ -85,11 +85,10 @@
                             </listitem>
                             <listitem>
                                 ENVISAT (in case the input product is a .N1 file and the output product has been
-                                selected
-                                as 'Radiance Product' (see below). In this case, the output product contains the
-                                same bands as the input N1 product. This allows the AE corrected product to be re-used
-                                as input for many other BEAM processors (such as Case 2 Regional) within a processing
-                                chain.
+                                selected as 'Radiance Product' (see below). In this case, the output product
+                                contains the same bands as the input N1 product. This allows the AE corrected
+                                product to be re-used as input for many other BEAM processors
+                                (such as Case 2 Regional) within a processing chain.
                             </listitem>
                         </itemizedlist>
                         For LANDSAT TM, these are:
@@ -523,12 +522,46 @@
         In this case, information on the usage and a list of all available parameters are given.
         (see<xref linkend="figure.processor.gpt" xrefstyle="select: label"/>).
 
-
         <figure id="figure.processor.gpt">
             <title>ICOL+ command line processing</title>
             <graphic scale="40" fileref="figures/icol_gpt.png"/>
         </figure>
 
+        If MERIS N1 products shall be written as output result a graph xml file has to be created.
+        This xml file should concatenate the icol.Meris operator and the N1Patcher operator.
+        A possible graph xml file would look like the following. For demonstration purpose only
+        the necessary parameter have been set.
+        <programlisting>
+            <![CDATA[
+            <graph id="N1Icol">
+                <version>1.0</version>
+                <node id="merisIcol">
+                    <operator>icol.Meris</operator>
+                    <sources>
+                        <sourceProduct>${n1Product}</sourceProduct>
+                    </sources>
+
+                </node>
+                <node id="n1Writer">
+                    <operator>N1Patcher</operator>
+                    <sources>
+                        <n1>${n1Product}</n1>
+                        <input>merisIcol</input>
+                    </sources>
+                    <parameters>
+                        <patchedFile>${n1TargetFile}</patchedFile>
+                    </parameters>
+                </node>
+            </graph>
+            ]]>
+        </programlisting>
+
+        This graph can be invoked by the following call on the command line:
+        <programlisting>
+            <![CDATA[
+               gpt <graph-file.xml> -Pn1TargetFile=<path-to-target-file> -Sn1Product=<path-to-source-file>
+            ]]>
+        </programlisting>
     </sect1>
 
 </chapter>
