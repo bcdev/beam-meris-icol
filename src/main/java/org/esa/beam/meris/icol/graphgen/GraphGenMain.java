@@ -47,6 +47,7 @@ public class GraphGenMain {
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
             System.out.println("Usage: GraphGenMain <productPath> <graphmlPath> 'meris'|'landsat' [[<hideBands>] <hideProducts>]");
+            System.exit(1);
         }
         String productPath = args[0];
         String graphmlPath = args[1];
