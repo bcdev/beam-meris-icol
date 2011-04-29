@@ -32,6 +32,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
+
+// todo: move this package to beam-gpf, e.g. into a package devtools.graphgen (nf, 29.04.2011)
+
+
+/**
+ * Generates GPF Operator graphs given a target data product and a {@link GraphGenHandler}.
+ *
+ * @author Thomas Storm
+ * @author Norman Fomferra
+ */
 public class GraphGen {
 
     private Set<Product> productNodes = new HashSet<Product>();
@@ -41,14 +51,14 @@ public class GraphGen {
     private Set<OpProductKey> opProductKeys = new HashSet<OpProductKey>();
     private Set<OpOpKey> opOpKeys = new HashSet<OpOpKey>();
 
-    public void generateGraph(Product targetProduct, Handler handler) {
+    public void generateGraph(Product targetProduct, GraphGenHandler handler) {
         handler.handleBeginGraph();
         generateNodes(targetProduct, handler);
         generateEdges(targetProduct, handler);
         handler.handleEndGraph();
     }
 
-    private void generateNodes(Product product, Handler handler) {
+    private void generateNodes(Product product, GraphGenHandler handler) {
         final Band[] bands = product.getBands();
         for (Band band : bands) {
             Op op = getOp(band);
@@ -70,7 +80,7 @@ public class GraphGen {
         handler.generateProductNode(product);
     }
 
-    private void generateEdges(Product product, Handler handler) {
+    private void generateEdges(Product product, GraphGenHandler handler) {
         final Band[] bands = product.getBands();
         for (Band band : bands) {
             Op targetOp = getOp(band);
@@ -292,25 +302,6 @@ public class GraphGen {
             result = 31 * result + op2.hashCode();
             return result;
         }
-    }
-
-    public interface Handler {
-
-        void handleBeginGraph();
-
-        void handleEndGraph();
-
-        void generateOpNode(Op operator);
-
-        void generateProductNode(Product product);
-
-        void generateOp2BandEdge(Op operator, Band band);
-
-        void generateOp2ProductEdge(Op operator, Product product);
-
-        void generateProduct2OpEdge(Product sourceProduct, Op operator);
-
-        void generateOp2OpEdge(Op source, Op target);
     }
 
     private static class GpfOp implements Op {

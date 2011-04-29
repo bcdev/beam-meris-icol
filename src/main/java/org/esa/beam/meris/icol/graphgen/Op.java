@@ -18,6 +18,12 @@ package org.esa.beam.meris.icol.graphgen;
 
 import org.esa.beam.framework.datamodel.Product;
 
+/**
+ * Abstraction of various op node types used by {@link GraphGen}.
+ *
+ * @author Thomas Storm
+ * @author Norman Fomferra
+ */
 public interface Op {
 
     String getName();

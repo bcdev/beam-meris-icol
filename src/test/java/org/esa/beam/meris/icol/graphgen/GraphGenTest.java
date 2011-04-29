@@ -182,7 +182,7 @@ public class GraphGenTest {
     }
 
 
-    private static class MyHandler implements GraphGen.Handler {
+    private static class MyHandler implements GraphGenHandler {
 
         StringBuilder xml = new StringBuilder();
 
