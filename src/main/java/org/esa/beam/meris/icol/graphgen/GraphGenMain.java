@@ -51,8 +51,8 @@ public class GraphGenMain {
         String productPath = args[0];
         String graphmlPath = args[1];
         String opSelector = args[2];
-        String hideBandsArg = args[3];
-        String hideProductsArg = args[4];
+        String hideBandsArg = args.length > 3 ? args[3] : null;
+        String hideProductsArg = args.length > 4 ? args[4] : null;
 
         Operator op;
         if (opSelector.equalsIgnoreCase("meris")) {
@@ -71,8 +71,8 @@ public class GraphGenMain {
         BufferedWriter writer = new BufferedWriter(fileWriter);
 
         final GraphGen graphGen = new GraphGen();
-        boolean hideBands = args.length >= 4 && Boolean.parseBoolean(hideBandsArg);
-        final boolean hideProducts = args.length >= 5 && Boolean.parseBoolean(hideProductsArg);
+        boolean hideBands = hideBandsArg != null && Boolean.parseBoolean(hideBandsArg);
+        final boolean hideProducts = hideProductsArg != null && Boolean.parseBoolean(hideProductsArg);
         if (hideProducts) {
             hideBands = true;
         }
