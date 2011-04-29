@@ -1,16 +1,22 @@
 package org.esa.beam.meris.icol.utils;
 
+import com.bc.ceres.core.PrintWriterProgressMonitor;
+import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.gpf.operators.standard.WriteOp;
 import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 public class OperatorUtils {
@@ -124,4 +130,44 @@ public class OperatorUtils {
         return tiles;
     }
 
+    // @author Norman
+
+    /**
+     * Persist a product to disk (temp dir), disposes it, reads it in again and returns the
+     * new instance.
+     * May be used to get rid of all the tiles that are in use due to the given product.
+     *
+     * @param product      A product to persist.
+     * @param variableName The name of the persisted product file (tip: use the Product variable used in your source code).
+     * @param logger       A logger.
+     * @return A new product instance which contains everything that {@code product} contains.
+     * @throws OperatorException If an I/O error occurs.
+     */
+    public static Product persist(Product product, String variableName, Logger logger) throws OperatorException {
+        if (product == null) {
+            return null;
+        }
+        String oldName = product.getName();
+        try {
+            File file = new File(System.getProperty("java.io.tmpdir"),
+                                 String.format("%s_%s.dim", variableName, Long.toHexString(System.nanoTime())));
+            logger.info("Writing product " + oldName + " to " + file);
+            WriteOp writeOp = new WriteOp();
+            writeOp.setFile(file);
+            writeOp.setFormatName("BEAM-DIMAP");
+            writeOp.setClearCacheAfterRowWrite(true);
+            writeOp.setDeleteOutputOnFailure(false);
+            writeOp.setWriteEntireTileRows(true);
+            writeOp.setSourceProduct(product);
+            writeOp.writeProduct(new PrintWriterProgressMonitor(System.out));
+            product.dispose();
+            logger.info("Product written. Now reading in again...");
+            Product persistedProduct = ProductIO.readProduct(file);
+            persistedProduct.setName(oldName);
+            logger.info("Product read.");
+            return persistedProduct;
+        } catch (IOException e) {
+            throw new OperatorException(String.format("Failed to persist product %s: %s", oldName, e.getMessage()), e);
+        }
+    }
 }
