@@ -18,6 +18,7 @@ package org.esa.beam.meris.icol;
 
 import com.bc.ceres.binding.ConversionException;
 import com.bc.ceres.binding.Converter;
+import com.bc.ceres.core.Assert;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.Operator;
@@ -37,6 +38,7 @@ import javax.media.jai.JAI;
 import javax.media.jai.KernelJAI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.ConvolveDescriptor;
+import javax.media.jai.operator.CropDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
@@ -112,6 +114,8 @@ public class ReshapedConvolutionOp extends Operator {
                                                 Interpolation interpolation,
                                                 float downscalingFactor) {
        RenderedOp image;
+       int width = src.getWidth();
+       int height = src.getHeight();
        if (downscalingFactor != 1.0) {
 
            ImageLayout targetImageLayout = new ImageLayout();
@@ -134,10 +138,19 @@ public class ReshapedConvolutionOp extends Operator {
            targetImageLayout.setTileWidth(src.getTileWidth());
            targetImageLayout.setTileHeight(src.getTileHeight());
            final RenderingHints renderingHints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, targetImageLayout);
+           renderingHints.put(JAI.KEY_IMAGE_LAYOUT, targetImageLayout);
+           renderingHints.put(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+           float xScale = (float) width / (float) image.getWidth();
+           float yScale = (float) height / (float) image.getHeight();
            image = ScaleDescriptor.create(image,
-                                          downscalingFactor,
-                                          downscalingFactor,
+                                          xScale,
+                                          yScale,
                                           0.0f, 0.0f, interpolation, renderingHints);
+           if (image.getWidth() > width || image.getHeight() > height) {
+               image = CropDescriptor.create(image, 0f, 0f, (float) width, (float) height, renderingHints);
+           }
+           Assert.state(image.getWidth() == width, "image.getWidth() == width");
+           Assert.state(image.getHeight() == height, "image.getHeight() == height");
        }
 //       System.out.printf("Downscaled 3, size: %d x %d x %d\n", image.getWidth(), image.getHeight(), image.getNumBands());
        return image;
