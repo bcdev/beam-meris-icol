@@ -125,8 +125,6 @@ public class AdjacencyEffectMaskOp extends Operator {
         maskBand.setSampleCoding(flagCoding);
         targetProduct.getFlagCodingGroup().add(flagCoding);
 
-        targetProduct.setPreferredTileSize(128, 128);
-
         BandMathsOp bandArithmeticOp1 = BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
         isLandBand = bandArithmeticOp1.getTargetProduct().getBandAt(0);
 
