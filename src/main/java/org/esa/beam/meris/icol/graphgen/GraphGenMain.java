@@ -41,19 +41,21 @@ public class GraphGenMain {
 
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
-            System.out.println("Usage: GraphGenMain <productPath> <graphmlPath> 'meris'|'landsat'");
+            System.out.println("Usage: GraphGenMain <productPath> <graphmlPath> 'meris'|'landsat' [[<hideBands>] <hideProducts>]");
         }
         String productPath = args[0];
         String graphmlPath = args[1];
         String opSelector = args[2];
+        String hideBandsArg = args[3];
+        String hideProductsArg = args[4];
 
         Operator op;
-        if( opSelector.equalsIgnoreCase("meris") ) {
+        if (opSelector.equalsIgnoreCase("meris")) {
             op = new MerisOp();
-        } else if ( opSelector.equalsIgnoreCase("landsat") ) {
+        } else if (opSelector.equalsIgnoreCase("landsat")) {
             op = new TmOp();
         } else {
-            throw new IllegalArgumentException( "argument 3 must be 'meris' or 'landsat'." );
+            throw new IllegalArgumentException("argument 3 must be 'meris' or 'landsat'.");
         }
 
         final Product sourceProduct = ProductIO.readProduct(new File(productPath));
@@ -64,9 +66,9 @@ public class GraphGenMain {
         BufferedWriter writer = new BufferedWriter(fileWriter);
 
         final GraphGen graphGen = new GraphGen();
-        boolean hideBands = args.length >= 4 && Boolean.parseBoolean(args[3]);
-        final boolean hideProducts = args.length >= 5 && Boolean.parseBoolean(args[4]);
-        if( hideProducts ) {
+        boolean hideBands = args.length >= 4 && Boolean.parseBoolean(hideBandsArg);
+        final boolean hideProducts = args.length >= 5 && Boolean.parseBoolean(hideProductsArg);
+        if (hideProducts) {
             hideBands = true;
         }
         MyHandler handler = new MyHandler(writer, hideBands, hideProducts);
@@ -106,13 +108,13 @@ public class GraphGenMain {
         public void handleBeginGraph() {
             try {
                 writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
-                             "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/" +
-                             "XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"" +
-                             "http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns " +
-                             "http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n" +
-                             "    <key for=\"node\" id=\"d0\" yfiles.type=\"nodegraphics\"/>\n" +
-                             "    <key for=\"edge\" id=\"d1\" yfiles.type=\"edgegraphics\"/>\n" +
-                             "    <graph>\n");
+                                     "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/" +
+                                     "XMLSchema-instance\" xmlns:y=\"http://www.yworks.com/xml/graphml\" xmlns:yed=\"" +
+                                     "http://www.yworks.com/xml/yed/3\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns " +
+                                     "http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd\">\n" +
+                                     "    <key for=\"node\" id=\"d0\" yfiles.type=\"nodegraphics\"/>\n" +
+                                     "    <key for=\"edge\" id=\"d1\" yfiles.type=\"edgegraphics\"/>\n" +
+                                     "    <graph>\n");
             } catch (IOException ignored) {
             }
         }
@@ -121,7 +123,7 @@ public class GraphGenMain {
         public void handleEndGraph() {
             try {
                 writer.write("    </graph>\n" +
-                             "</graphml>");
+                                     "</graphml>");
             } catch (IOException ignored) {
             }
         }
@@ -140,11 +142,11 @@ public class GraphGenMain {
                                 String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\">\n", edgeId++,
                                               operatorIds.get(operator), bandIds.get(band)));
                         writer.write("            <data key=\"d1\">\n" +
-                                     "                <y:PolyLineEdge>\n" +
-                                     "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
-                                     "                </y:PolyLineEdge>\n" +
-                                     "            </data>\n" +
-                                     "        </edge>\n"
+                                             "                <y:PolyLineEdge>\n" +
+                                             "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
+                                             "                </y:PolyLineEdge>\n" +
+                                             "            </data>\n" +
+                                             "        </edge>\n"
                         );
                     }
                 } catch (IOException ignored) {
@@ -165,11 +167,11 @@ public class GraphGenMain {
                                 String.format("        <edge id=\"e%d\" source=\"n%d\" target=\"n%d\">\n", edgeId++,
                                               operatorIds.get(operator), productIds.get(product)));
                         writer.write("            <data key=\"d1\">\n" +
-                                     "                <y:PolyLineEdge>\n" +
-                                     "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
-                                     "                </y:PolyLineEdge>\n" +
-                                     "            </data>\n" +
-                                     "        </edge>\n"
+                                             "                <y:PolyLineEdge>\n" +
+                                             "                    <y:LineStyle color=\"#ff0000\" type=\"dashed\" width=\"1.0\"/>\n" +
+                                             "                </y:PolyLineEdge>\n" +
+                                             "            </data>\n" +
+                                             "        </edge>\n"
                         );
                     }
                 } catch (IOException ignored) {
@@ -240,7 +242,7 @@ public class GraphGenMain {
             int fontSize = 35;
             int height = fontSize + 10;
             int width = label.length() * (fontSize - 10);
-            if(label.endsWith("Op")) {
+            if (label.endsWith("Op")) {
                 label = label.substring(0, label.length() - 2);
             }
             String[] parts = label.split("(?<!^)(?=[A-Z])");
@@ -250,12 +252,12 @@ public class GraphGenMain {
             }
             return String.format(
                     "            <data key=\"d0\">\n" +
-                    "                <y:ShapeNode>\n" +
-                    "                    <y:Geometry height=\"" + height + "\" width=\"" + width + "\"/>\n" +
-                    "                    <y:NodeLabel fontSize=\"" + fontSize + "\">%s</y:NodeLabel>\n" +
-                    "                    <y:Shape type=\"%s\"/>\n" +
-                    "                </y:ShapeNode>\n" +
-                    "            </data>\n",
+                            "                <y:ShapeNode>\n" +
+                            "                    <y:Geometry height=\"" + height + "\" width=\"" + width + "\"/>\n" +
+                            "                    <y:NodeLabel fontSize=\"" + fontSize + "\">%s</y:NodeLabel>\n" +
+                            "                    <y:Shape type=\"%s\"/>\n" +
+                            "                </y:ShapeNode>\n" +
+                            "            </data>\n",
                     label.trim(), shape);
         }
 
