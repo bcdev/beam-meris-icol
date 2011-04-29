@@ -41,23 +41,26 @@ public class GraphGenMain {
 
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
-            throw new IllegalArgumentException("Input and output file locations and product type needed.");
+            System.out.println("Usage: GraphGenMain <productPath> <graphmlPath> 'meris'|'landsat'");
         }
+        String productPath = args[0];
+        String graphmlPath = args[1];
+        String opSelector = args[2];
 
         Operator op;
-        if( args[2].equalsIgnoreCase("meris") ) {
+        if( opSelector.equalsIgnoreCase("meris") ) {
             op = new MerisOp();
-        } else if ( args[2].equalsIgnoreCase("landsat") ) {
+        } else if ( opSelector.equalsIgnoreCase("landsat") ) {
             op = new TmOp();
         } else {
             throw new IllegalArgumentException( "argument 3 must be 'meris' or 'landsat'." );
         }
 
-        final Product sourceProduct = ProductIO.readProduct(new File(args[0]));
+        final Product sourceProduct = ProductIO.readProduct(new File(productPath));
         op.setSourceProduct(sourceProduct);
         final Product targetProduct = op.getTargetProduct();
 
-        FileWriter fileWriter = new FileWriter(new File(args[1]));
+        FileWriter fileWriter = new FileWriter(new File(graphmlPath));
         BufferedWriter writer = new BufferedWriter(fileWriter);
 
         final GraphGen graphGen = new GraphGen();
