@@ -47,6 +47,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+// Try running with:  -Dbeam.gpf.useFileTileCache=true
+
+
 /**
  * Main operator for MERIS AE correction.
  *
@@ -131,13 +134,12 @@ public class MerisOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        System.out.println("Tile size: " + tileSize);
-        System.out.println("Apply AE over: " + aeArea);
-
-        // todo: why this??
         if (tileSize > 0) {
             sourceProduct.setPreferredTileSize(tileSize, tileSize);
         }
+
+        getLogger().info("Tile size of source product is " + sourceProduct.getPreferredTileSize());
+        getLogger().info("Applying AE over: " + aeArea);
 
         // todo: we need to think about how to handle the left and right stripes in Meris N1 files which
         // consist of invalid pixels (detector_index = -1). It seems that they are somehow introduced in the
