@@ -264,13 +264,13 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                                      sourceRect, pm);
+                                                      sourceRect);
 
         Tile[] rhoRaecConv = null;
         if (openclConvolution && ray1bconvProduct != null) {
             rhoRaecConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "rho_ray_aerc_conv",
                                                        EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                                       sourceRect, pm);
+                                                       sourceRect);
         }
 
         RhoBracketAlgo.Convolver convolver = null;

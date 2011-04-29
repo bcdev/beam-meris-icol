@@ -196,19 +196,19 @@ public class AdjacencyEffectRayleighOp extends Operator {
             Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect, pm);
 
             Tile[] rhoNg = OperatorUtils.getSourceTiles(this, gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX,
-                                                        instrument, targetRect, pm);
-            Tile[] transRup = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRv", instrument, targetRect,
-                                                           pm); //up
-            Tile[] transRdown = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRs", instrument, targetRect,
-                                                             pm); //down
-            Tile[] tauR = OperatorUtils.getSourceTiles(this, ray1bProduct, "tauR", instrument, targetRect, pm);
-            Tile[] sphAlbR = OperatorUtils.getSourceTiles(this, ray1bProduct, "sphAlbR", instrument, targetRect, pm);
+                                                        instrument, targetRect);
+            Tile[] transRup = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRv", instrument, targetRect
+            ); //up
+            Tile[] transRdown = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRs", instrument, targetRect
+            ); //down
+            Tile[] tauR = OperatorUtils.getSourceTiles(this, ray1bProduct, "tauR", instrument, targetRect);
+            Tile[] sphAlbR = OperatorUtils.getSourceTiles(this, ray1bProduct, "sphAlbR", instrument, targetRect);
 
-            Tile[] rhoAg = OperatorUtils.getSourceTiles(this, ray1bProduct, "brr", instrument, sourceRect, pm);
+            Tile[] rhoAg = OperatorUtils.getSourceTiles(this, ray1bProduct, "brr", instrument, sourceRect);
             Tile[] rhoAgConv = null;
             if (openclConvolution && ray1bconvProduct != null) {
-                rhoAgConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "brr_conv", instrument, sourceRect,
-                                                         pm);
+                rhoAgConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "brr_conv", instrument, sourceRect
+                );
             }
             final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoAg, targetRect, pm);
 

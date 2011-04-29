@@ -1,6 +1,5 @@
 package org.esa.beam.meris.icol.utils;
 
-import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -90,20 +89,21 @@ public class OperatorUtils {
     }
 
     public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, Instrument instrument,
-                                        Rectangle rect, ProgressMonitor pm) throws OperatorException {
-        return getSourceTiles(op, srcProduct, bandPrefix, instrument.numSpectralBands, instrument.bandsToSkip, rect,
-                              pm);
+                                        Rectangle rect) throws OperatorException {
+        return getSourceTiles(op, srcProduct, bandPrefix, instrument.numSpectralBands, instrument.bandsToSkip, rect);
     }
 
     public static Tile[] getSourceTiles(Operator op, Product srcProduct, String bandPrefix, int numBands,
-                                        int[] bandsToSkip, Rectangle rect, ProgressMonitor pm) throws
-                                                                                               OperatorException {
+                                        int[] bandsToSkip, Rectangle rect) throws OperatorException {
         Tile[] tiles = new Tile[numBands];
         for (int i = 0; i < tiles.length; i++) {
             if (!IcolUtils.isIndexToSkip(i, bandsToSkip)) {
                 String bandName = bandPrefix + "_" + (i + 1);
                 Band srcBand = srcProduct.getBand(bandName);
-                tiles[i] = op.getSourceTile(srcBand, rect, pm);
+                if (srcBand == null) {
+                    throw new OperatorException("Missing band " + bandName + " in source product " + srcProduct.getName());
+                }
+                tiles[i] = op.getSourceTile(srcBand, rect);
             }
         }
         return tiles;

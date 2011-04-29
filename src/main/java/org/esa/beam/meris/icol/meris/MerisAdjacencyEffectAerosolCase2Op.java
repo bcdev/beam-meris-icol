@@ -261,7 +261,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                                      sourceRect, pm);
+                                                      sourceRect);
         RhoBracketAlgo.Convolver convolver = null;
 
         Tile flagTile = targetTiles.get(flagBand);
