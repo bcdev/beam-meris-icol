@@ -43,13 +43,15 @@ import java.util.Map;
  */
 public class IcolDialog extends SingleTargetProductDialog {
 
-    public static final String TITLE = "ICOL Processor - v2.5-SNAPSHOT";
+    static final String N1_FORMAT = EnvisatConstants.ENVISAT_FORMAT_NAME + " N1";
+
+    public static final String TITLE = "ICOL Processor - v2.6-SNAPSHOT";
     private IcolForm form;
     private IcolModel model;
 
     public IcolDialog(AppContext appContext) {
         super(appContext, TITLE, ID_APPLY_CLOSE_HELP, "icolProcessor",
-              TargetProductSelectorModel.createEnvisatTargetProductSelectorModel());
+              TargetProductSelectorModel.createEnvisatTargetProductSelectorModel(N1_FORMAT));
 
         model = new IcolModel();
         form = new IcolForm(appContext, model, getTargetProductSelector());
@@ -76,7 +78,7 @@ public class IcolDialog extends SingleTargetProductDialog {
             return false;
         }
         if (form.isEnvisatOutputFormatSelected() && !form.isEnvisatSourceProduct(sourceProduct)) {
-            showErrorDialog("If " + EnvisatConstants.ENVISAT_FORMAT_NAME + " is selected as output format the " +
+            showErrorDialog("If " + N1_FORMAT + " is selected as output format the " +
                             "source product must be in the same format.");
             return false;
         }

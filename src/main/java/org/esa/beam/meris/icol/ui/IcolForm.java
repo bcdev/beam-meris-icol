@@ -8,7 +8,6 @@ import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
 import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import com.bc.jexp.ParseException;
 import com.bc.jexp.Term;
-import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.dataio.envisat.EnvisatProductReader;
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
@@ -124,18 +123,18 @@ class IcolForm extends JTabbedPane {
                 if (isEnvisatSourceProduct(
                         IcolForm.this.sourceProductSelector.getSelectedProduct()) && radianceProductTypeButton.isSelected()) {
                     final PropertyContainer pc = IcolForm.this.targetProductSelector.getModel().getValueContainer();
-                    pc.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
+                    pc.setValue("formatName", IcolDialog.N1_FORMAT);
                 }
             }
         });
-        targetProductSelector.getModel().getValueContainer().addPropertyChangeListener("formatName",
-                                                                                       new PropertyChangeListener() {
-                                                                                           @Override
-                                                                                           public void propertyChange(
-                                                                                                   PropertyChangeEvent evt) {
-                                                                                               updateProductFormatChange();
-                                                                                           }
-                                                                                       });
+        final PropertyContainer valueContainer = targetProductSelector.getModel().getValueContainer();
+        valueContainer.addPropertyChangeListener("formatName",
+                                                 new PropertyChangeListener() {
+                                                     @Override
+                                                     public void propertyChange(PropertyChangeEvent evt) {
+                                                         updateProductFormatChange();
+                                                     }
+                                                 });
         bindComponents();
         updateUIStates();
     }
@@ -163,7 +162,7 @@ class IcolForm extends JTabbedPane {
     }
 
     boolean isEnvisatOutputFormatSelected() {
-        return targetProductSelector.getModel().getFormatName().equals(EnvisatConstants.ENVISAT_FORMAT_NAME);
+        return targetProductSelector.getModel().getFormatName().equals(IcolDialog.N1_FORMAT);
     }
 
     private void bindComponents() {

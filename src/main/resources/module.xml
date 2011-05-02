@@ -36,6 +36,8 @@
 
     <changelog>
         <![CDATA[
+            <p>Changes in 2.6<br/>
+            [ICOL-9]OperatorException: "The specified region, if not null, must intersect with the image`s bounds"
             <p>Changes in 1.1<br/>
             [ICOL-?] Use JAI-based image convolution<br/>
             <p>Changes in 1.0.4<br/>
