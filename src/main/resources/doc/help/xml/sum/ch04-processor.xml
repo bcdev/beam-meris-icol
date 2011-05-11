@@ -528,7 +528,7 @@
         </figure>
 
         If MERIS N1 products shall be written as output result a graph xml file has to be created.
-        This xml file should concatenate the icol.Meris operator and the N1Patcher operator.
+        This xml file should concatenate the icol.Meris operator and the Meris.N1Patcher operator.
         A possible graph xml file would look like the following. For demonstration purpose only
         the necessary parameter have been set.
         <programlisting>
@@ -543,7 +543,7 @@
 
                 </node>
                 <node id="n1Writer">
-                    <operator>N1Patcher</operator>
+                    <operator>Meris.N1Patcher</operator>
                     <sources>
                         <n1>${n1Product}</n1>
                         <input>merisIcol</input>

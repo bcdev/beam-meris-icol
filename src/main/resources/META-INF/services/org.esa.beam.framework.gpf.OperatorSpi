@@ -36,4 +36,3 @@ org.esa.beam.meris.icol.common.CoastDistanceOp$Spi
 org.esa.beam.meris.icol.common.CloudDistanceOp$Spi
 org.esa.beam.meris.icol.common.ZmaxOp$Spi
 org.esa.beam.meris.icol.common.AdjacencyEffectRayleighOp$Spi
-org.esa.beam.meris.icol.common.IcolN1PatcherOp$Spi
