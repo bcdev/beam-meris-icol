@@ -14,6 +14,7 @@ import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -37,7 +38,7 @@ public class CompareConvolutionOp extends MerisBasisOp {
     @TargetProduct
     private Product targetProduct;
 
-    RhoBracketAlgo rhoBracketAlgo;
+    IcolConvolutionAlgo icolConvolutionAlgo;
 
     private Band flagBand;
 
@@ -59,7 +60,7 @@ public class CompareConvolutionOp extends MerisBasisOp {
         } catch (IOException e) {
             throw new OperatorException(e);
         }
-        rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
+        icolConvolutionAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
 
         totalTime = 0;
         totalPixels = 0;
@@ -88,13 +89,14 @@ public class CompareConvolutionOp extends MerisBasisOp {
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) throws OperatorException {
         Rectangle targetRect = targetTile.getRectangle();
-        Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
+        Rectangle sourceRect = icolConvolutionAlgo.mapTargetRect(targetRect);
 
         Tile[] rhoRaec = new Tile[10];
         for (int i = 0; i < 10; i++) {
-            rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect, pm);
+            rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
-        final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+        final IcolConvolutionAlgo.Convolver convolver = icolConvolutionAlgo.createConvolver(this, rhoRaec, targetRect, pm);
 
         long t1 = System.currentTimeMillis();
         for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {

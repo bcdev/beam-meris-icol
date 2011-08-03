@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.util.ProductUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
@@ -52,8 +53,9 @@ public class TmCloudTopPressureOp extends TmBasisOp {
 
         Rectangle rectangle = targetTile.getRectangle();
 
-        Tile reflectance6Tile = getSourceTile(reflectanceBand6, rectangle, pm);
-        Tile cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle, pm);
+        Tile reflectance6Tile = getSourceTile(reflectanceBand6, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
         pm.beginTask("Processing frame...", rectangle.height);
         try {

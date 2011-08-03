@@ -18,6 +18,7 @@ import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Utils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
@@ -76,15 +77,20 @@ public class TmAeMergeOp extends TmBasisOp {
         try {
             final String bandName = band.getName();
             final int bandNumber = band.getSpectralBandIndex() + 1;
-            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
+            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             if (bandName.startsWith(TmAeMergeOp.AE_TOTAL) &&
                     !IcolUtils.isIndexToSkip(bandNumber - 1,
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
-                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
-                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
-                Tile aeMaskRayleigh = getSourceTile(aeMaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-                Tile aeMaskAerosol = getSourceTile(aeMaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeMaskRayleigh = getSourceTile(aeMaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeMaskAerosol = getSourceTile(aeMaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {

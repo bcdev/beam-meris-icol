@@ -15,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
@@ -107,7 +108,7 @@ public class TmCloudClassificationOp extends TmBasisOp {
 
         Tile[] reflectanceTile = new Tile[reflectanceBands.length];
         for (int i = 0; i < reflectanceTile.length; i++) {
-            reflectanceTile[i] = getSourceTile(reflectanceBands[i], rectangle, pm);
+            reflectanceTile[i] = getSourceTile(reflectanceBands[i], rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
 
         pm.beginTask("Processing frame...", rectangle.height);

@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.util.Map;
 
@@ -64,13 +65,15 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
             Tile[] gaseousTransmittanceTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
             for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
                 gaseousTransmittanceTile[i] =
-                        getSourceTile(atmFunctionsProduct.getBand(TmConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i]), rectangle, pm);
+                        getSourceTile(atmFunctionsProduct.getBand(TmConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i]), rectangle,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
             Tile[] reflectanceTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
             for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
                 reflectanceTile[i] =
-                        getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]), rectangle, pm);
+                        getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]), rectangle,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
             Tile[] rhoNgTile = OperatorUtils.getTargetTiles(targetTiles, rhoNgBands);

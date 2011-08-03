@@ -16,13 +16,8 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.icol.AerosolScatteringFunctions;
-import org.esa.beam.meris.icol.CoeffW;
-import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
-import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.RhoBracketAlgo;
-import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
-import org.esa.beam.meris.icol.RhoBracketKernellLoop;
+import org.esa.beam.meris.icol.*;
+import org.esa.beam.meris.icol.IcolConvolutionKernellLoop;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
@@ -33,6 +28,7 @@ import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -104,7 +100,7 @@ public class TmAeAerosolOp extends TmBasisOp {
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25")
     private double userPSurf;
 
-    RhoBracketAlgo rhoBracketAlgo;
+    IcolConvolutionAlgo icolConvolutionAlgo;
 
     private Band flagBand;
 
@@ -176,10 +172,10 @@ public class TmAeAerosolOp extends TmBasisOp {
         String productType = l1bProduct.getProductType();
 
         if (reshapedConvolution) {
-            rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
+            icolConvolutionAlgo = new IcolConvolutionJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
                                                        numSpectralBands, bandsToSkip);
         } else {
-            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
+            icolConvolutionAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         }
 
 
@@ -227,24 +223,26 @@ public class TmAeAerosolOp extends TmBasisOp {
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
                                                                                                         OperatorException {
-        Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
+        Rectangle sourceRect = icolConvolutionAlgo.mapTargetRect(targetRect);
 
         Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect,
-                                 pm);
-        Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect, pm);
+                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME), targetRect,
-                                 pm);
+                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), targetRect,
-                                 pm);
+                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-        Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
+        Tile isLand = getSourceTile(isLandBand, sourceRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
         Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
-        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
         Tile[] rhoRaec = getRhoRaecTiles(pm, sourceRect, instrument);
 
-        final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+        final IcolConvolutionAlgo.Convolver convolver = icolConvolutionAlgo.createConvolver(this, rhoRaec, targetRect, pm);
 
         Tile flagTile = targetTiles.get(flagBand);
 
@@ -274,14 +272,16 @@ public class TmAeAerosolOp extends TmBasisOp {
         if (cloudProduct != null) {
             if (instrument.toUpperCase().equals("MERIS")) {
                 surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE),
-                                                targetRect, pm);
+                                                targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect,
-                                                 pm);
-                cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
+                                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             } else if (instrument.toUpperCase().equals("LANDSAT5 TM")) {
                 cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT5_CTP_BAND_NAME), targetRect,
-                                                 pm);
-                cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
+                                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), targetRect,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
         }
 
@@ -577,7 +577,8 @@ public class TmAeAerosolOp extends TmBasisOp {
             if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
                 continue;
             }
-            rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect, pm);
+            rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
 
         return rhoRaec;

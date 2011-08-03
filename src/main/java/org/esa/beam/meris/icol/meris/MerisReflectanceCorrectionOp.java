@@ -49,11 +49,11 @@ import java.util.List;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Meris.IcolCorrectedReflectances",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Marco Zühlke",
-                  copyright = "(c) 2007 by Brockmann Consult",
-                  description = "Corrects for the adjacency effect and computes rho TOA.")
+        version = "1.0",
+        internal = true,
+        authors = "Marco Zühlke",
+        copyright = "(c) 2007 by Brockmann Consult",
+        description = "Corrects for the adjacency effect and computes rho TOA.")
 public class MerisReflectanceCorrectionOp extends Operator {
 
     private static final int FLAG_AE_MASK_RAYLEIGH = 1;
@@ -141,6 +141,18 @@ public class MerisReflectanceCorrectionOp extends Operator {
         }
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
+
+        Band copyLandFlagRayleighConvBand = ProductUtils.copyBand("land_flag_ray_conv", aeRayProduct, targetProduct);
+        copyLandFlagRayleighConvBand.setSourceImage(aeRayProduct.getBand("land_flag_ray_conv").getSourceImage());
+
+        Band copyCloudFlagRayleighConvBand = ProductUtils.copyBand("cloud_flag_ray_conv", aeRayProduct, targetProduct);
+        copyCloudFlagRayleighConvBand.setSourceImage(aeRayProduct.getBand("cloud_flag_ray_conv").getSourceImage());
+
+        Band copyLandFlagAerosolConvBand = ProductUtils.copyBand("land_flag_aer_conv", aeAerosolProduct, targetProduct);
+        copyLandFlagAerosolConvBand.setSourceImage(aeAerosolProduct.getBand("land_flag_aer_conv").getSourceImage());
+
+        Band copyCloudFlagAerosolConvBand = ProductUtils.copyBand("cloud_flag_aer_conv", aeAerosolProduct, targetProduct);
+        copyCloudFlagAerosolConvBand.setSourceImage(aeAerosolProduct.getBand("cloud_flag_aer_conv").getSourceImage());
 
         // create and add the flags coding
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
@@ -239,9 +251,9 @@ public class MerisReflectanceCorrectionOp extends Operator {
             Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rect);
             Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rect);
             Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
-                                                rect);
+                    rect);
             Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
-                                               rect);
+                    rect);
             Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rect);
             Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rect);
 
@@ -290,7 +302,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
             Tile gasCor = getSourceTile(
                     gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle);
             Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
-                                    rectangle);
+                    rectangle);
             Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle);
             Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle);
             Tile aeRayleigh = null;
@@ -323,18 +335,18 @@ public class MerisReflectanceCorrectionOp extends Operator {
     }
 
     private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws
-                                                                                                   OperatorException {
+            OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height + 7);
         try {
             Tile gasCor = getSourceTile(
                     gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle);
             Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
-                                    rectangle);
+                    rectangle);
             Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
-                                             rectangle);
+                    rectangle);
             Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
-                                            rectangle);
+                    rectangle);
             Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle);
             Tile aeRayleigh = null;
             Tile aeAerosol = null;

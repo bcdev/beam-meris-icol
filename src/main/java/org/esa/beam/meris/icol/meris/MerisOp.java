@@ -43,6 +43,7 @@ import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
+import javax.media.jai.JAI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -134,6 +135,8 @@ public class MerisOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
+        JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // only for debugging purpose!!
+
         if (tileSize > 0) {
             sourceProduct.setPreferredTileSize(tileSize, tileSize);
         }
@@ -141,16 +144,15 @@ public class MerisOp extends Operator {
         getLogger().info("Tile size of source product is " + sourceProduct.getPreferredTileSize());
         getLogger().info("Applying AE over: " + aeArea);
 
-        // todo: we need to think about how to handle the left and right stripes in Meris N1 files which
-        // consist of invalid pixels (detector_index = -1). It seems that they are somehow introduced in the
-        // AE correction (see email from MB, 10.09.2010). Do a kind of a priori "edge correction"?
-
         Product rad2reflProduct = createRad2ReflProduct();
         Product ctpProduct = createCtpProduct();
         Product cloudClassificationProduct = createCloudClassificationProduct(rad2reflProduct, ctpProduct);
         cloudClassificationProduct = updateCloudClassificationProduct(cloudClassificationProduct);
         Product gasProduct = createGasProduct(rad2reflProduct, cloudClassificationProduct);
         Product landProduct = createLandProduct(rad2reflProduct, gasProduct);
+
+        Product cloudLandMaskProduct = createCloudLandMaskProduct(cloudClassificationProduct, landProduct);
+
         Product fresnelProduct = createFresnelProduct(gasProduct, landProduct);
         Product rayleighProduct = createRayleighProduct(cloudClassificationProduct, landProduct, fresnelProduct);
         Product aemaskRayleighProduct = createAeMaskRayleighProduct(landProduct);
@@ -160,39 +162,19 @@ public class MerisOp extends Operator {
         Product zmaxProduct = createZMaxProduct(aemaskRayleighProduct, coastDistanceProduct);
         Product zmaxCloudProduct = createZMaxCloudProduct(aemaskRayleighProduct, cloudDistanceProduct);
 
-        // test: create constant reflectance input
-//        Map<String, Product> constInput = new HashMap<String, Product>(1);
-//        constInput.put("source", sourceProduct);
-//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ConstantValueOp.class), GPF.NO_PARAMS, rayleighProduct);
-//        Product constProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), GPF.NO_PARAMS, rayleighProduct);
-        // end test
-
         Product brrCloudProduct = createBrrCloudProduct(rad2reflProduct, cloudClassificationProduct, landProduct,
                                                         rayleighProduct);
 
         Product brrConvolveProduct = createBrrConvolveProduct(brrCloudProduct);
 
         Product aeRayProduct = createAeRayProduct(rad2reflProduct, cloudClassificationProduct, gasProduct, landProduct,
+                                                  cloudLandMaskProduct,
                                                   aemaskRayleighProduct, zmaxProduct, zmaxCloudProduct, brrCloudProduct,
                                                   brrConvolveProduct);
 
-        // test: create constant reflectance input
-//            Map<String, Product> compareConvolutionInput = new HashMap<String, Product>(1);
-//            compareConvolutionInput.put("l1b", sourceProduct);
-//            compareConvolutionInput.put("ae_ray", aeRayProduct);
-//            Product compareConvolutionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CompareConvolutionOp.class), GPF.NO_PARAMS, compareConvolutionInput);
-//            targetProduct = compareConvolutionProduct;
-//            return;
-
-
-        // test: create constant reflectance input
-//            Map<String, Product> constInputAer = new HashMap<String, Product>(1);
-//            constInputAer.put("source", sourceProduct);
-//            Product constProductAer = GPF.createProduct(OperatorSpi.getOperatorAlias(TestImageOp.class), GPF.NO_PARAMS, constInputAer);
-        // end test
-
         Product rayAercConvolveProduct = createRayAercConvolveProduct(aeRayProduct);
-        Product aeAerProduct = createAeAerProduct(cloudClassificationProduct, landProduct, aemaskAerosolProduct,
+        Product aeAerProduct = createAeAerProduct(cloudClassificationProduct, landProduct,
+                                                  cloudLandMaskProduct, aemaskAerosolProduct,
                                                   zmaxProduct, zmaxCloudProduct, aeRayProduct, rayAercConvolveProduct);
         Product reverseRhoToaProduct = createReverseRhoToaProduct(rad2reflProduct, cloudClassificationProduct,
                                                                   gasProduct, landProduct, aemaskRayleighProduct,
@@ -227,6 +209,7 @@ public class MerisOp extends Operator {
             targetProduct = finalRhoToaProduct;
         }
     }
+
 
     private void addDebugBands(Product rad2reflProduct, Product ctpProduct, Product cloudClassificationProduct,
                                Product landProduct, Product aemaskRayleighProduct, Product aemaskAerosolProduct,
@@ -336,9 +319,10 @@ public class MerisOp extends Operator {
     }
 
     private Product createAeAerProduct(Product cloudClassificationProduct, Product landProduct,
+                                       Product cloudLandMaskProduct,
                                        Product aemaskAerosolProduct, Product zmaxProduct, Product zmaxCloudProduct,
                                        Product aeRayProduct, Product rayAercConvolveProduct) {
-        Map<String, Product> aeAerInput = new HashMap<String, Product>(8);
+        Map<String, Product> aeAerInput = new HashMap<String, Product>(9);
         aeAerInput.put("l1b", sourceProduct);
         aeAerInput.put("land", landProduct);
         aeAerInput.put("aemask", aemaskAerosolProduct);
@@ -349,6 +333,7 @@ public class MerisOp extends Operator {
         }
 //      aeAerInput.put("ae_ray", constProductAer);  // test!!
         aeAerInput.put("cloud", cloudClassificationProduct);
+        aeAerInput.put("cloudLandMask", cloudLandMaskProduct);
         aeAerInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeAerosolParams = new HashMap<String, Object>(8);
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
@@ -397,9 +382,10 @@ public class MerisOp extends Operator {
     }
 
     private Product createAeRayProduct(Product rad2reflProduct, Product cloudClassificationProduct, Product gasProduct,
-                                       Product landProduct, Product aemaskRayleighProduct, Product zmaxProduct,
+                                       Product landProduct, Product cloudLandMaskProduct,
+                                       Product aemaskRayleighProduct, Product zmaxProduct,
                                        Product zmaxCloudProduct, Product brrCloudProduct, Product brrConvolveProduct) {
-        Map<String, Product> aeRayInput = new HashMap<String, Product>(10);
+        Map<String, Product> aeRayInput = new HashMap<String, Product>(11);
         aeRayInput.put("l1b", sourceProduct);
         aeRayInput.put("refl", rad2reflProduct);
         aeRayInput.put("land", landProduct);
@@ -412,9 +398,11 @@ public class MerisOp extends Operator {
         aeRayInput.put("rhoNg", gasProduct);
         aeRayInput.put("zmax", zmaxProduct);
         aeRayInput.put("cloud", cloudClassificationProduct);
+        aeRayInput.put("cloudLandMask", cloudLandMaskProduct);
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(5);
         aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        aeRayParams.put("cloudExpression", "cloud_classif_flags.F_CLOUD");
         // todo simplify expression
         final String debugProperty = System.getProperty("additionalOutputBands");
         if (productType == 0 && debugProperty != null && debugProperty.equals("RS")) {
@@ -483,6 +471,17 @@ public class MerisOp extends Operator {
         zmaxParameters.put("aeMaskExpression", aeMaskExpression);
         zmaxParameters.put("distanceBandName", CoastDistanceOp.COAST_DISTANCE);
         return GPF.createProduct(OperatorSpi.getOperatorAlias(ZmaxOp.class), zmaxParameters, zmaxInput);
+    }
+
+    private Product createCloudLandMaskProduct(Product cloudClassificationProduct, Product landProduct) {
+        Map<String, Product> cloudLandMaskInput = new HashMap<String, Product>(2);
+        cloudLandMaskInput.put("cloud", cloudClassificationProduct);
+        cloudLandMaskInput.put("land", landProduct);
+        Map<String, Object> cloudLandMaskParameters = new HashMap<String, Object>(2);
+        cloudLandMaskParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        cloudLandMaskParameters.put("cloudExpression", "cloud_classif_flags.F_CLOUD");
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(CloudLandMaskOp.class), cloudLandMaskParameters,
+                                 cloudLandMaskInput);
     }
 
     private Product createCloudDistanceProduct(Product cloudClassificationProduct) {

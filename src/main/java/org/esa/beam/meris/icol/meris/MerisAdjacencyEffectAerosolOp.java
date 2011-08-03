@@ -33,14 +33,9 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.icol.AerosolScatteringFunctions;
+import org.esa.beam.meris.icol.*;
 import org.esa.beam.meris.icol.AerosolScatteringFunctions.RV;
-import org.esa.beam.meris.icol.CoeffW;
-import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
-import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.RhoBracketAlgo;
-import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
-import org.esa.beam.meris.icol.RhoBracketKernellLoop;
+import org.esa.beam.meris.icol.IcolConvolutionKernellLoop;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
@@ -51,6 +46,7 @@ import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -68,11 +64,11 @@ import java.util.Map;
  */
 @SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "Meris.AEAerosol",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Marco Zuehlke",
-                  copyright = "(c) 2007 by Brockmann Consult",
-                  description = "Contribution of aerosol to the adjacency effect.")
+        version = "1.0",
+        internal = true,
+        authors = "Marco Zuehlke",
+        copyright = "(c) 2007 by Brockmann Consult",
+        description = "Contribution of aerosol to the adjacency effect.")
 public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     public static final String AOT_FLAGS = "aot_flags";
@@ -101,6 +97,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
     private Product cloudProduct;
     @SourceProduct(alias = "zmaxCloud")
     private Product zmaxCloudProduct;
+    @SourceProduct(alias = "cloudLandMask")
+    private Product cloudLandMaskProduct;
 
     @TargetProduct
     private Product targetProduct;
@@ -114,7 +112,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1")
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2",
-               description = "The aerosol optical thickness at reference wavelength")
+            description = "The aerosol optical thickness at reference wavelength")
     private double userAot;
     // new in v1.1
     @Parameter(interval = "[1, 26]", defaultValue = "10")
@@ -126,7 +124,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
     @Parameter
     private String landExpression;
 
-    RhoBracketAlgo rhoBracketAlgo;
+    IcolConvolutionAlgo icolConvolutionAlgo;
+    IcolConvolutionAlgo lcFlagConvAlgo;
 
     private Band flagBand;
 
@@ -141,6 +140,9 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     private Band[] fresnelDebugBands;
     private Band[] aerosolDebugBands;
+
+    private Band landFlagConvBand;
+    private Band cloudFlagConvBand;
 
     private CoeffW coeffW;
     private double[/*26*/][/*RR=26|FR=101*/] w;
@@ -188,6 +190,9 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
             fresnelDebugBands = addBandGroup("rho_aeAer_fresnel");
         }
 
+        landFlagConvBand = targetProduct.addBand("land_flag_aer_conv", ProductData.TYPE_FLOAT32);
+        cloudFlagConvBand = targetProduct.addBand("cloud_flag_aer_conv", ProductData.TYPE_FLOAT32);
+
         try {
             loadAuxData();
         } catch (IOException e) {
@@ -197,11 +202,13 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         String productType = l1bProduct.getProductType();
 
         if (reshapedConvolution) {
-            rhoBracketAlgo = new RhoBracketJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
-                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS,
-                                                       bandsToSkip);
+            icolConvolutionAlgo = new IcolConvolutionJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
+                    EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS,
+                    bandsToSkip);
+            lcFlagConvAlgo = new IcolConvolutionJaiConvolve(cloudLandMaskProduct, productType, coeffW, "lcflag_", iaerConv, 2, null);
         } else {
-            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
+            icolConvolutionAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
+            lcFlagConvAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
 
 
@@ -214,7 +221,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     private Band[] addBandGroup(String prefix) {
         return OperatorUtils.addBandGroup(l1bProduct, EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                          targetProduct, prefix, NO_DATA_VALUE, false);
+                targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     private FlagCoding createFlagCoding() {
@@ -248,10 +255,11 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
-                                                                                                        OperatorException {
-        Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
+            OperatorException {
+        Rectangle sourceRect = icolConvolutionAlgo.mapTargetRect(targetRect);
 
-        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect, pm);
+        Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
         Tile vza = null;
         Tile sza = null;
@@ -263,17 +271,22 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         Tile zmaxCloud = null;
 
         Tile[] rhoRaec = OperatorUtils.getSourceTiles(this, aeRayProduct, "rho_ray_aerc",
-                                                      EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                                      sourceRect);
+                EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                sourceRect);
 
         Tile[] rhoRaecConv = null;
         if (openclConvolution && ray1bconvProduct != null) {
             rhoRaecConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "rho_ray_aerc_conv",
-                                                       EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
-                                                       sourceRect);
+                    EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS, bandsToSkip,
+                    sourceRect);
         }
 
-        RhoBracketAlgo.Convolver convolver = null;
+        Tile isMaskLand = getSourceTile(cloudLandMaskProduct.getBand(CloudLandMaskOp.LAND_MASK_NAME), targetRect,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile isMaskCloud = getSourceTile(cloudLandMaskProduct.getBand(CloudLandMaskOp.CLOUD_MASK_NAME), targetRect,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+
+        IcolConvolutionAlgo.Convolver convolver = null;
 
         Tile flagTile = targetTiles.get(flagBand);
 
@@ -300,15 +313,24 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
             fresnelDebug = getTargetTiles(targetTiles, fresnelDebugBands);
         }
 
+        Tile lfConvTile = targetTiles.get(landFlagConvBand);
+        Tile cfConvTile = targetTiles.get(cloudFlagConvBand);
+
+
         Tile surfacePressure = null;
         Tile cloudTopPressure = null;
         Tile cloudFlags = null;
         if (cloudProduct != null) {
             surfacePressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE), targetRect,
-                                            pm);
-            cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect, pm);
-            cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            cloudTopPressure = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
+
+        final IcolConvolutionAlgo.Convolver lcFlagConvolver =
+                lcFlagConvAlgo.createConvolver(this, new Tile[]{isMaskLand, isMaskCloud}, targetRect, pm);
 
         try {
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
@@ -323,29 +345,42 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                         if (isCloud) {
                             final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) /
-                                                                   surfacePressure.getSampleDouble(x, y);
+                                    surfacePressure.getSampleDouble(x, y);
                             // cloud height
                             double zCloud = 8.0 * Math.log(1.0 / pressureCorrectionCloud);
                             rhoCloudCorrFac = Math.exp(-zCloud / HA);
                         }
                     }
 
+                    double lfConv;
+                    double cfConv;
+                    if (reshapedConvolution) {
+                        lfConv = lcFlagConvolver.convolveSample(x, y, iaerConv, 0);
+                        cfConv = lcFlagConvolver.convolveSample(x, y, iaerConv, 1);
+                    } else {
+                        lfConv = lcFlagConvolver.convolveSampleBoolean(x, y, iaerConv, 0);
+                        cfConv = lcFlagConvolver.convolveSampleBoolean(x, y, iaerConv, 1);
+                    }
+                    lfConvTile.setSample(x, y, lfConv);
+                    cfConvTile.setSample(x, y, cfConv);
+
+
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         // attempt to optimise
                         if (vza == null || sza == null || vaa == null || saa == null || isLand == null || zmaxs == null ||
-                            zmaxCloud == null || convolver == null) {
+                                zmaxCloud == null || convolver == null) {
                             vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME),
-                                                targetRect, pm);
+                                    targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
-                                                targetRect, pm);
+                                    targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             vaa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME),
-                                                targetRect, pm);
+                                    targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
-                                                targetRect, pm);
-                            isLand = getSourceTile(isLandBand, sourceRect, pm);
+                                    targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                            isLand = getSourceTile(isLandBand, sourceRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
                             zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
-                            convolver = rhoBracketAlgo.createConvolver(this, rhoRaec, targetRect, pm);
+                            convolver = icolConvolutionAlgo.createConvolver(this, rhoRaec, targetRect, pm);
                         }
                         // end of optimisation attempt
 
@@ -413,7 +448,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                             for (int iiaot = 1; iiaot <= 16 && searchIAOT == -1; iiaot++) {
                                 taua = tauaConst * iiaot;
                                 RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y),
-                                                                             vza.getSampleFloat(x, y), phi);
+                                        vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
@@ -426,8 +461,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                             if (searchIAOT != -1) {
                                 aot = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], searchIAOT,
-                                                                                rhoBrr865[searchIAOT + 1],
-                                                                                searchIAOT + 1, rho_13) * 0.1;
+                                        rhoBrr865[searchIAOT + 1],
+                                        searchIAOT + 1, rho_13) * 0.1;
                             } else {
                                 flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 2);
                             }
@@ -438,7 +473,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                             for (int iiaot = searchIAOT; iiaot <= searchIAOT + 1; iiaot++) {
                                 taua = tauaConst * iiaot;
                                 RV rv = aerosolScatteringFunctions.aerosol_f(taua, iaer, pab, sza.getSampleFloat(x, y),
-                                                                             vza.getSampleFloat(x, y), phi);
+                                        vza.getSampleFloat(x, y), phi);
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
@@ -480,8 +515,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                                 //Compute the aerosols functions for the first aot
                                 final double taua1 = 0.1 * searchIAOT * Math.pow((550.0 / wvl), (iaer / 10.0));
                                 RV rv1 = aerosolScatteringFunctions.aerosol_f(taua1, iaer, pab,
-                                                                              sza.getSampleFloat(x, y),
-                                                                              vza.getSampleFloat(x, y), phi);
+                                        sza.getSampleFloat(x, y),
+                                        vza.getSampleFloat(x, y), phi);
 
                                 double aerosol1 = (rhoAerMean - rhoRaecIwvl) * (rv1.tds / (1.0 - rhoAerMean * rv1.sa));
                                 aerosol1 = (rv1.tus - Math.exp(-taua1 / muv)) * aerosol1;
@@ -497,8 +532,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                                 //Compute the aerosols functions for the second aot
                                 final double taua2 = 0.1 * (searchIAOT + 1) * Math.pow((550.0 / wvl), (iaer / 10.0));
                                 RV rv2 = aerosolScatteringFunctions.aerosol_f(taua2, iaer, pab,
-                                                                              sza.getSampleFloat(x, y),
-                                                                              vza.getSampleFloat(x, y), phi);
+                                        sza.getSampleFloat(x, y),
+                                        vza.getSampleFloat(x, y), phi);
 
                                 double aerosol2 = (rhoAerMean - rhoRaecIwvl) * (rv2.tds / (1.0 - rhoAerMean * rv2.sa));
                                 aerosol2 = (rv2.tus - Math.exp(-taua2 / muv)) * aerosol2;
@@ -506,8 +541,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                                 //AOT INTERPOLATION to get AE_aer
                                 double aea = aerosolScatteringFunctions.interpolateLin(rhoBrr865[searchIAOT], aea1,
-                                                                                       rhoBrr865[searchIAOT + 1],
-                                                                                       aerosol2, rho_13);
+                                        rhoBrr865[searchIAOT + 1],
+                                        aerosol2, rho_13);
 
                                 if (isCloud) {
                                     aea *= rhoCloudCorrFac;
@@ -538,7 +573,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                                 continue;
                             }
                             if (isLand == null) {
-                                isLand = getSourceTile(isLandBand, sourceRect, pm);
+                                isLand = getSourceTile(isLandBand, sourceRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             }
                             if (!isLand.getSampleBoolean(x, y) && iwvl == 9) {
                                 continue;

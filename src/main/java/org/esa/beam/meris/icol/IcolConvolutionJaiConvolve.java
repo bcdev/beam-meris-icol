@@ -9,6 +9,7 @@ import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
+import javax.media.jai.BorderExtender;
 import javax.media.jai.KernelJAI;
 import java.awt.Rectangle;
 import java.util.HashMap;
@@ -19,20 +20,18 @@ import java.util.Map;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class RhoBracketJaiConvolve implements RhoBracketAlgo {
-    private final Product rhoBracketProduct;
+public class IcolConvolutionJaiConvolve implements IcolConvolutionAlgo {
+    private final Product convolveSourceProduct;
     private final String namePrefix;
     private int numBands;
     private int[] bandsToSkip;
 
-    public RhoBracketJaiConvolve(Product l1bProduct, String productType, CoeffW coeffW, String namePrefix, int iaerConv,
-                                 int numBands, int[] bandsToSkip) {
+    public IcolConvolutionJaiConvolve(Product l1bProduct, String productType, CoeffW coeffW, String namePrefix, int iaerConv,
+                                      int numBands, int[] bandsToSkip) {
         KernelJAI convolveKernel;
-        double reshapedScalingFactor = 1.0;
-        if (productType.indexOf("_RR") > -1) {
+        double reshapedScalingFactor;
+        if (productType.contains("_RR")) {
             convolveKernel = coeffW.getReshapedConvolutionKernelForRR(iaerConv);
-            // test!!!
-//            convolveKernel = coeffW.getReshapedConvolutionKernelForRROffNadir(iaerConv);
             reshapedScalingFactor = 2.0 * (CoeffW.RR_KERNEL_SIZE ) / (convolveKernel.getWidth() - 1);
         } else {
             convolveKernel = coeffW.getReshapedConvolutionKernelForFR(iaerConv);
@@ -48,7 +47,7 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
         convolveParams.put("namePrefix", namePrefix);
         convolveParams.put("correctionMode", coeffW.getCorrectionMode());
         convolveParams.put("reshapedScalingFactor", reshapedScalingFactor);
-        rhoBracketProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ReshapedConvolutionOp.class), convolveParams, l1bProduct);
+        convolveSourceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(ReshapedConvolutionOp.class), convolveParams, l1bProduct);
     }
 
     public Rectangle mapTargetRect(Rectangle targetRect) {
@@ -56,15 +55,16 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
     }
 
     public Convolver createConvolver(Operator op, Tile[] rhoTiles, Rectangle targetRect, ProgressMonitor pm) {
-        Tile[] rhoBracket = new Tile[numBands];
+        Tile[] sourceTiles = new Tile[numBands];
         for (int i = 0; i < numBands; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+            if (bandsToSkip != null && IcolUtils.isIndexToSkip(i, bandsToSkip)) {
                 continue;
             }
-            final Band rhoBracketProductBand = rhoBracketProduct.getBand(namePrefix + (i + 1));
-            rhoBracket[i] = op.getSourceTile(rhoBracketProductBand, targetRect, pm);
+            // todo: this only handles band names of the form <name>_n - make more general
+            final Band sourceBand = convolveSourceProduct.getBand(namePrefix + (i + 1));
+            sourceTiles[i] = op.getSourceTile(sourceBand, targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
-        return new ConvolverImpl(rhoBracket);
+        return new ConvolverImpl(sourceTiles);
     }
 
     public class ConvolverImpl implements Convolver {
@@ -77,7 +77,7 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
         public double[] convolvePixel(int x, int y, int iaer) {
             final double[] pixel = new double[rhoBracket.length];
             for (int b = 0; b < pixel.length; b++) {
-                if (IcolUtils.isIndexToSkip(b, bandsToSkip)) {
+                if (bandsToSkip != null && IcolUtils.isIndexToSkip(b, bandsToSkip)) {
                     continue;
                 }
                 pixel[b] = rhoBracket[b].getSampleDouble(x, y);
@@ -87,6 +87,11 @@ public class RhoBracketJaiConvolve implements RhoBracketAlgo {
 
         public double convolveSample(int x, int y, int iaer, int b) {
             return rhoBracket[b].getSampleDouble(x, y);
+        }
+
+        @Override
+        public double convolveSampleBoolean(int x, int y, int iaer, int b) {
+            return 0.0;  // not used
         }
     }
 }

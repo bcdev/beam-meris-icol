@@ -19,6 +19,7 @@ import org.esa.beam.meris.icol.meris.MerisAdjacencyEffectAerosolOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.util.ProductUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
@@ -239,7 +240,7 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
                 correctForRayleighAndAerosol(targetTile, bandNumber, pm);
             } else if (copySource.containsKey(band)) {
                 Rectangle rectangle = targetTile.getRectangle();
-                Tile srcTile = getSourceTile(copySource.get(band), rectangle, pm);
+                Tile srcTile = getSourceTile(copySource.get(band), rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         targetTile.setSample(x, y, srcTile.getSampleDouble(x, y));
@@ -253,15 +254,18 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
 
     private void computeAeFlags(Tile targetTile, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
-        Tile land = getSourceTile(landProduct.getBand(TmLandClassificationOp.LAND_FLAGS), rectangle, pm);
-        Tile cloud = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle, pm);
+        Tile land = getSourceTile(landProduct.getBand(TmLandClassificationOp.LAND_FLAGS), rectangle,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile cloud = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
-                                            rectangle, pm);
+                                            rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aemaskAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL),
-                                           rectangle, pm);
+                                           rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile gasCor0 = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_1"), rectangle,
-                                     pm);
-        Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rectangle, pm);
+                                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile aerosol = getSourceTile(aeAerosolProduct.getBand(MerisAdjacencyEffectAerosolOp.AOT_FLAGS), rectangle,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
             for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                 int result = 0;
@@ -298,13 +302,14 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
     private void correctForRayleigh(Tile targetTile, int bandNumber, ProgressMonitor pm) throws OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber),
-                                    rectangle, pm);
+                                    rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
-                                pm);
-        Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        Tile aep = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle,
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile rhoToaR = getSourceTile(
                 sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber), rectangle,
-                pm);
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aeRayleigh = null;
 
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
@@ -313,7 +318,8 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
                 double gasCorValue = gasCor.getSampleDouble(x, y);
                 if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
                     if (aeRayleigh == null) {
-                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
+                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                     }
                     double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                     double corrected = gasCorValue - aeRayleighValue;
@@ -333,19 +339,17 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
                                                                                                    OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber),
-                                    rectangle, pm);
+                                    rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
-                                pm);
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
-                                        pm);
+                                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile rhoToaR = getSourceTile(
                 sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber), rectangle,
-                pm);
-//        Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
+                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         Tile aeRayleigh = null;
-//        Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
         Tile aeAerosol = null;
 
         for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
@@ -355,14 +359,16 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
                 double corrected = 0.0;
                 if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
                     if (aeRayleigh == null) {
-                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
+                        aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                     }
                     double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                     corrected = gasCorValue - aeRayleighValue;
                 }
                 if (aepAerosol.getSampleInt(x, y) == 1) {
                     if (aeAerosol == null) {
-                        aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
+                        aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                     }
                     double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
                     corrected -= aeAerosolValue;

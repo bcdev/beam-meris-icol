@@ -21,6 +21,7 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
@@ -33,19 +34,16 @@ import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
-import org.esa.beam.meris.icol.CoeffW;
-import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
-import org.esa.beam.meris.icol.IcolConstants;
-import org.esa.beam.meris.icol.Instrument;
-import org.esa.beam.meris.icol.RhoBracketAlgo;
-import org.esa.beam.meris.icol.RhoBracketJaiConvolve;
-import org.esa.beam.meris.icol.RhoBracketKernellLoop;
+import org.esa.beam.meris.icol.*;
+import org.esa.beam.meris.icol.IcolConvolutionJaiConvolve;
+import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -61,11 +59,11 @@ import java.util.Map;
  * @author Marco Zuehlke, Olaf Danne
  */
 @OperatorMetadata(alias = "AERayleigh",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Marco Zuehlke, Olaf Danne",
-                  copyright = "(c) 2010 by Brockmann Consult",
-                  description = "Contribution of rayleigh to the adjacency effect.")
+        version = "1.0",
+        internal = true,
+        authors = "Marco Zuehlke, Olaf Danne",
+        copyright = "(c) 2010 by Brockmann Consult",
+        description = "Contribution of rayleigh to the adjacency effect.")
 public class AdjacencyEffectRayleighOp extends Operator {
 
     private static final double NO_DATA_VALUE = -1.0;
@@ -73,7 +71,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
 
     private FresnelReflectionCoefficient fresnelCoefficient;
     private CoeffW coeffW;
-    RhoBracketAlgo rhoBracketAlgo;
+    IcolConvolutionAlgo icolConvolutionAlgo;
+    IcolConvolutionAlgo lcFlagConvAlgo;
 
     private Band[] aeRayBands;
     private Band[] rhoAeRcBands;
@@ -83,6 +82,10 @@ public class AdjacencyEffectRayleighOp extends Operator {
     private Band[] rayleighdebugBands;
 
     private Band isLandBand;
+    private Band isCloudBand;
+
+    private Band landFlagConvBand;
+    private Band cloudFlagConvBand;
 
     @SourceProduct(alias = "l1b")
     private Product l1bProduct;
@@ -102,6 +105,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
     private Product cloudProduct;
     @SourceProduct(alias = "zmaxCloud")
     private Product zmaxCloudProduct;
+    @SourceProduct(alias = "cloudLandMask")
+    private Product cloudLandMaskProduct;
 
     @TargetProduct
     private Product targetProduct;
@@ -110,6 +115,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
     private Instrument instrument;
     @Parameter
     private String landExpression;
+    @Parameter
+    private String cloudExpression;
     @Parameter(defaultValue = "true")
     private boolean openclConvolution = true;
     @Parameter(defaultValue = "true")
@@ -127,9 +134,10 @@ public class AdjacencyEffectRayleighOp extends Operator {
         }
         createTargetProduct();
 
-        BandMathsOp bandArithmeticOp =
+        BandMathsOp bandArithmeticLandOp =
                 BandMathsOp.createBooleanExpressionBand(landExpression, landProduct);
-        isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
+        isLandBand = bandArithmeticLandOp.getTargetProduct().getBandAt(0);
+
     }
 
     private void loadFresnelReflectionCoefficient() throws IOException {
@@ -151,15 +159,17 @@ public class AdjacencyEffectRayleighOp extends Operator {
     private void createTargetProduct() {
         String productType = l1bProduct.getProductType();
         if (reshapedConvolution) {
-            rhoBracketAlgo = new RhoBracketJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
-                                                       instrument.numSpectralBands,
-                                                       instrument.bandsToSkip);
+            icolConvolutionAlgo = new IcolConvolutionJaiConvolve(ray1bProduct, productType, coeffW, "brr_", 1,
+                    instrument.numSpectralBands,
+                    instrument.bandsToSkip);
+            lcFlagConvAlgo = new IcolConvolutionJaiConvolve(cloudLandMaskProduct, productType, coeffW, "lcflag_", 1, 2, null);
         } else {
-            rhoBracketAlgo = new RhoBracketKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
+            icolConvolutionAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
+            lcFlagConvAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_RAYLEIGH);
         }
 
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "ae_ray_" + l1bProduct.getName(),
-                                                              "MER_AE_RAY");
+                "MER_AE_RAY");
         aeRayBands = addBandGroup("rho_aeRay");
         rhoAeRcBands = addBandGroup("rho_ray_aerc");
         rhoAgBracketBands = addBandGroup("rho_ag_bracket");
@@ -168,35 +178,44 @@ public class AdjacencyEffectRayleighOp extends Operator {
             rayleighdebugBands = addBandGroup("rho_aeRay_rayleigh");
             fresnelDebugBands = addBandGroup("rho_aeRay_fresnel");
         }
+
+        landFlagConvBand = targetProduct.addBand("land_flag_ray_conv", ProductData.TYPE_FLOAT32);
+        cloudFlagConvBand = targetProduct.addBand("cloud_flag_ray_conv", ProductData.TYPE_FLOAT32);
     }
 
     private Band[] addBandGroup(String prefix) {
         return OperatorUtils.addBandGroup(l1bProduct, instrument.numSpectralBands, instrument.bandsToSkip,
-                                          targetProduct, prefix, NO_DATA_VALUE, false);
+                targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
-                                                                                                        OperatorException {
+            OperatorException {
 
-        Rectangle sourceRect = rhoBracketAlgo.mapTargetRect(targetRect);
+        Rectangle sourceRect = icolConvolutionAlgo.mapTargetRect(targetRect);
         pm.beginTask("Processing frame...", targetRect.height + 1);
         try {
             // sources
-            Tile isLand = getSourceTile(isLandBand, sourceRect, pm);
+            Tile isLand = getSourceTile(cloudLandMaskProduct.getBand(CloudLandMaskOp.LAND_MASK_NAME), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            Tile isCloud = getSourceTile(cloudLandMaskProduct.getBand(CloudLandMaskOp.CLOUD_MASK_NAME), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), targetRect,
-                                     pm);
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), targetRect,
-                                     pm);
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile[] zmaxs = ZmaxOp.getSourceTiles(this, zmaxProduct, targetRect, pm);
             Tile zmaxCloud = ZmaxOp.getSourceTile(this, zmaxCloudProduct, targetRect);
-            Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), targetRect, pm);
-            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect, pm);
-            Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect, pm);
+            Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            Tile landFlags = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), targetRect,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile[] rhoNg = OperatorUtils.getSourceTiles(this, gasCorProduct, GaseousCorrectionOp.RHO_NG_BAND_PREFIX,
-                                                        instrument, targetRect);
+                    instrument, targetRect);
             Tile[] transRup = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRv", instrument, targetRect
             ); //up
             Tile[] transRdown = OperatorUtils.getSourceTiles(this, ray1bProduct, "transRs", instrument, targetRect
@@ -210,17 +229,22 @@ public class AdjacencyEffectRayleighOp extends Operator {
                 rhoAgConv = OperatorUtils.getSourceTiles(this, ray1bconvProduct, "brr_conv", instrument, sourceRect
                 );
             }
-            final RhoBracketAlgo.Convolver convolver = rhoBracketAlgo.createConvolver(this, rhoAg, targetRect, pm);
+            final IcolConvolutionAlgo.Convolver convolver = icolConvolutionAlgo.createConvolver(this, rhoAg, targetRect, pm);
+            final IcolConvolutionAlgo.Convolver lcFlagConvolver =
+                    lcFlagConvAlgo.createConvolver(this, new Tile[]{isLand, isCloud}, targetRect, pm);
 
             //targets
             Tile[] aeRayTiles = OperatorUtils.getTargetTiles(targetTiles, aeRayBands);
             Tile[] rhoAeRcTiles = OperatorUtils.getTargetTiles(targetTiles, rhoAeRcBands);
             Tile[] rhoAgBracket = null;
             final boolean isRSAdditionalOutputBands = System.getProperty("additionalOutputBands") != null &&
-                                                      System.getProperty("additionalOutputBands").equals("RS");
+                    System.getProperty("additionalOutputBands").equals("RS");
             if (isRSAdditionalOutputBands) {
                 rhoAgBracket = OperatorUtils.getTargetTiles(targetTiles, rhoAgBracketBands);
             }
+
+            Tile lfConvTile = targetTiles.get(landFlagConvBand);
+            Tile cfConvTile = targetTiles.get(cloudFlagConvBand);
 
             Tile[] rayleighDebug = null;
             Tile[] fresnelDebug = null;
@@ -240,9 +264,22 @@ public class AdjacencyEffectRayleighOp extends Operator {
                             }
                         }
                     }
-                    boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
-                    boolean isIce = landFlags.getSampleBit(x, y, LandClassificationOp.F_ICE);
-                    final boolean cloudfreeOrIce = !isCloud || isIce;
+
+                    double lfConv;
+                    double cfConv;
+                    if (reshapedConvolution) {
+                        lfConv = lcFlagConvolver.convolveSample(x, y, 1, 0);
+                        cfConv = lcFlagConvolver.convolveSample(x, y, 1, 1);
+                    } else {
+                        lfConv = lcFlagConvolver.convolveSampleBoolean(x, y, 1, 0);
+                        cfConv = lcFlagConvolver.convolveSampleBoolean(x, y, 1, 1);
+                    }
+                    lfConvTile.setSample(x, y, lfConv);
+                    cfConvTile.setSample(x, y, cfConv);
+
+                    boolean cloudy = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
+                    boolean icy = landFlags.getSampleBit(x, y, LandClassificationOp.F_ICE);
+                    final boolean cloudfreeOrIce = !cloudy || icy;
                     if (aep.getSampleInt(x, y) == 1 && cloudfreeOrIce && rhoAg[0].getSampleFloat(x, y) != -1) {
                         double[] means = new double[numBands];
                         if (rhoAgConv == null) {
@@ -277,8 +314,8 @@ public class AdjacencyEffectRayleighOp extends Operator {
 
                                 double aeRayRay = (transRupValue - Math
                                         .exp(-tauRValue / muV))
-                                                  * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
-                                                                                       (1d - tmpRhoRayBracket * sphAlbValue));
+                                        * (tmpRhoRayBracket - rhoAgValue) * (transRdownValue /
+                                        (1d - tmpRhoRayBracket * sphAlbValue));
 
                                 double aeRayFresnelLand = 0.0d;
                                 if (zmaxPart != 0) {

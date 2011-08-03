@@ -24,6 +24,7 @@ import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.util.math.MathUtils;
 import org.opengis.referencing.operation.MathTransform;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
@@ -161,7 +162,8 @@ public class TmGeometryOp extends TmBasisOp {
 
         Tile radianceSourceTile = null;
         if (targetBand.getName().startsWith(TmConstants.LANDSAT5_RADIANCE_BAND_PREFIX)) {
-            radianceSourceTile = getSourceTile(sourceProduct.getBand(targetBand.getName()), sourceRectangle, pm);
+            radianceSourceTile = getSourceTile(sourceProduct.getBand(targetBand.getName()), sourceRectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
 
         pm.beginTask("Processing frame...", targetRectangle.height);

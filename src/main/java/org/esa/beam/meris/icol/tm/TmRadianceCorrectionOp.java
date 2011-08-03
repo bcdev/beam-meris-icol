@@ -18,6 +18,7 @@ import org.esa.beam.meris.l2auxdata.Utils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
@@ -88,21 +89,28 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
 
             final int bandNumber = band.getSpectralBandIndex() + 1;
 
-            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
-            Tile gasCorTile = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
-            Tile tgTile = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle, pm);
+            Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            Tile gasCorTile = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            Tile tgTile = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
 
             //  write reflectances as output, skip TM 6
             if (bandName.startsWith(TmConstants.LANDSAT5_RADIANCE_BAND_PREFIX) &&
                     !IcolUtils.isIndexToSkip(bandNumber - 1,
                                             new int[]{TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX})) {
-                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
-                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
-                Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle, pm);
-                Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aepRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aepAerosol = getSourceTile(aemaskAerosolProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 Tile reflectanceR = getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_PREFIX + "_tm" + bandNumber),
-                                                  rectangle, pm);
+                                                  rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         double result = 0.0;
@@ -134,7 +142,7 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                 // just copy TM6
                 Tile reflectanceR = getSourceTile(sourceProduct.getBand
                         (TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX]),
-                                                  rectangle, pm);
+                                                  rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         double temperatureTM6  = reflectanceR.getSampleDouble(x, y);

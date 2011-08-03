@@ -35,6 +35,7 @@ import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -110,13 +111,16 @@ public class FresnelCoefficientOp extends MerisBasisOp {
 			String bandName = band.getName();
         	final double noDataValue = band.getNoDataValue();
 
-            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle, pm);
-        	Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle, pm);
-        	Tile isLand = getSourceTile(isLandBand, rectangle, pm);
+            Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        	Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        	Tile isLand = getSourceTile(isLandBand, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         	if (bandName.equals("cf")) {
         		bandName = sourceProduct.getBands()[0].getName();
         	}
-        	Tile srcTile = getSourceTile(sourceProduct.getBand(bandName), rectangle, pm);
+        	Tile srcTile = getSourceTile(sourceProduct.getBand(bandName), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         	
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {

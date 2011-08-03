@@ -58,6 +58,10 @@ public class WeightedMeanCalculator {
         final Rectangle sourceRect = srcTile.getRectangle();
         ProductData srcData = srcTile.getRawSamples();
 
+        if (x == 124 && y == 142) {
+            System.out.println("x,y = " + x + "," + y);
+        }
+
         int[] counts = new int[extend + 1];
         float[] sum = new float[extend + 1];
 
@@ -94,6 +98,10 @@ public class WeightedMeanCalculator {
             }
         }
 
+        if (x == 124 && y == 142) {
+            System.out.println("x,y = " + x + "," + y);
+        }
+
         int[] counts = new int[extend + 1];
         float[][] sum = new float[numBands][extend + 1];
 
@@ -127,6 +135,40 @@ public class WeightedMeanCalculator {
             }
         }
         return means;
+    }
+
+    public double computeBoolean(final int x, final int y, Tile srcTile, double[] weights) {
+        final Rectangle sourceRect = srcTile.getRectangle();
+        ProductData srcData = srcTile.getRawSamples();
+
+        if (x == 124 && y == 142) {
+            System.out.println("x,y = " + x + "," + y);
+        }
+
+        int[] counts = new int[extend + 1];
+        float[] sum = new float[extend + 1];
+
+        for (int iy = 0; iy <= 2 * extend; iy++) {
+            int index = convertToIndex(x - extend, y + iy - extend, sourceRect);
+            final int[] distancesY = distances[iy];
+            for (int ix = 0; ix <= 2 * extend; ix++, index++) {
+                final int distance = distancesY[ix];
+                if (distance != 0) {
+                    final boolean value = srcData.getElemBooleanAt(index);
+                    if (value) {
+                        counts[distance]++;
+                        sum[distance] += 1.0;
+                    }
+                }
+            }
+        }
+        double mean = (srcTile.getSampleBoolean(x, y) == true) ? weights[0] : 0.0;
+        for (int distance = 1; distance <= extend; distance++) {
+            if (counts[distance] > 0) {
+                mean += ((sum[distance] * weights[distance]) / counts[distance]);
+            }
+        }
+        return mean;
     }
 
 }

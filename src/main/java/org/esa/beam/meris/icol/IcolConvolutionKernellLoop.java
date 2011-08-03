@@ -14,12 +14,12 @@ import java.awt.Rectangle;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class RhoBracketKernellLoop implements RhoBracketAlgo {
+public class IcolConvolutionKernellLoop implements IcolConvolutionAlgo {
     private final int sourceExtend;
     private final RectangleExtender rectCalculator;
     private final double[][] w;
 
-    public RhoBracketKernellLoop(Product l1bProduct, CoeffW coeffW, int correctionMode) {
+    public IcolConvolutionKernellLoop(Product l1bProduct, CoeffW coeffW, int correctionMode) {
         final String productType = l1bProduct.getProductType();
         double sourceExtendReduction = 1.0;
 
@@ -57,6 +57,10 @@ public class RhoBracketKernellLoop implements RhoBracketAlgo {
 
         public double[] convolvePixel(int x, int y, int iaer) {
             return meanCalculator.computeAll(x, y, srcTiles, w[iaer]);
+        }
+
+        public double convolveSampleBoolean(int x, int y, int iaer, int b) {
+            return meanCalculator.computeBoolean(x, y, srcTiles[b], w[iaer - 1]);
         }
     }
 }

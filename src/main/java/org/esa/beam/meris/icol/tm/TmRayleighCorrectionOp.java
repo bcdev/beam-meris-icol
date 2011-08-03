@@ -23,6 +23,7 @@ import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.util.Map;
 
@@ -134,31 +135,34 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
             Tile szaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile vzaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile saaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile vaaTile = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile altitudeTile = getSourceTile(
-                    sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME), rectangle, pm);
+                    sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile scattAngleTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SCATTERING_ANGLE_BAND_NAME),
-                                                rectangle, pm);
+                                                rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile[] rhoNg = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
             for (int i = 0; i < rhoNg.length; i++) {
                 rhoNg[i] = getSourceTile(
                         fresnelProduct.getBand(TmGaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + (i + 1)), rectangle,
-                        pm);
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
-            Tile isLandCons = getSourceTile(isLandBand, rectangle, pm);
+            Tile isLandCons = getSourceTile(isLandBand, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile cloudTopPressure = null;
             Tile cloudFlags = null;
             if (cloudProduct != null) {
-                cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT5_CTP_BAND_NAME), rectangle, pm);
-                cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle, pm);
+                cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT5_CTP_BAND_NAME), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
             Tile[] transRvData = null;

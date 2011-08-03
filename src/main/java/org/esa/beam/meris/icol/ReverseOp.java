@@ -33,6 +33,7 @@ import org.esa.beam.meris.l2auxdata.L2AuxDataProvider;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 
@@ -87,7 +88,8 @@ public class ReverseOp extends MerisBasisOp {
             if (bandId == -1) {
                 return;
             } else if (bandId == 10 || bandId == 14) {
-                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + (bandId + 1)), rectangle, pm);
+                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + (bandId + 1)), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                         targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
@@ -99,19 +101,23 @@ public class ReverseOp extends MerisBasisOp {
 
                 Tile gasCor = getSourceTile(
                         gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
-                        pm);
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber),
-                                        rectangle, pm);
+                                        rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle, pm);
-                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle, pm);
+                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-                Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle, pm);
+                Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
-                                         rectangle, pm);
+                                         rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 Tile detectorIndex = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME),
-                                                   rectangle, pm);
-                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rectangle, pm);
+                                                   rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile radianceR = getSourceTile(l1bProduct.getBand("radiance_" + bandNumber), rectangle,
+                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
                 for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                     for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {

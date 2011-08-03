@@ -15,6 +15,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.util.Map;
 
@@ -62,7 +63,8 @@ public class TmGaseousTransmittanceOp extends Operator {
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
-            Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle, SubProgressMonitor.create(pm, 1));
+            Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile[] gaseousTransmittanceTile = OperatorUtils.getTargetTiles(targetTiles, gaseousTransmittanceBands);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {

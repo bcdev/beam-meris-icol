@@ -12,13 +12,14 @@ import java.awt.Rectangle;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public interface RhoBracketAlgo {
+public interface IcolConvolutionAlgo {
     Rectangle mapTargetRect(Rectangle targetRect);
 
     Convolver createConvolver(Operator op, Tile[] rhoTiles, Rectangle targetRect, ProgressMonitor pm);
 
     interface Convolver {
         double convolveSample(int x, int y, int iaer, int b);
+        double convolveSampleBoolean(int x, int y, int iaer, int b);
         double[] convolvePixel(int x, int y, int iaer);
     }
 }

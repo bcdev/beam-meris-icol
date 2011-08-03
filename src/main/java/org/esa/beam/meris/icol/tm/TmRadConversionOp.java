@@ -20,6 +20,7 @@ import org.esa.beam.meris.l2auxdata.Utils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
+import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 import java.awt.image.DataBuffer;
 import java.util.Map;
@@ -162,9 +163,10 @@ public class TmRadConversionOp extends Operator {
         try {
         	Tile[] radianceTile = new Tile[radianceBands.length];
         	for (int i = 0; i < radianceTile.length; i++) {
-        		radianceTile[i] = getSourceTile(radianceBands[i], rectangle, pm);
+        		radianceTile[i] = getSourceTile(radianceBands[i], rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
-            Tile szaTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME), rectangle, pm);
+            Tile szaTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME), rectangle,
+                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile[] reflectanceTile = OperatorUtils.getTargetTiles(targetTiles, reflectanceBands);
 
