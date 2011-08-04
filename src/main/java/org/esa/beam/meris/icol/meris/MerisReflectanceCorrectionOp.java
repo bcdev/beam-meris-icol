@@ -62,8 +62,10 @@ public class MerisReflectanceCorrectionOp extends Operator {
     private static final int FLAG_CLOUD = 8;
     private static final int FLAG_AE_APPLIED_RAYLEIGH = 16;
     private static final int FLAG_AE_APPLIED_AEROSOL = 32;
-    private static final int FLAG_ALPHA_ERROR = 64;
-    private static final int FLAG_AOT_ERROR = 128;
+    private static final int FLAG_ALPHA_OUT_OF_RANGE = 64;
+    private static final int FLAG_AOT_OUT_OF_RANGE = 128;
+    private static final int FLAG_HIGH_TURBID_WATER = 128;
+    private static final int FLAG_SUNGLINT = 128;
 
     @SourceProduct(alias = "l1b")
     private Product l1bProduct;
@@ -192,11 +194,19 @@ public class MerisReflectanceCorrectionOp extends Operator {
         flagCoding.addAttribute(cloudAttr);
 
         cloudAttr = new MetadataAttribute("alpha_out_of_range", ProductData.TYPE_UINT8);
-        cloudAttr.getData().setElemInt(FLAG_ALPHA_ERROR);
+        cloudAttr.getData().setElemInt(FLAG_ALPHA_OUT_OF_RANGE);
         flagCoding.addAttribute(cloudAttr);
 
         cloudAttr = new MetadataAttribute("aot_out_of_range", ProductData.TYPE_UINT8);
-        cloudAttr.getData().setElemInt(FLAG_AOT_ERROR);
+        cloudAttr.getData().setElemInt(FLAG_AOT_OUT_OF_RANGE);
+        flagCoding.addAttribute(cloudAttr);
+
+        cloudAttr = new MetadataAttribute("high_turbid_water", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_HIGH_TURBID_WATER);
+        flagCoding.addAttribute(cloudAttr);
+
+        cloudAttr = new MetadataAttribute("sunglint", ProductData.TYPE_UINT8);
+        cloudAttr.getData().setElemInt(FLAG_SUNGLINT);
         flagCoding.addAttribute(cloudAttr);
 
         return flagCoding;
@@ -280,10 +290,16 @@ public class MerisReflectanceCorrectionOp extends Operator {
                         result += FLAG_AE_APPLIED_AEROSOL;
                     }
                     if (aerosol.getSampleBit(x, y, 0)) {
-                        result += FLAG_ALPHA_ERROR;
+                        result += FLAG_ALPHA_OUT_OF_RANGE;
                     }
                     if (aotError) {
-                        result += FLAG_AOT_ERROR;
+                        result += FLAG_AOT_OUT_OF_RANGE;
+                    }
+                    if (aerosol.getSampleBit(x, y, 3)) {
+                        result += FLAG_HIGH_TURBID_WATER;
+                    }
+                    if (aerosol.getSampleBit(x, y, 4)) {
+                        result += FLAG_SUNGLINT;
                     }
                     targetTile.setSample(x, y, result);
                 }

@@ -55,6 +55,8 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.Map;
 
+import static org.esa.beam.meris.l2auxdata.Constants.L1_F_GLINTRISK;
+
 
 /**
  * Operator for aerosol part of AE correction.
@@ -226,6 +228,8 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
         FlagCoding flagCoding = new FlagCoding(AOT_FLAGS);
         flagCoding.addFlag("bad_aerosol_model", BitSetter.setFlag(0, 0), null);
         flagCoding.addFlag("bad_aot_model", BitSetter.setFlag(0, 1), null);
+        flagCoding.addFlag("high_turbid_water", BitSetter.setFlag(0, 2), null);
+        flagCoding.addFlag("sunglint", BitSetter.setFlag(0, 3), null);
         return flagCoding;
     }
 
@@ -283,6 +287,8 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
         Tile aotTile = targetTiles.get(aotBand);
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
+
+        Tile l1FlagsTile = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME), targetRect);
 
         Tile rhoW9Tile = targetTiles.get(rhoW9Band);
 
@@ -355,6 +361,9 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                     lfConvTile.setSample(x, y, lfConv);
                     cfConvTile.setSample(x, y, cfConv);
 
+                    if (l1FlagsTile.getSampleBit(x, y, L1_F_GLINTRISK)) {
+                        flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 8);
+                    }
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 >= 0.0 && rho_12 >= 0.0) {
                         // attempt to optimise
@@ -548,7 +557,6 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                         if (jrhow705 > 0) {
                                             double delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
                                             if (Math.abs(delta705) > 1.0) {
-                                                // todo: raise a flag at conditions like this
                                                 delta705 = 0.0;
                                             }
                                             rhoW705Interpolated = rhoB9Table[jrhow705] + delta705 *
@@ -557,10 +565,10 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                         break;
                                     }
                                 } else {
-                                    // todo: raise flag
+                                    // raise 'high turbid water' flag
+                                    flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 4);
                                 }
                             } // end irhow705 loop
-                            // todo: raise a 'turbid water' flag if last irhow is reached
 
                             // We are done with the case 2 retrieval. Set final values of alpha, AOT, these go into the
                             // the product
@@ -608,7 +616,6 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                 fresnelDebug[iwvl].setSample(x, y, -1);
                             }
                             if (searchIAOT != -1 && aot > AE_AOT_THRESHOLD) {
-                                // todo: extract methods also in this part!
                                 double roAerMean;
                                 if (iwvl == Constants.bb9) {
                                     roAerMean = rhoBrr705Bracket06 + (iaer - 5) * deltaRhoBrr705Bracket06;

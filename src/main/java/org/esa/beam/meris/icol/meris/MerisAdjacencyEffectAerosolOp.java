@@ -55,6 +55,9 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.Map;
 
+import static org.esa.beam.meris.l2auxdata.Constants.L1_F_GLINTRISK;
+import static org.esa.beam.meris.l2auxdata.Constants.L1_F_LAND;
+
 
 /**
  * Operator for aerosol part of AE correction.
@@ -228,6 +231,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         FlagCoding flagCoding = new FlagCoding(AOT_FLAGS);
         flagCoding.addFlag("bad_aerosol_model", BitSetter.setFlag(0, 0), null);
         flagCoding.addFlag("bad_aot_model", BitSetter.setFlag(0, 1), null);
+        flagCoding.addFlag("high_turbid_water", BitSetter.setFlag(0, 2), null);
+        flagCoding.addFlag("sunglint", BitSetter.setFlag(0, 3), null);
         return flagCoding;
     }
 
@@ -293,6 +298,8 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
         Tile aotTile = targetTiles.get(aotBand);
         Tile alphaTile = targetTiles.get(alphaBand);
         Tile alphaIndexTile = targetTiles.get(alphaIndexBand);
+
+        Tile l1FlagsTile = getSourceTile(l1bProduct.getBand(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME), targetRect);
 
         Tile[] rhoAeAcRaster = getTargetTiles(targetTiles, rhoAeAcBands);
         Tile[] aeAerRaster = getTargetTiles(targetTiles, aeAerBands);
@@ -364,6 +371,9 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                     lfConvTile.setSample(x, y, lfConv);
                     cfConvTile.setSample(x, y, cfConv);
 
+                    if (l1FlagsTile.getSampleBit(x, y, L1_F_GLINTRISK)) {
+                        flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 8);
+                    }
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         // attempt to optimise
@@ -452,7 +462,6 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
-                                // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0)
                                 rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                                 if (rhoBrr865[iiaot] > rho_13) {
                                     searchIAOT = iiaot - 1;
@@ -477,7 +486,6 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                                 //  - this reflects ICOL D6a ATBD, eq. (2): rhoa = rho_a, rv.rhoa = rho_a0 !!!
                                 rhoa0 = rv.rhoa;
                                 rhoa = rhoa0 * corrFac;
-                                // todo: identify this eq. in ATBDs (looks like  ICOL D61 ATBD eq. (1) with rho_w = 0) s.a.
                                 rhoBrr865[iiaot] = rhoa + rhoBrrBracket865 * rv.tds * (rv.tus - Math.exp(-taua / muv));
                             }
                         }
