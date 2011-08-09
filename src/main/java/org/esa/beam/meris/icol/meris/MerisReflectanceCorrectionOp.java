@@ -101,6 +101,10 @@ public class MerisReflectanceCorrectionOp extends Operator {
     private boolean exportAeAerosol;
     @Parameter(defaultValue = "true")
     private boolean exportAlphaAot;
+    @Parameter(defaultValue = "false")
+    private boolean icolAerosolCase2;
+    @Parameter(defaultValue = "true")
+    private boolean icolAerosolForWater;
 
     private List<Band> rhoToaRayBands;
     private List<Band> rhoToaAerBands;
@@ -141,6 +145,12 @@ public class MerisReflectanceCorrectionOp extends Operator {
             Band copyAotBand = ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
             copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
         }
+
+        if (icolAerosolCase2 && icolAerosolForWater) {
+            Band copyRhoW9Band = ProductUtils.copyBand("rhoW9", aeAerosolProduct, targetProduct);
+            copyRhoW9Band.setSourceImage(aeAerosolProduct.getBand("rhoW9").getSourceImage());
+        }
+
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
 

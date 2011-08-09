@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class IcolDialog extends SingleTargetProductDialog {
 
-    public static final String TITLE = "ICOL Processor - v2.6-SNAPSHOT";
+    public static final String TITLE = "ICOL Processor - v2.7.1";
     private IcolForm form;
     private IcolModel model;
 

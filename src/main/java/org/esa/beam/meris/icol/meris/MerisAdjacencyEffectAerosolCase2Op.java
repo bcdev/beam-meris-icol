@@ -575,7 +575,8 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                             aot = aot865Best;
                             alpha = alphaBest;
 
-                            if (exportSeparateDebugBands && searchIAOT != -1) {
+//                            if (exportSeparateDebugBands && searchIAOT != -1) {
+                            if (searchIAOT != -1) {
                                 rhoW9Tile.setSample(x, y, rhoW705Interpolated);
                             }
                         } else {

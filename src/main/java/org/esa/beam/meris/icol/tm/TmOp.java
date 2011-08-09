@@ -19,6 +19,7 @@ import org.esa.beam.meris.icol.common.AdjacencyEffectRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
+import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 
@@ -219,6 +220,14 @@ public class TmOp extends TmBasisOp {
         landParameters.put("landsatSeason", landsatSeason);
         Product landProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmLandClassificationOp.class), landParameters, landInput);
 
+        Map<String, Product> cloudLandMaskInput = new HashMap<String, Product>(2);
+        cloudLandMaskInput.put("cloud", cloudProduct);
+        cloudLandMaskInput.put("land", landProduct);
+        Map<String, Object> cloudLandMaskParameters = new HashMap<String, Object>(2);
+        cloudLandMaskParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
+        cloudLandMaskParameters.put("cloudExpression", "cloud_classif_flags.F_CLOUD");
+        Product cloudLandMaskProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudLandMaskOp.class), cloudLandMaskParameters,
+                                 cloudLandMaskInput);
 
         FlagCoding landFlagCoding = TmLandClassificationOp.createFlagCoding();
         FlagCoding cloudFlagCoding = TmCloudClassificationOp.createFlagCoding();
@@ -336,6 +345,7 @@ public class TmOp extends TmBasisOp {
         aeRayInput.put("ray1b", rayleighProduct);
         aeRayInput.put("rhoNg", gasProduct);
         aeRayInput.put("cloud", cloudProduct);
+        aeRayInput.put("cloudLandMask", cloudLandMaskProduct);
         aeRayInput.put("zmax", zmaxProduct);
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(5);

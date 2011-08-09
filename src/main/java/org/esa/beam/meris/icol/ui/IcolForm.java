@@ -51,7 +51,6 @@ import java.util.Map;
 
 class IcolForm extends JTabbedPane {
 
-    private JCheckBox rhoToa;
     private JCheckBox rhoToaRayleigh;
     private JCheckBox rhoToaAerosol;
     private JCheckBox aeRayleigh;
@@ -168,7 +167,6 @@ class IcolForm extends JTabbedPane {
 
     private void bindComponents() {
 
-        bc.bind("exportRhoToa", rhoToa);
         bc.bind("exportRhoToaRayleigh", rhoToaRayleigh);
         bc.bind("exportRhoToaAerosol", rhoToaAerosol);
         bc.bind("exportAeRayleigh", aeRayleigh);
@@ -308,7 +306,6 @@ class IcolForm extends JTabbedPane {
         layout.setTableWeightX(1);
         layout.setTablePadding(2, 2);
 
-        rhoToa = new JCheckBox("TOA reflectances (rho_toa)");
         rhoToaRayleigh = new JCheckBox("TOA reflectances corrected for AE rayleigh (rho_toa_AERC)");
         rhoToaAerosol = new JCheckBox("TOA reflectances corrected for AE rayleigh and AE aerosol (rho_toa_AEAC)");
         aeRayleigh = new JCheckBox("AE rayleigh correction term (rho_aeRay)");
@@ -319,7 +316,6 @@ class IcolForm extends JTabbedPane {
         panel.setBorder(BorderFactory.createTitledBorder("RhoToa Product"));
 
         panel.add(new JLabel("Bands included in the rhoToa product:"));
-        panel.add(rhoToa);
         panel.add(rhoToaRayleigh);
         panel.add(rhoToaAerosol);
         panel.add(aeRayleigh);
@@ -472,7 +468,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel(""));
 
         icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
-        icolAerosolForWaterCheckBox.setSelected(false);
+        icolAerosolForWaterCheckBox.setSelected(true);
         panel.add(icolAerosolForWaterCheckBox);
 
         return panel;
@@ -878,7 +874,6 @@ class IcolForm extends JTabbedPane {
     }
 
     private void setRhoToaBandSelectionPanelEnabled(boolean enabled) {
-        rhoToa.setEnabled(enabled);
         rhoToaRayleigh.setEnabled(enabled);
         rhoToaAerosol.setEnabled(enabled);
         aeRayleigh.setEnabled(enabled);

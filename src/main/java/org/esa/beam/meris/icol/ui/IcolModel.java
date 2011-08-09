@@ -13,8 +13,6 @@ import java.util.Map;
 public class IcolModel {
     // MerisReflectanceCorrectionOp
     @Parameter(defaultValue = "true")
-    private boolean exportRhoToa = true;
-    @Parameter(defaultValue = "true")
     private boolean exportRhoToaRayleigh = true;
     @Parameter(defaultValue = "true")
     private boolean exportRhoToaAerosol = true;
@@ -36,8 +34,8 @@ public class IcolModel {
     private double userCtp = 1013.0;
 
     // MerisAeAerosolOp
-    @Parameter(defaultValue = "false")
-    boolean icolAerosolForWater = false;
+    @Parameter(defaultValue = "true")
+    boolean icolAerosolForWater = true;
     @Parameter(defaultValue = "false")
     boolean icolAerosolCase2 = false;
     @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0")
@@ -158,7 +156,6 @@ public class IcolModel {
     }
 
     private void configReverseRhoToaOp(HashMap<String, Object> params) {
-        params.put("exportRhoToa", exportRhoToa);
         params.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
         params.put("exportRhoToaAerosol", exportRhoToaAerosol);
         params.put("exportAeRayleigh", exportAeRayleigh);

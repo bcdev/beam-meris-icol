@@ -4,7 +4,7 @@ import com.nativelibs4java.opencl.CLBuildException;
 import com.nativelibs4java.opencl.CLContext;
 import com.nativelibs4java.opencl.CLDevice;
 import com.nativelibs4java.opencl.CLEvent;
-import com.nativelibs4java.opencl.CLFloatBuffer;
+//import com.nativelibs4java.opencl.CLFloatBuffer;
 import com.nativelibs4java.opencl.CLKernel;
 import com.nativelibs4java.opencl.CLMem;
 import com.nativelibs4java.opencl.CLProgram;
@@ -25,9 +25,9 @@ import java.nio.FloatBuffer;
 import java.util.Map;
 
 /**
- * @author Olaf Danne
- * @version $Revision: $ $Date:  $
- */
+* @author Olaf Danne
+* @version $Revision: $ $Date:  $
+*/
 
 public class Convoluter {
     private KernelJAI kernelJAI;
@@ -76,55 +76,55 @@ public class Convoluter {
     }
 
     private BufferedImage convolveOpenCL(PlanarImage inputImage) throws IOException, CLBuildException {
-        float[] filterData = kernelJAI.getKernelData();
-        int filterSize = kernelJAI.getWidth();
-
-        BufferedImage bufferedInputImage = inputImage.getAsBufferedImage();
-        DataBufferFloat inputDataBuffer = (DataBufferFloat) bufferedInputImage.getRaster().getDataBuffer();
-        float[] inputData = inputDataBuffer.getData();
-        int width = bufferedInputImage.getWidth();
-        int height = bufferedInputImage.getHeight();
-
-        long time = System.nanoTime();
-
-        FloatBuffer filter = FloatBuffer.wrap(filterData);
-        FloatBuffer input = FloatBuffer.wrap(inputData);
-
-        CLFloatBuffer clFilter = context.createFloatBuffer(CLMem.Usage.Input, filter, true);
-        CLFloatBuffer clInput = context.createFloatBuffer(CLMem.Usage.Input, input, true);
-        CLFloatBuffer clOutput = context.createFloatBuffer(CLMem.Usage.Output, width * height);
-
-        kernel.setArgs(clInput,
-                       width,
-                       height,
-                       clFilter,
-                       filterSize,
-                       clOutput);
-
-        CLQueue queue = context.createDefaultQueue();
-
-//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{32, 4});
-//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{width, 1});
-//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{16, 16});
-//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{width, 1});
-        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, null); // this works, but is it ok???
-
-        FloatBuffer floatBuffer = clOutput.read(queue, clEvent);
-        WritableRaster raster = WritableRaster.createWritableRaster(bufferedInputImage.getSampleModel(), null);
-        BufferedImage outputImage = new BufferedImage(bufferedInputImage.getColorModel(), raster, false, null);
-        floatBuffer.get(((DataBufferFloat) raster.getDataBuffer()).getData());
-
-        clEvent.release();
-        clInput.release();
-        clFilter.release();
-        clOutput.release();
-
-        queue.release();
-
-        time = System.nanoTime() - time;
-        System.out.println("time = " + time / 1000 + " ms");
-
-        return outputImage;
-
+//                float[] filterData = kernelJAI.getKernelData();
+//        int filterSize = kernelJAI.getWidth();
+//
+//        BufferedImage bufferedInputImage = inputImage.getAsBufferedImage();
+//        DataBufferFloat inputDataBuffer = (DataBufferFloat) bufferedInputImage.getRaster().getDataBuffer();
+//        float[] inputData = inputDataBuffer.getData();
+//        int width = bufferedInputImage.getWidth();
+//        int height = bufferedInputImage.getHeight();
+//
+//        long time = System.nanoTime();
+//
+//        FloatBuffer filter = FloatBuffer.wrap(filterData);
+//        FloatBuffer input = FloatBuffer.wrap(inputData);
+//
+//        CLFloatBuffer clFilter = context.createFloatBuffer(CLMem.Usage.Input, filter, true);
+//        CLFloatBuffer clInput = context.createFloatBuffer(CLMem.Usage.Input, input, true);
+//        CLFloatBuffer clOutput = context.createFloatBuffer(CLMem.Usage.Output, width * height);
+//
+//        kernel.setArgs(clInput,
+//                       width,
+//                       height,
+//                       clFilter,
+//                       filterSize,
+//                       clOutput);
+//
+//        CLQueue queue = context.createDefaultQueue();
+//
+////        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{32, 4});
+////        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, new int[]{width, 1});
+////        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{16, 16});
+////        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{1024, 1024}, new int[]{width, 1});
+//        CLEvent clEvent = kernel.enqueueNDRange(queue, new int[]{width, height}, null); // this works, but is it ok???
+//
+//        FloatBuffer floatBuffer = clOutput.read(queue, clEvent);
+//        WritableRaster raster = WritableRaster.createWritableRaster(bufferedInputImage.getSampleModel(), null);
+//        BufferedImage outputImage = new BufferedImage(bufferedInputImage.getColorModel(), raster, false, null);
+//        floatBuffer.get(((DataBufferFloat) raster.getDataBuffer()).getData());
+//
+//        clEvent.release();
+//        clInput.release();
+//        clFilter.release();
+//        clOutput.release();
+//
+//        queue.release();
+//
+//        time = System.nanoTime() - time;
+//        System.out.println("time = " + time / 1000 + " ms");
+//
+//        return outputImage;
+                return null;
     }
 }

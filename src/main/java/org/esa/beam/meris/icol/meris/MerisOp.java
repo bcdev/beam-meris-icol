@@ -89,13 +89,13 @@ public class MerisOp extends Operator {
     @Parameter(defaultValue = "false",
                description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
-    @Parameter(defaultValue = "false",
+    @Parameter(defaultValue = "true",
                description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
-    private boolean icolAerosolForWater = false;
+    private boolean icolAerosolForWater = true;
     @Parameter(defaultValue = "false",
                description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
     private boolean icolAerosolCase2 = false;
-    @Parameter(interval = "[440.0, 2225.0]", defaultValue = "550.0",
+    @Parameter(interval = "[440.0, 900.0]", defaultValue = "550.0",
                description = "The Aerosol optical thickness reference wavelength.")
     private double userAerosolReferenceWavelength;
     @Parameter(interval = "[-2.1, -0.4]", defaultValue = "-1", description = "The Angstrom coefficient.")
@@ -105,8 +105,6 @@ public class MerisOp extends Operator {
     private double userAot;
 
     // MerisReflectanceCorrectionOp
-    @Parameter(defaultValue = "true")
-    private boolean exportRhoToa = true;
     @Parameter(defaultValue = "true")
     private boolean exportRhoToaRayleigh = true;
     @Parameter(defaultValue = "true")
@@ -301,7 +299,7 @@ public class MerisOp extends Operator {
         reverseRhoToaInput.put("ae_ray", aeRayProduct);
         reverseRhoToaInput.put("ae_aerosol", aeAerProduct);
         Map<String, Object> reverseRhoToaParams = new HashMap<String, Object>(7);
-        reverseRhoToaParams.put("exportRhoToa", exportRhoToa);
+        reverseRhoToaParams.put("exportRhoToa", true);
         reverseRhoToaParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
         reverseRhoToaParams.put("exportRhoToaAerosol", exportRhoToaAerosol);
         if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty(
@@ -313,6 +311,9 @@ public class MerisOp extends Operator {
         reverseRhoToaParams.put("exportAeRayleigh", exportAeRayleigh);
         reverseRhoToaParams.put("exportAeAerosol", exportAeAerosol);
         reverseRhoToaParams.put("exportAlphaAot", exportAlphaAot);
+        reverseRhoToaParams.put("icolAerosolCase2", icolAerosolCase2);
+        reverseRhoToaParams.put("icolAerosolForWater", icolAerosolForWater);
+
         return GPF.createProduct(
                 OperatorSpi.getOperatorAlias(MerisReflectanceCorrectionOp.class), reverseRhoToaParams,
                 reverseRhoToaInput);
