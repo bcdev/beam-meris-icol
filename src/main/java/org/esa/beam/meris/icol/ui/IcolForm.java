@@ -116,26 +116,25 @@ class IcolForm extends JTabbedPane {
         cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();
+        final PropertyContainer valueContainer = targetProductSelector.getModel().getValueContainer();
         sourceComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 updateProductTypeSettings();
-                if (isEnvisatSourceProduct(
-                        IcolForm.this.sourceProductSelector.getSelectedProduct()) && radianceProductTypeButton.isSelected()) {
-                    final PropertyContainer pc = IcolForm.this.targetProductSelector.getModel().getValueContainer();
-                    pc.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
-                    IcolForm.this.targetProductSelector.getFormatNameComboBox().setEnabled(true);
+                if (isEnvisatSourceProduct(IcolForm.this.sourceProductSelector.getSelectedProduct()) &&
+                    radianceProductTypeButton.isSelected()) {
+                    valueContainer.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
                 }
             }
         });
-        targetProductSelector.getModel().getValueContainer().addPropertyChangeListener("formatName",
-                                                                                       new PropertyChangeListener() {
-                                                                                           @Override
-                                                                                           public void propertyChange(
-                                                                                                   PropertyChangeEvent evt) {
-                                                                                               updateProductFormatChange();
-                                                                                           }
-                                                                                       });
+        PropertyChangeListener formatNameChangeListener = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                updateProductFormatChange();
+            }
+        };
+        valueContainer.addPropertyChangeListener("formatName", formatNameChangeListener);
+
         bindComponents();
         updateUIStates();
     }
@@ -906,6 +905,8 @@ class IcolForm extends JTabbedPane {
             JCheckBox saveToFileCheckBox = targetProductSelector.getSaveToFileCheckBox();
             saveToFileCheckBox.setSelected(true);
             saveToFileCheckBox.setEnabled(false);
+            targetProductSelector.getFormatNameComboBox().setEnabled(true);
+            targetProductSelector.getOpenInAppCheckBox().setEnabled(true);
 
             radianceProductTypeButton.setSelected(true);
             rhoToaProductTypeButton.setEnabled(false);
