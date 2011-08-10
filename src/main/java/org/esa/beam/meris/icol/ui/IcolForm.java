@@ -124,6 +124,7 @@ class IcolForm extends JTabbedPane {
                         IcolForm.this.sourceProductSelector.getSelectedProduct()) && radianceProductTypeButton.isSelected()) {
                     final PropertyContainer pc = IcolForm.this.targetProductSelector.getModel().getValueContainer();
                     pc.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
+                    IcolForm.this.targetProductSelector.getFormatNameComboBox().setEnabled(true);
                 }
             }
         });
