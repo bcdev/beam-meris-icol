@@ -22,6 +22,8 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
+import org.esa.beam.framework.gpf.ui.OperatorMenu;
+import org.esa.beam.framework.gpf.ui.OperatorParameterSupport;
 import org.esa.beam.framework.gpf.ui.SingleTargetProductDialog;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
@@ -53,6 +55,15 @@ public class IcolDialog extends SingleTargetProductDialog {
 
         model = new IcolModel();
         form = new IcolForm(appContext, model, getTargetProductSelector());
+
+        OperatorSpi operatorSpi = GPF.getDefaultInstance().getOperatorSpiRegistry().getOperatorSpi("icol.Meris");
+        final OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorClass(),
+                                                                                       null,
+                                                                                       null,
+                                                                                       null);
+        OperatorMenu menuSupport = new OperatorMenu(this.getJDialog(), operatorSpi.getOperatorClass(),
+                                                    parameterSupport, null);
+        getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
     }
 
     @Override
