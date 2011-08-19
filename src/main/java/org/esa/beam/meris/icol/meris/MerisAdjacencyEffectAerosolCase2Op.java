@@ -331,6 +331,11 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
         try {
             for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
                 for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
+
+                    if (x == 73 && y == 101) {
+                        System.out.println("x, y = " + x + "," + y);
+                    }
+
                     final double rho_13 = rhoRaec[Constants.bb865].getSampleFloat(x, y);
                     final double rho_12 = rhoRaec[Constants.bb775].getSampleFloat(x, y);
                     final double rho_9 = rhoRaec[Constants.bb705].getSampleFloat(x, y);
@@ -707,7 +712,11 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (
+                IOException e
+                )
+
+        {
             throw new OperatorException(e);
         }
     }

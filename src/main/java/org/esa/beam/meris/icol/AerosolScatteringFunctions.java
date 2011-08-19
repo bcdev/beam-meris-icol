@@ -51,15 +51,15 @@ public class AerosolScatteringFunctions {
 	   phase = new double[NUM_IAER+1][];
    }
    
-//   private static int checkIndex(int index, int max) {
-//	   if (index >= max) {
-//		   index = max-1;
-//	   }
-//	   if (index < 0) {
-//		   index = 0;
-//	   }
-//	   return index;
-//   }
+   private static int checkIndex(int index, int max) {
+	   if (index >= max) {
+		   index = max-1;
+	   }
+	   if (index < 0) {
+		   index = 0;
+	   }
+	   return index;
+   }
    
    static int selectIza(double teta) {
 	   return selectIzaUpperIndex(teta);
@@ -94,7 +94,7 @@ public class AerosolScatteringFunctions {
     }
    
    static double interZa(int iza, double y1, double y2, double x) {
-//	   iza = checkIndex(iza, angle.length); overflow no possible
+	   iza = checkIndex(iza, angle.length-1);
 	   double x1 =  angle[iza];
 	   double x2 =  angle[iza+1];
 	   double slope = (y2-y1)/(x2-x1);
@@ -103,9 +103,9 @@ public class AerosolScatteringFunctions {
    }
    
    double aerosolTransmittance(int isza, int iaot, int iaer) throws IOException {
-//	   isza = checkIndex(isza, NUM_IZA);
-//	   iaot = checkIndex(iaot, NUM_IAOT);
-//	   iaer = checkIndex(iaer, NUM_IAER);
+	   isza = checkIndex(isza, NUM_IZA);
+	   iaot = checkIndex(iaot, NUM_IAOT);
+	   iaer = checkIndex(iaer, NUM_IAER);
 	   if (transmittance[iaer] == null) {
 		   transmittance[iaer] = readAerosolTransmittanceFiles(iaer);
 	   }
@@ -137,8 +137,8 @@ public class AerosolScatteringFunctions {
 	}
 	
 	private double aerosolAlbedo(int iaot, int iaer) throws IOException {
-//		iaot = checkIndex(iaot, NUM_IAOT);
-//		iaer = checkIndex(iaer, NUM_IAER);
+		iaot = checkIndex(iaot, NUM_IAOT);
+		iaer = checkIndex(iaer, NUM_IAER);
 		if (albedo == null) {
 			albedo = readAerosolAlbedo();
 		}
@@ -275,9 +275,9 @@ public class AerosolScatteringFunctions {
 	
 	private double aerosolReflectance(int isza, int ivza, float phi, double aot, int iaer) throws IOException {
 		final int NORDRE = 5;
-//		isza = checkIndex(isza, NUM_IZA);
-//		ivza = checkIndex(ivza, NUM_IZA);
-//		iaer = checkIndex(iaer, NUM_IAER);
+		isza = checkIndex(isza, NUM_IZA);
+		ivza = checkIndex(ivza, NUM_IZA);
+		iaer = checkIndex(iaer, NUM_IAER);
 		
 		if (fourier[iaer] == null) {
 			fourier[iaer] = readFourierAerosol(iaer+36);
@@ -350,7 +350,7 @@ public class AerosolScatteringFunctions {
 	}
 	
 	public double aerosolPhaseFB(double thetaf, double thetab, int iaer) throws IOException {
-//		iaer = checkIndex(iaer, NUM_IAER);
+		iaer = checkIndex(iaer, NUM_IAER);
 		double paerF = aerosolPhase(thetaf,iaer);
         double paerB = aerosolPhase(thetab,iaer);
         return paerF/paerB;
@@ -361,7 +361,7 @@ public class AerosolScatteringFunctions {
 	}
 	
 	public double aerosolPhase(double theta, int iaer) throws IOException {
-//		iaer = checkIndex(iaer, NUM_IAER);
+		iaer = checkIndex(iaer, NUM_IAER);
 		if (phase[iaer] == null) {
 			phase[iaer] = readAerosolPhase(iaer);
 		}
@@ -384,7 +384,7 @@ public class AerosolScatteringFunctions {
 	
 	@SuppressWarnings("boxing")
 	double[] readAerosolPhase(int iaer) throws IOException {
-//		iaer = checkIndex(iaer, NUM_IAER);
+		iaer = checkIndex(iaer, NUM_IAER);
 		
 		double[] buf = new double[NTHETA*2];
 		String fileName = String.format(
