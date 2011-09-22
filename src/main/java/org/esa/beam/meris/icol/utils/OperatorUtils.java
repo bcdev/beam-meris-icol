@@ -52,6 +52,7 @@ public class OperatorUtils {
      */
     public static void copyProductBase(Product sourceProduct, Product targetProduct) {
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
+        ProductUtils.copyMetadata(sourceProduct, targetProduct);
         targetProduct.setStartTime(sourceProduct.getStartTime());
         targetProduct.setEndTime(sourceProduct.getEndTime());
     }
