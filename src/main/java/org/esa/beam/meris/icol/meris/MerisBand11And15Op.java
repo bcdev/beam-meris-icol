@@ -21,11 +21,11 @@ import java.awt.Rectangle;
  * @version $Revision: $ $Date:  $
  */
 @OperatorMetadata(alias = "Meris.IcolCorrectBand11And15",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Olaf Danne",
-                  copyright = "(c) 2009 by Brockmann Consult",
-                  description = "Corrects MERIS band 11 and 15 and writes to output product.")
+        version = "1.0",
+        internal = true,
+        authors = "Olaf Danne",
+        copyright = "(c) 2009 by Brockmann Consult",
+        description = "Corrects MERIS band 11 and 15 and writes to output product.")
 public class MerisBand11And15Op extends Operator {
 
     @SourceProduct(alias = "l1b")
@@ -47,16 +47,18 @@ public class MerisBand11And15Op extends Operator {
         for (String bandName : corrReflProduct.getBandNames()) {
             Band srcBand = corrReflProduct.getBand(bandName);
             if (!srcBand.isFlagBand()) { // do flags band later
-                Band targetBand = ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
-                if (!bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15")) {
-                    targetBand.setSourceImage(corrReflProduct.getBand(bandName).getSourceImage());
+                if (!targetProduct.containsRasterDataNode(bandName)) {
+                    Band targetBand = ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
+                    if (!bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15")) {
+                        targetBand.setSourceImage(corrReflProduct.getBand(bandName).getSourceImage());
+                    }
                 }
             }
         }
         OperatorUtils.copyFlagBandsWithImages(corrReflProduct, targetProduct);
 
         Band detectorBand = ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct,
-                                                  targetProduct);
+                targetProduct);
         detectorBand.setSourceImage(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME).getSourceImage());
     }
 

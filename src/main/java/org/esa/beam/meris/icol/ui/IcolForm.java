@@ -57,6 +57,7 @@ class IcolForm extends JTabbedPane {
     private JCheckBox aeAerosol;
     private JCheckBox alphaAot;
 
+    private JCheckBox useAdvancedLandWaterMaskCheckBox;
     private JCheckBox icolAerosolForWaterCheckBox;
     private JCheckBox icolAerosolCase2CheckBox;
     private JRadioButton icolCtp;
@@ -186,6 +187,7 @@ class IcolForm extends JTabbedPane {
         bc.bind("userAot", aotValue);
 
         bc.bind("aeArea", aeAreaComboBox);
+        bc.bind("useAdvancedLandWaterMask", useAdvancedLandWaterMaskCheckBox);
 
         bc.bind("openclConvolution", openclConvolutionCheckBox);
 
@@ -494,6 +496,11 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(aeAreaComboBox);
         panel.add(new JLabel());
+
+        useAdvancedLandWaterMaskCheckBox = new JCheckBox(
+                "Use advanced land/water mask.");
+        useAdvancedLandWaterMaskCheckBox.setSelected(false);
+        panel.add(useAdvancedLandWaterMaskCheckBox);
 
         return panel;
     }

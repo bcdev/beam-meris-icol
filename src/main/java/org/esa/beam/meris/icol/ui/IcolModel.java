@@ -54,6 +54,8 @@ public class IcolModel {
     private int tileSize = 64;
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
     private AeArea aeArea;
+    @Parameter(defaultValue = "false")
+    boolean useAdvancedLandWaterMask = false;
 
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
@@ -199,6 +201,7 @@ public class IcolModel {
 
     private void configGeneral(HashMap<String, Object> params) {
         params.put("tileSize", tileSize);
+        params.put("useAdvancedLandWaterMask", useAdvancedLandWaterMask);
         params.put("openclConvolution", openclConvolution);
         params.put("aeArea", aeArea);
     }

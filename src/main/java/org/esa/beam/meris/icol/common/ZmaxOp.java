@@ -28,11 +28,11 @@ import java.util.Map;
  * @author Olaf Danne
  */
 @OperatorMetadata(alias = "Zmax",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Marco Zühlke, Olaf Danne",
-                  copyright = "(c) 2007-2010 by Brockmann Consult",
-                  description = "Zmax computation for land or cloud contribution in AE correction.")
+        version = "1.0",
+        internal = true,
+        authors = "Marco Zühlke, Olaf Danne",
+        copyright = "(c) 2007-2010 by Brockmann Consult",
+        description = "Zmax computation for land or cloud contribution in AE correction.")
 public class ZmaxOp extends Operator {
 
     public static final String ZMAX = "zmax";
@@ -85,30 +85,32 @@ public class ZmaxOp extends Operator {
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
             Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
-                                     targetRect);
+                    targetRect);
             Tile aeMask = getSourceTile(aeMaskBand, targetRect);
 
             Band distanceBand = distanceBandMap.get(zmaxBand);
-            Tile distance = getSourceTile(distanceBand, targetRect);
-            double distanceNoDataValue = distanceBand.getNoDataValue();
+            if (distanceBand != null) {
+                Tile distance = getSourceTile(distanceBand, targetRect);
+                double distanceNoDataValue = distanceBand.getNoDataValue();
 
-            PixelPos pPix = new PixelPos();
-            for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
-                pPix.y = y;
-                for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
-                    pPix.x = x;
-                    float zMaxValue = NO_DATA_VALUE;
-                    if (aeMask.getSampleBoolean(x, y)) {
-                        int distanceValue = distance.getSampleInt(x, y);
-                        if (distanceValue != distanceNoDataValue) {
-                            float szaValue = sza.getSampleFloat(x, y);
-                            zMaxValue = (float) (distanceValue / Math.tan(szaValue * MathUtils.DTOR));
+                PixelPos pPix = new PixelPos();
+                for (int y = targetRect.y; y < targetRect.y + targetRect.height; y++) {
+                    pPix.y = y;
+                    for (int x = targetRect.x; x < targetRect.x + targetRect.width; x++) {
+                        pPix.x = x;
+                        float zMaxValue = NO_DATA_VALUE;
+                        if (aeMask.getSampleBoolean(x, y)) {
+                            int distanceValue = distance.getSampleInt(x, y);
+                            if (distanceValue != distanceNoDataValue) {
+                                float szaValue = sza.getSampleFloat(x, y);
+                                zMaxValue = (float) (distanceValue / Math.tan(szaValue * MathUtils.DTOR));
+                            }
                         }
+                        zmax.setSample(x, y, zMaxValue);
                     }
-                    zmax.setSample(x, y, zMaxValue);
+                    checkForCancellation();
+                    pm.worked(1);
                 }
-                checkForCancellation();
-                pm.worked(1);
             }
         } finally {
             pm.done();

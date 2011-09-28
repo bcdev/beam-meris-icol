@@ -64,8 +64,8 @@ public class MerisReflectanceCorrectionOp extends Operator {
     private static final int FLAG_AE_APPLIED_AEROSOL = 32;
     private static final int FLAG_ALPHA_OUT_OF_RANGE = 64;
     private static final int FLAG_AOT_OUT_OF_RANGE = 128;
-    private static final int FLAG_HIGH_TURBID_WATER = 128;
-    private static final int FLAG_SUNGLINT = 128;
+    private static final int FLAG_HIGH_TURBID_WATER = 256;
+    private static final int FLAG_SUNGLINT = 512;
 
     @SourceProduct(alias = "l1b")
     private Product l1bProduct;
@@ -118,10 +118,11 @@ public class MerisReflectanceCorrectionOp extends Operator {
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "reverseRhoToa", productType, true);
         Band[] allBands = rhoToaProduct.getBands();
         Band[] sourceBands = new Band[15];
+        int count = 0;
         for (int i = 0; i < allBands.length; i++) {
             Band band = allBands[i];
             if (band.getName().startsWith("rho_toa")) {
-                sourceBands[i] = band;
+                sourceBands[count++] = band;
             }
         }
         if (exportRhoToa) {
@@ -172,6 +173,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
         aeFlagBand.setSampleCoding(flagCoding);
 
         OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
+        OperatorUtils.copyFlagBandsWithImages(aeAerosolProduct, targetProduct);
     }
 
     private FlagCoding createFlagCoding(String bandName) {
@@ -179,44 +181,54 @@ public class MerisReflectanceCorrectionOp extends Operator {
         final FlagCoding flagCoding = new FlagCoding(bandName);
         flagCoding.setDescription("Adjacency-Effect - Flag Coding");
 
-        cloudAttr = new MetadataAttribute("ae_mask_rayleigh", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("ae_mask_rayleigh", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_AE_MASK_RAYLEIGH);
+        cloudAttr.setDescription("Pixel is inside Rayleigh AE correction mask.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("ae_mask_aerosol", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("ae_mask_aerosol", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_AE_MASK_AEROSOL);
+        cloudAttr.setDescription("Pixel is inside aerosol AE correction mask.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("landcons", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("landcons", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_LANDCONS);
+        cloudAttr.setDescription("Consolidated land pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("cloud", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("cloud", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_CLOUD);
+        cloudAttr.setDescription("Cloud pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("ae_applied_rayleigh", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("ae_applied_rayleigh", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_AE_APPLIED_RAYLEIGH);
+        cloudAttr.setDescription("Rayleigh AE correction was applied to this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("ae_applied_aerosol", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("ae_applied_aerosol", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_AE_APPLIED_AEROSOL);
+        cloudAttr.setDescription("Aerosol AE correction was applied to this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("alpha_out_of_range", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("alpha_out_of_range", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_ALPHA_OUT_OF_RANGE);
+        cloudAttr.setDescription("Alpha value is out of range for this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("aot_out_of_range", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("aot_out_of_range", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_AOT_OUT_OF_RANGE);
+        cloudAttr.setDescription("AOT value is out of range for this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("high_turbid_water", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("high_turbid_water", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_HIGH_TURBID_WATER);
+        cloudAttr.setDescription("Turbidity was identified as high for this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
-        cloudAttr = new MetadataAttribute("sunglint", ProductData.TYPE_UINT8);
+        cloudAttr = new MetadataAttribute("sunglint", ProductData.TYPE_INT16);
         cloudAttr.getData().setElemInt(FLAG_SUNGLINT);
+        cloudAttr.setDescription("Sun glint present in this pixel.");
         flagCoding.addAttribute(cloudAttr);
 
         return flagCoding;
@@ -268,7 +280,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
         Rectangle rect = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rect.height + 6);
         try {
-            Tile land = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rect);
+            Tile land = getSourceTile(landProduct.getBand(MerisLandClassificationOp.LAND_FLAGS), rect);
             Tile cloud = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rect);
             Tile aemaskRayleigh = getSourceTile(aemaskRayleighProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_RAYLEIGH),
                     rect);

@@ -17,11 +17,13 @@ import org.esa.beam.meris.icol.tm.TmAeMergeOp;
 public class DebugUtils {
 
     public static void addSingleDebugFlagBand(Product targetProduct, Product sourceProduct, FlagCoding flagCoding, String flagBandName) {
-        for (Band band:sourceProduct.getBands()) {
-            if (band.getName().equals(flagBandName)) {
-                band.setSampleCoding(flagCoding);
+        for (Band band : sourceProduct.getBands()) {
+            if (!targetProduct.containsRasterDataNode(band.getName())) {
+                if (band.getName().equals(flagBandName)) {
+                    band.setSampleCoding(flagCoding);
+                }
+                targetProduct.addBand(band);
             }
-            targetProduct.addBand(band);
         }
     }
 
@@ -136,7 +138,7 @@ public class DebugUtils {
 
 
     public static void addRad2ReflDebugBands(Product targetProduct, Product rad2ReflProduct) {
-        for (Band band:rad2ReflProduct.getBands()) {
+        for (Band band : rad2ReflProduct.getBands()) {
             if (band.getName().startsWith(Rad2ReflOp.RHO_TOA_BAND_PREFIX)) {
                 targetProduct.addBand(band);
             }
@@ -159,7 +161,7 @@ public class DebugUtils {
     }
 
     public static void addLandProductDebugBands(Product targetProduct, Product landProduct, FlagCoding landFlagCoding) {
-        for (Band band:landProduct.getBands()) {
+        for (Band band : landProduct.getBands()) {
             if (band.getName().equals(LandClassificationOp.LAND_FLAGS)) {
                 band.setSampleCoding(landFlagCoding);
             }
@@ -168,7 +170,7 @@ public class DebugUtils {
     }
 
     public static void addCloudProductDebugBands(Product targetProduct, Product cloudProduct, FlagCoding cloudFlagCoding) {
-        for (Band band:cloudProduct.getBands()) {
+        for (Band band : cloudProduct.getBands()) {
             if (band.getName().equals(CloudClassificationOp.CLOUD_FLAGS)) {
                 band.setSampleCoding(cloudFlagCoding);
             }
@@ -177,7 +179,7 @@ public class DebugUtils {
     }
 
     public static void addCtpProductDebugBand(Product targetProduct, Product ctpProduct, String ctpBandName) {
-        for (Band band:ctpProduct.getBands()) {
+        for (Band band : ctpProduct.getBands()) {
             if (band.getName().equals(ctpBandName)) {
                 targetProduct.addBand(band);
             }
@@ -185,15 +187,15 @@ public class DebugUtils {
     }
 
     public static void addAEMaskProductDebugBand(Product targetProduct, Product aemaskProduct, String aemaskBandName) {
-        for (Band band:aemaskProduct.getBands()) {
+        for (Band band : aemaskProduct.getBands()) {
             if (band.getName().equals(aemaskBandName)) {
                 targetProduct.addBand(band);
             }
         }
     }
 
-   public static void addCoastDistanceProductDebugBand(Product targetProduct, Product coastDistanceProduct, String coastDistanceBandName) {
-        for (Band band:coastDistanceProduct.getBands()) {
+    public static void addCoastDistanceProductDebugBand(Product targetProduct, Product coastDistanceProduct, String coastDistanceBandName) {
+        for (Band band : coastDistanceProduct.getBands()) {
             if (band.getName().equals(CoastDistanceOp.COAST_DISTANCE)) {
                 targetProduct.addBand(band);
             }

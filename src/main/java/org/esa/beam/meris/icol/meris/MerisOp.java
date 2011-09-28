@@ -130,6 +130,9 @@ public class MerisOp extends Operator {
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
+    @Parameter(defaultValue = "false",
+               description = "If set to 'true', use new, improved land/water mask.")
+    private boolean useAdvancedLandWaterMask = false;
 
     @Override
     public void initialize() throws OperatorException {
@@ -561,7 +564,9 @@ public class MerisOp extends Operator {
         landInput.put("l1b", sourceProduct);
         landInput.put("rhotoa", rad2reflProduct);
         landInput.put("gascor", gasProduct);
-        return GPF.createProduct(OperatorSpi.getOperatorAlias(LandClassificationOp.class), GPF.NO_PARAMS,
+        Map<String, Object> landParameters = new HashMap<String, Object>(2);
+        landParameters.put("useAdvancedLandWaterMask", useAdvancedLandWaterMask);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(MerisLandClassificationOp.class), landParameters,
                                  landInput);
     }
 

@@ -79,6 +79,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
     private static final double HA = 3000;
     private static final double NO_DATA_VALUE = -1.0;
     private static final double AE_AOT_THRESHOLD = 0.01;
+//    private static final double AE_AOT_THRESHOLD = 0.0;  // was just for a RS test
 
     private Band isLandBand;
 

@@ -31,6 +31,7 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.LandClassificationOp;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.ResourceInstaller;
 import org.esa.beam.util.SystemUtils;
@@ -54,32 +55,34 @@ public class FresnelCoefficientOp extends MerisBasisOp {
 
     private FresnelReflectionCoefficient fresnelCoefficient;
     private Band isLandBand;
-    
-    @SourceProduct(alias="input")
+
+    @SourceProduct(alias = "input")
     private Product sourceProduct;
-    @SourceProduct(alias="l1b")
+    @SourceProduct(alias = "l1b")
     private Product l1bProduct;
-    @SourceProduct(alias="land")
+    @SourceProduct(alias = "land")
     private Product landProduct;
     @TargetProduct
     private Product targetProduct;
-	
+
 
     @Override
     public void initialize() throws OperatorException {
-        targetProduct = createCompatibleProduct(sourceProduct, "MER", "MER_L2");
+        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "MER", "MER_L2");
         Band[] sourceBands = sourceProduct.getBands();
         for (Band srcBand : sourceBands) {
-			Band targetBand = targetProduct.addBand(srcBand.getName(), ProductData.TYPE_FLOAT32);
+            if (!targetProduct.containsRasterDataNode(srcBand.getName())) {
+                Band targetBand = targetProduct.addBand(srcBand.getName(), ProductData.TYPE_FLOAT32);
 //			ProductUtils.copySpectralAttributes(srcBand, targetBand);
-             ProductUtils.copySpectralBandProperties(srcBand, targetBand);
-            targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
-            targetBand.setNoDataValue(srcBand.getNoDataValue());
-		}
+                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+                targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
+                targetBand.setNoDataValue(srcBand.getNoDataValue());
+            }
+        }
         targetProduct.addBand("cf", ProductData.TYPE_FLOAT32);
-        
+
         BandMathsOp bandArithmeticOp =
-            BandMathsOp.createBooleanExpressionBand(LandClassificationOp.LAND_FLAGS + ".F_LANDCONS", landProduct);
+                BandMathsOp.createBooleanExpressionBand(LandClassificationOp.LAND_FLAGS + ".F_LANDCONS", landProduct);
         isLandBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
         try {
             loadFresnelReflectionCoefficient();
@@ -87,7 +90,7 @@ public class FresnelCoefficientOp extends MerisBasisOp {
             throw new OperatorException(e);
         }
     }
-    
+
     private void loadFresnelReflectionCoefficient() throws IOException {
         String auxdataSrcPath = "auxdata/icol";
         final String auxdataDestPath = ".beam/beam-meris-icol/" + auxdataSrcPath;
@@ -101,49 +104,49 @@ public class FresnelCoefficientOp extends MerisBasisOp {
         final Reader reader = new FileReader(fresnelFile);
         fresnelCoefficient = new FresnelReflectionCoefficient(reader);
     }
-    
+
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
 
-    	Rectangle rectangle = targetTile.getRectangle();
+        Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height);
         try {
-			String bandName = band.getName();
-        	final double noDataValue = band.getNoDataValue();
+            String bandName = band.getName();
+            final double noDataValue = band.getNoDataValue();
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-        	Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle,
+            Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-        	Tile isLand = getSourceTile(isLandBand, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-        	if (bandName.equals("cf")) {
-        		bandName = sourceProduct.getBands()[0].getName();
-        	}
-        	Tile srcTile = getSourceTile(sourceProduct.getBand(bandName), rectangle,
+            Tile isLand = getSourceTile(isLandBand, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            if (bandName.equals("cf")) {
+                bandName = sourceProduct.getBands()[0].getName();
+            }
+            Tile srcTile = getSourceTile(sourceProduct.getBand(bandName), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-        	
+
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-					float rhoNg = srcTile.getSampleFloat(x, y);
-					if (band.getName().equals("cf")) {
-						if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
-							final double rs = fresnelCoefficient.getCoeffFor(sza.getSampleDouble(x, y));
-							final double rv = fresnelCoefficient.getCoeffFor(vza.getSampleDouble(x, y));
+                for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                    float rhoNg = srcTile.getSampleFloat(x, y);
+                    if (band.getName().equals("cf")) {
+                        if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
+                            final double rs = fresnelCoefficient.getCoeffFor(sza.getSampleDouble(x, y));
+                            final double rv = fresnelCoefficient.getCoeffFor(vza.getSampleDouble(x, y));
                             targetTile.setSample(x, y, 1 + rs + rv);
-						}
-					} else {
-						if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
-							final double rs = fresnelCoefficient.getCoeffFor(sza.getSampleDouble(x, y));
-							final double rv = fresnelCoefficient.getCoeffFor(vza.getSampleDouble(x, y));
-							final double cf = 1 + rs + rv;
-							targetTile.setSample(x, y, rhoNg * cf);
-						} else {
-							targetTile.setSample(x, y, rhoNg);
-						}
-					}
-				}
-				pm.worked(1);
-			}
+                        }
+                    } else {
+                        if (rhoNg != noDataValue && !isLand.getSampleBoolean(x, y)) {
+                            final double rs = fresnelCoefficient.getCoeffFor(sza.getSampleDouble(x, y));
+                            final double rv = fresnelCoefficient.getCoeffFor(vza.getSampleDouble(x, y));
+                            final double cf = 1 + rs + rv;
+                            targetTile.setSample(x, y, rhoNg * cf);
+                        } else {
+                            targetTile.setSample(x, y, rhoNg);
+                        }
+                    }
+                }
+                pm.worked(1);
+            }
         } catch (Exception e) {
             throw new OperatorException(e);
         } finally {
