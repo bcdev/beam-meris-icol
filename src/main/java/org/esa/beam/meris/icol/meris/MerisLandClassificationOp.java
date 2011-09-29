@@ -70,7 +70,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
     @TargetProduct
     private Product targetProduct;
 
-    @Parameter(defaultValue = "false",
+    @Parameter(defaultValue = "true",
             description = "If set to 'true', use new, improved land/water mask.")
     private boolean useAdvancedLandWaterMask;
 
@@ -122,6 +122,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
 
         Rectangle rectangle = targetTile.getRectangle();
         try {
+            Tile latTile = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_LAT_DS_NAME), rectangle);
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle);
             Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle);
             Tile saa = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME), rectangle);
@@ -198,6 +199,9 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                     final int xWinEnd = Math.min(rectangle.x + rectangle.width, x + Constants.SUBWIN_WIDTH) - 1;
                     final int yWinEnd = Math.min(rectangle.y + rectangle.height, y + Constants.SUBWIN_HEIGHT) - 1;
 
+                    if (x == 786 && y == 293) {
+                        System.out.println("ice ix = " + x);
+                    }
                     for (int iy = y; iy <= yWinEnd; iy++) {
                         for (int ix = x; ix <= xWinEnd; ix++) {
                             /* Land /Water re-classification - v4.2, updated for v7 */
@@ -218,8 +222,8 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
 
                             /* test if pixel is land */
                             final float thresh_medg = 0.2f;
-                            boolean isGlint = (rhoGlint >= thresh_medg * rhoNg_bb865_Tile.getSampleFloat(ix, iy));
-                            if (isGlint) {
+                            boolean is_glint = (rhoGlint >= thresh_medg * rhoNg_bb865_Tile.getSampleFloat(ix, iy));
+                            if (is_glint) {
                                 targetTile.setSample(ix, iy, F_MEGLINT, true);
                                 b_thresh = b_thresh_0;
                                 a_thresh = a_thresh_0;
@@ -237,7 +241,8 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
 //                                                               (rhoToa[12].getSampleDouble(x,y) + rhoToa[13].getSampleDouble(x,y));
                                 final double mdsi = (rhoToa12.getSampleDouble(x, y) - rhoToa13.getSampleDouble(x, y)) /
                                         (rhoToa12.getSampleDouble(x, y) + rhoToa13.getSampleDouble(x, y));
-                                is_ice = (mdsi > 0.01 && l1Flags.getSampleBit(ix, iy, L1_F_BRIGHT));
+                                final float latitude = latTile.getSampleFloat(ix, iy);
+                                is_ice = (Math.abs(latitude) > 60.0 && mdsi > 0.01 && l1Flags.getSampleBit(ix, iy, L1_F_BRIGHT));
                             }
                             targetTile.setSample(ix, iy, F_ICE, is_ice);
 
@@ -249,7 +254,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                             // the water test is less severe than the land test
                             boolean is_land_consolidated = !is_water;
                             // the land test is more severe than the water test
-                            if (isGlint && !l1Flags.getSampleBit(ix, iy, L1_F_LAND)) {
+                            if (is_glint && !l1Flags.getSampleBit(ix, iy, L1_F_LAND)) {
                                 is_land_consolidated = is_land;
                             }
 
@@ -262,6 +267,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                             if (ix == 360 && iy == 500) {
                                 System.out.println("diff ix = " + ix);
                             }
+
                             if (useAdvancedLandWaterMask) {
                                 WatermaskStrategy strategy = new MerisWatermaskStrategy();
                                 final GeoCoding geoCoding = l1bProduct.getGeoCoding();
@@ -271,9 +277,10 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                                     if (!(waterMaskSample == WatermaskClassifier.INVALID_VALUE)) {
                                         is_land = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
                                         is_land_consolidated = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
-                                        targetTile.setSample(ix, iy, F_MEGLINT, isGlint && !is_land);
-                                        targetTile.setSample(ix, iy, F_ICE, is_ice && !is_land);
-                                        targetTile.setSample(ix, iy, F_LOINLD, is_water && !is_land);
+                                        final boolean isGlint = (is_glint && !is_land);
+                                        final boolean isLoinld = (is_water && !is_land);
+                                        targetTile.setSample(ix, iy, F_MEGLINT, isGlint);
+                                        targetTile.setSample(ix, iy, F_LOINLD, isLoinld);
                                     }
                                 }
                             }

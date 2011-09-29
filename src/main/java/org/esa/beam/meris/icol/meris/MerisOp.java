@@ -130,9 +130,9 @@ public class MerisOp extends Operator {
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
-    @Parameter(defaultValue = "false",
+    @Parameter(defaultValue = "true",
                description = "If set to 'true', use new, improved land/water mask.")
-    private boolean useAdvancedLandWaterMask = false;
+    private boolean useAdvancedLandWaterMask = true;
 
     @Override
     public void initialize() throws OperatorException {

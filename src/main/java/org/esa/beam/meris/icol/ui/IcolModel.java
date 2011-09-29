@@ -54,8 +54,8 @@ public class IcolModel {
     private int tileSize = 64;
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
     private AeArea aeArea;
-    @Parameter(defaultValue = "false")
-    boolean useAdvancedLandWaterMask = false;
+    @Parameter(defaultValue = "true")
+    boolean useAdvancedLandWaterMask = true;
 
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
