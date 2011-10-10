@@ -37,10 +37,8 @@ import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.math.FractIndex;
 import org.esa.beam.util.math.Interp;
 import org.esa.beam.util.math.MathUtils;
-import org.esa.beam.watermask.operator.WatermaskClassifier;
 
 import java.awt.*;
-import java.io.IOException;
 
 
 @OperatorMetadata(alias = "Meris.Icol.LandClassification",
@@ -74,18 +72,18 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
             description = "If set to 'true', use new, improved land/water mask.")
     private boolean useAdvancedLandWaterMask;
 
-    private WatermaskClassifier classifier;
+//    private WatermaskClassifier classifier;
     private static int WATERMASK_RESOLUTION_DEFAULT = 50;
 
     @Override
     public void initialize() throws OperatorException {
-        if (useAdvancedLandWaterMask) {
-            try {
-                classifier = new WatermaskClassifier(WATERMASK_RESOLUTION_DEFAULT);
-            } catch (IOException e) {
-                getLogger().warning("Watermask classifier could not be initialized - fallback mode is used.");
-            }
-        }
+//        if (useAdvancedLandWaterMask) {
+//            try {
+//                classifier = new WatermaskClassifier(WATERMASK_RESOLUTION_DEFAULT);
+//            } catch (IOException e) {
+//                getLogger().warning("Watermask classifier could not be initialized - fallback mode is used.");
+//            }
+//        }
 
         try {
             auxData = L2AuxDataProvider.getInstance().getAuxdata(l1bProduct);
@@ -258,32 +256,22 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                                 is_land_consolidated = is_land;
                             }
 
-                            if (ix == 420 && iy == 430) {
-                                System.out.println("land ix = " + ix);
-                            }
-                            if (ix == 450 && iy == 460) {
-                                System.out.println("ocean ix = " + ix);
-                            }
-                            if (ix == 360 && iy == 500) {
-                                System.out.println("diff ix = " + ix);
-                            }
-
-                            if (useAdvancedLandWaterMask) {
-                                WatermaskStrategy strategy = new MerisWatermaskStrategy();
-                                final GeoCoding geoCoding = l1bProduct.getGeoCoding();
-                                if (geoCoding.canGetGeoPos()) {
-                                    geoPos = geoCoding.getGeoPos(new PixelPos(ix, iy), geoPos);
-                                    byte waterMaskSample = strategy.getWatermaskSample(geoPos.lat, geoPos.lon);
-                                    if (!(waterMaskSample == WatermaskClassifier.INVALID_VALUE)) {
-                                        is_land = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
-                                        is_land_consolidated = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
-                                        final boolean isGlint = (is_glint && !is_land);
-                                        final boolean isLoinld = (is_water && !is_land);
-                                        targetTile.setSample(ix, iy, F_MEGLINT, isGlint);
-                                        targetTile.setSample(ix, iy, F_LOINLD, isLoinld);
-                                    }
-                                }
-                            }
+//                            if (useAdvancedLandWaterMask) {
+//                                WatermaskStrategy strategy = new MerisWatermaskStrategy();
+//                                final GeoCoding geoCoding = l1bProduct.getGeoCoding();
+//                                if (geoCoding.canGetGeoPos()) {
+//                                    geoPos = geoCoding.getGeoPos(new PixelPos(ix, iy), geoPos);
+//                                    byte waterMaskSample = strategy.getWatermaskSample(geoPos.lat, geoPos.lon);
+//                                    if (!(waterMaskSample == WatermaskClassifier.INVALID_VALUE)) {
+//                                        is_land = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
+//                                        is_land_consolidated = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
+//                                        final boolean isGlint = (is_glint && !is_land);
+//                                        final boolean isLoinld = (is_water && !is_land);
+//                                        targetTile.setSample(ix, iy, F_MEGLINT, isGlint);
+//                                        targetTile.setSample(ix, iy, F_LOINLD, isLoinld);
+//                                    }
+//                                }
+//                            }
 
                             /* the is_land flag is available in the output product as F_ISLAND */
                             targetTile.setSample(ix, iy, F_ISLAND, is_land);
@@ -379,20 +367,20 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
         }
     }
 
-    private interface WatermaskStrategy {
-
-        byte getWatermaskSample(float lat, float lon);
-    }
-
-    private class MerisWatermaskStrategy implements WatermaskStrategy {
-
-        @Override
-        public byte getWatermaskSample(float lat, float lon) {
-            int waterMaskSample = WatermaskClassifier.INVALID_VALUE;
-            if (classifier != null) {
-                waterMaskSample = classifier.getWaterMaskSample(lat, lon);
-            }
-            return (byte) waterMaskSample;
-        }
-    }
+//    private interface WatermaskStrategy {
+//
+//        byte getWatermaskSample(float lat, float lon);
+//    }
+//
+//    private class MerisWatermaskStrategy implements WatermaskStrategy {
+//
+//        @Override
+//        public byte getWatermaskSample(float lat, float lon) {
+//            int waterMaskSample = WatermaskClassifier.INVALID_VALUE;
+//            if (classifier != null) {
+//                waterMaskSample = classifier.getWaterMaskSample(lat, lon);
+//            }
+//            return (byte) waterMaskSample;
+//        }
+//    }
 }
