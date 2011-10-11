@@ -499,8 +499,8 @@ class IcolForm extends JTabbedPane {
 
         useAdvancedLandWaterMaskCheckBox = new JCheckBox(
                 "Use advanced land/water mask.");
-//        useAdvancedLandWaterMaskCheckBox.setSelected(true);
-//        panel.add(useAdvancedLandWaterMaskCheckBox);
+        useAdvancedLandWaterMaskCheckBox.setSelected(true);
+        panel.add(useAdvancedLandWaterMaskCheckBox);
 
         return panel;
     }

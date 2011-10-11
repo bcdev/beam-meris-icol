@@ -1,7 +1,7 @@
 <module>
     <manifestVersion>1.0.0</manifestVersion>
     <symbolicName>beam-meris-icol</symbolicName>
-    <version>2.7.4</version>
+    <version>2.8-SNAPSHOT</version>
     <name>MERIS ICOL Processor</name>
 
     <description><![CDATA[
@@ -36,6 +36,8 @@
 
     <changelog>
         <![CDATA[
+            <p>Changes in 2.7.4<br/>
+            [ICOL-?] Missing metadata written to ICOL product
             <p>Changes in 2.6<br/>
             [ICOL-9]OperatorException: "The specified region, if not null, must intersect with the image`s bounds"
             <p>Changes in 1.1<br/>
