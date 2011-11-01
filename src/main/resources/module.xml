@@ -74,9 +74,9 @@
         <module>beam-visat</module>
         <optional>true</optional>
     </dependency>
-    <!--<dependency>-->
-        <!--<module>beam-watermask</module>-->
-    <!--</dependency>-->
+    <dependency>
+        <module>beam-watermask</module>
+    </dependency>
 
     <categories>Application,Processing</categories>
 
