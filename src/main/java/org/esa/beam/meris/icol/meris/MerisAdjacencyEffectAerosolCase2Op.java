@@ -561,7 +561,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                         rhoBrr705Best = rhoBrr705[searchIAOT];
                                         jrhow705 = irhow705;
                                         if (jrhow705 > 0) {
-                                            double delta705 = (rho_9 - rhoBrr705BestPrev) / (rhoBrr705BestPrev - rhoBrr705Best);
+                                            double delta705 = (rho_9 - rhoBrr705Best) / (rhoBrr705BestPrev - rhoBrr705Best);
                                             if (Math.abs(delta705) > 1.0) {
                                                 delta705 = 0.0;
                                             }
