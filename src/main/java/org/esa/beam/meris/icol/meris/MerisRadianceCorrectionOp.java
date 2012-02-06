@@ -152,16 +152,11 @@ public class MerisRadianceCorrectionOp extends Operator {
                     if (detectorIndex != -1) {
                         double rhoToa = rhoToaCorrTile.getSampleDouble(x, y);
                         double result = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) *
-                                         auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
-                                        (Math.PI * auxData.seasonal_factor);
+                                auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
+                                (Math.PI * auxData.seasonal_factor);
                         final double radianceOrig = radianceR.getSampleDouble(x, y);
-//                            if (result == 0) {
-//                                result = radianceOrig;
-//                            }
-                        // final consistency check:
-                        double reldiff = 100.0 * Math.abs(result - radianceOrig) / radianceOrig;
-                        if (result <= 0.0 || reldiff > 20.0) {
-//                            if (result <= 0.0) {
+                        // final consistency check: if corrected values are negative, revert correction
+                        if (result <= 0.0) {
                             result = radianceOrig;
                         }
                         targetTile.setSample(x, y, result);
