@@ -49,11 +49,8 @@ public class MerisUserCloudOp extends Operator {
         ProductUtils.copyFlagBands(cloudClassification, targetProduct);
         cloudClassificationBand = cloudClassification.getBand(CloudClassificationOp.CLOUD_FLAGS);
 
-        Band targetBand = ProductUtils.copyBand(CloudClassificationOp.PRESSURE_CTP, cloudClassification, targetProduct);
-        targetBand.setSourceImage(cloudClassification.getBand(CloudClassificationOp.PRESSURE_CTP).getSourceImage());
-
-        targetBand = ProductUtils.copyBand(CloudClassificationOp.PRESSURE_SURFACE, cloudClassification, targetProduct);
-        targetBand.setSourceImage(cloudClassification.getBand(CloudClassificationOp.PRESSURE_SURFACE).getSourceImage());
+        ProductUtils.copyBand(CloudClassificationOp.PRESSURE_CTP, cloudClassification, targetProduct);
+        ProductUtils.copyBand(CloudClassificationOp.PRESSURE_SURFACE, cloudClassification, targetProduct);
 
         BandMathsOp baOp = BandMathsOp.createBooleanExpressionBand(cloudMaskExpression, cloudMask);
         isCloudyBand = baOp.getTargetProduct().getBandAt(0);

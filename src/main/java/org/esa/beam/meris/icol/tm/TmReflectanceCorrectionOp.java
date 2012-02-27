@@ -123,10 +123,8 @@ public class TmReflectanceCorrectionOp extends TmBasisOp {
         }
         if (exportAlphaAot) {
             Band copyAlphaBand = ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
-            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
             copySource.put(copyAlphaBand, aeAerosolProduct.getBand("alpha"));
             Band copyAotBand = ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
-            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
             copySource.put(copyAotBand, aeAerosolProduct.getBand("aot"));
         }
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);

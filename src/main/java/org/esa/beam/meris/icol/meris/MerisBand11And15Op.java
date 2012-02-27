@@ -48,18 +48,13 @@ public class MerisBand11And15Op extends Operator {
             Band srcBand = corrReflProduct.getBand(bandName);
             if (!srcBand.isFlagBand()) { // do flags band later
                 if (!targetProduct.containsRasterDataNode(bandName)) {
-                    Band targetBand = ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
-                    if (!bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15")) {
-                        targetBand.setSourceImage(corrReflProduct.getBand(bandName).getSourceImage());
-                    }
+                    ProductUtils.copyBand(bandName, corrReflProduct, targetProduct);
                 }
             }
         }
         OperatorUtils.copyFlagBandsWithImages(corrReflProduct, targetProduct);
 
-        Band detectorBand = ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct,
-                targetProduct);
-        detectorBand.setSourceImage(l1bProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME).getSourceImage());
+        ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct, targetProduct);
     }
 
     @Override

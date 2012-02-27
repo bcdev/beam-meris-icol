@@ -32,7 +32,6 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.brr.CloudClassificationOp;
 import org.esa.beam.meris.brr.GaseousCorrectionOp;
-import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
@@ -141,31 +140,21 @@ public class MerisReflectanceCorrectionOp extends Operator {
             copyBandGroup(aeAerosolProduct, "rho_aeAer");
         }
         if (exportAlphaAot) {
-            Band copyAlphaBand = ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
-            copyAlphaBand.setSourceImage(aeAerosolProduct.getBand("alpha").getSourceImage());
-            Band copyAotBand = ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
-            copyAotBand.setSourceImage(aeAerosolProduct.getBand("aot").getSourceImage());
+            ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
+            ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
         }
 
         if (icolAerosolCase2 && icolAerosolForWater) {
-            Band copyRhoW9Band = ProductUtils.copyBand("rhoW9", aeAerosolProduct, targetProduct);
-            copyRhoW9Band.setSourceImage(aeAerosolProduct.getBand("rhoW9").getSourceImage());
+            ProductUtils.copyBand("rhoW9", aeAerosolProduct, targetProduct);
         }
 
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
 
-        Band copyLandFlagRayleighConvBand = ProductUtils.copyBand("land_flag_ray_conv", aeRayProduct, targetProduct);
-        copyLandFlagRayleighConvBand.setSourceImage(aeRayProduct.getBand("land_flag_ray_conv").getSourceImage());
-
-        Band copyCloudFlagRayleighConvBand = ProductUtils.copyBand("cloud_flag_ray_conv", aeRayProduct, targetProduct);
-        copyCloudFlagRayleighConvBand.setSourceImage(aeRayProduct.getBand("cloud_flag_ray_conv").getSourceImage());
-
-        Band copyLandFlagAerosolConvBand = ProductUtils.copyBand("land_flag_aer_conv", aeAerosolProduct, targetProduct);
-        copyLandFlagAerosolConvBand.setSourceImage(aeAerosolProduct.getBand("land_flag_aer_conv").getSourceImage());
-
-        Band copyCloudFlagAerosolConvBand = ProductUtils.copyBand("cloud_flag_aer_conv", aeAerosolProduct, targetProduct);
-        copyCloudFlagAerosolConvBand.setSourceImage(aeAerosolProduct.getBand("cloud_flag_aer_conv").getSourceImage());
+        ProductUtils.copyBand("land_flag_ray_conv", aeRayProduct, targetProduct);
+        ProductUtils.copyBand("cloud_flag_ray_conv", aeRayProduct, targetProduct);
+        ProductUtils.copyBand("land_flag_aer_conv", aeAerosolProduct, targetProduct);
+        ProductUtils.copyBand("cloud_flag_aer_conv", aeAerosolProduct, targetProduct);
 
         // create and add the flags coding
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
@@ -239,8 +228,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
         for (Band srcBand : sourceBands) {
             String srcBandName = srcBand.getName();
             if (srcBandName.startsWith(bandPrefix)) {
-                Band targetBand = ProductUtils.copyBand(srcBandName, sourceProduct, targetProduct);
-                targetBand.setSourceImage(srcBand.getSourceImage());
+                ProductUtils.copyBand(srcBandName, sourceProduct, targetProduct);
             }
         }
     }

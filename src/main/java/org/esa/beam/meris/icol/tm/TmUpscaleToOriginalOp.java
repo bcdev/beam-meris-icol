@@ -1,6 +1,5 @@
 package org.esa.beam.meris.icol.tm;
 
-import com.bc.ceres.glevel.MultiLevelImage;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -88,10 +87,8 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                     RenderedOp finalAeCorrectedImage = SubtractDescriptor.create(sourceBand.getGeophysicalImage(), upscaledDiffImage, null);
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {
-                    MultiLevelImage sourceImage = sourceBand.getSourceImage();
                     targetBand = targetProduct.addBand(srcBandName, dataType);
                     ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
-                    targetBand.setSourceImage(sourceImage);
                 }
             }
         }

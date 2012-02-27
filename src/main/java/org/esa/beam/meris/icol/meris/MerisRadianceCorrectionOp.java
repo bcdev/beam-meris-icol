@@ -83,12 +83,7 @@ public class MerisRadianceCorrectionOp extends Operator {
         productType = productType.substring(0, index) + "_1N";
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType, true);
         for (String bandName : l1bProduct.getBandNames()) {
-            if (bandName.startsWith("radiance")) {
-                ProductUtils.copyBand(bandName, l1bProduct, targetProduct);
-            } else if (bandName.equals(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME)) {
-                Band band = ProductUtils.copyBand(bandName, l1bProduct, targetProduct);
-                band.setSourceImage(l1bProduct.getBand(bandName).getSourceImage());
-            }
+            ProductUtils.copyBand(bandName, l1bProduct, targetProduct);
         }
 
         OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);

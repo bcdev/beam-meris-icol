@@ -55,10 +55,7 @@ public class MerisBrrCloudOp extends Operator {
         for (String bandName : brrProduct.getBandNames()) {
             if (!brrProduct.getBand(bandName).isFlagBand()) {
                 if (!targetProduct.containsRasterDataNode(bandName)) {
-                    Band targetBand = ProductUtils.copyBand(bandName, brrProduct, targetProduct);
-                    if (!bandName.startsWith("brr")) {
-                        targetBand.setSourceImage(brrProduct.getBand(bandName).getSourceImage());
-                    }
+                    ProductUtils.copyBand(bandName, brrProduct, targetProduct);
                 }
             }
         }
