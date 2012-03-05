@@ -23,11 +23,11 @@ import java.awt.Rectangle;
  * @version $Revision: $ $Date:  $
  */
 @OperatorMetadata(alias = "Meris.BrrCloud",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Sets BRR values to RS proposal in case of clouds.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Sets BRR values to RS proposal in case of clouds.")
 public class MerisBrrCloudOp extends Operator {
 
     @SourceProduct(alias = "l1b")
@@ -53,17 +53,14 @@ public class MerisBrrCloudOp extends Operator {
 
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
         for (String bandName : brrProduct.getBandNames()) {
-            if (!brrProduct.getBand(bandName).isFlagBand()) {
-                if (!targetProduct.containsRasterDataNode(bandName)) {
-                    ProductUtils.copyBand(bandName, brrProduct, targetProduct);
-                }
+            if (!targetProduct.containsRasterDataNode(bandName)) {
+                boolean copySrcImage = !bandName.startsWith("brr");
+                ProductUtils.copyBand(bandName, brrProduct, targetProduct, copySrcImage);
             }
         }
-        OperatorUtils.copyFlagBandsWithImages(brrProduct, targetProduct);
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand("l1_flags.INVALID", l1bProduct);
         invalidBand = bandArithmeticOp.getTargetProduct().getBandAt(0);
-
     }
 
     @Override
@@ -78,9 +75,9 @@ public class MerisBrrCloudOp extends Operator {
             Tile isInvalid = getSourceTile(invalidBand, rectangle);
 
             Tile surfacePressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_SURFACE),
-                    rectangle);
+                                                     rectangle);
             Tile cloudTopPressureTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.PRESSURE_CTP),
-                    rectangle);
+                                                      rectangle);
             Tile cloudFlagsTile = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle);
             Tile landFlagsTile = getSourceTile(landProduct.getBand(LandClassificationOp.LAND_FLAGS), rectangle);
 

@@ -58,14 +58,7 @@ public class OperatorUtils {
     }
 
     public static void copyFlagBandsWithImages(Product sourceProduct, Product targetProduct) {
-        ProductUtils.copyFlagBands(sourceProduct, targetProduct);
-        Band[] bands = sourceProduct.getBands();
-        for (Band srcBand : bands) {
-            if (srcBand.isFlagBand()) {
-                Band targetBand = targetProduct.getBand(srcBand.getName());
-                targetBand.setSourceImage(srcBand.getSourceImage());
-            }
-        }
+        ProductUtils.copyFlagBands(sourceProduct, targetProduct, true);
     }
 
     public static Band[] addBandGroup(Product srcProduct, int numSrcBands, int[] bandsToSkip, Product targetProduct,

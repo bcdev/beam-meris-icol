@@ -69,7 +69,7 @@ public class MerisBrrConvolveOp extends Operator {
         int index = productType.indexOf("_1");
         productType = productType.substring(0, index) + "_1N";
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
-        ProductUtils.copyFlagBands(l1bProduct, targetProduct);
+        ProductUtils.copyFlagBands(l1bProduct, targetProduct, true);
 
         double[][] coeffs = coeffW.getCoeffForRR();
 
@@ -81,7 +81,7 @@ public class MerisBrrConvolveOp extends Operator {
             String srcBandName = srcBand.getName();
             if (!srcBand.isFlagBand() && srcBandName.startsWith(bandPrefix)) {
                 String targetBandName  = bandPrefix + "_conv_" + srcBandName.substring(bandPrefix.length()+1, srcBandName.length());
-                Band targetBand = ProductUtils.copyBand(srcBandName, brrProduct, targetBandName, targetProduct);
+                Band targetBand = ProductUtils.copyBand(srcBandName, brrProduct, targetBandName, targetProduct, false);
                 final MultiLevelImage sourceImage = srcBand.getSourceImage();
                 RenderedImage outputImage;
                 try {

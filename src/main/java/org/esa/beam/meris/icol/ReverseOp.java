@@ -73,7 +73,7 @@ public class ReverseOp extends MerisBasisOp {
         Band[] sourceBands = l1bProduct.getBands();
         for (Band srcBand : sourceBands) {
             if (srcBand.getName().startsWith("radiance")) {
-                ProductUtils.copyBand(srcBand.getName(), l1bProduct, targetProduct);
+                ProductUtils.copyBand(srcBand.getName(), l1bProduct, targetProduct, false);
             }
         }
     }

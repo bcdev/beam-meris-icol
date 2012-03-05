@@ -66,7 +66,7 @@ public class DFTConvolutionOp extends Operator {
         RenderedImage kernelFT = null;
         for (String name : sourceNames) {
             if (name.startsWith(namePrefix)) {
-                Band targetBand = ProductUtils.copyBand(name, sourceProduct, targetProduct);
+                Band targetBand = ProductUtils.copyBand(name, sourceProduct, targetProduct, false);
                 RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
                 RenderedOp targetOp;
                 if (useFT) {

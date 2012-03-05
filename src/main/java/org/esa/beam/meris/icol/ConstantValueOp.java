@@ -36,13 +36,12 @@ public class ConstantValueOp extends MerisBasisOp {
         String[] sourceNames = sourceProduct.getBandNames();
         for (String name : sourceNames) {
             Band sourceBand = sourceProduct.getBand(name);
-            RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
             if (!sourceBand.isFlagBand()) {
                 Band targetBand = targetProduct.addBand(name, sourceBand.getDataType());
                 targetBand.setSpectralBandIndex(sourceBand.getSpectralBandIndex());
                 targetBand.setNoDataValue(sourceBand.getNoDataValue());
-                RenderedImage image1 = createConstantImage(sourceImage);
-                targetBand.setSourceImage(image1);
+                RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
+                targetBand.setSourceImage(createConstantImage(sourceImage));
             } 
         }
     }
@@ -57,7 +56,7 @@ public class ConstantValueOp extends MerisBasisOp {
         targetProduct.setStartTime(sourceProduct.getStartTime());
         targetProduct.setEndTime(sourceProduct.getEndTime());
         ProductUtils.copyTiePointGrids(sourceProduct, targetProduct);
-        ProductUtils.copyFlagBands(sourceProduct, targetProduct);
+        ProductUtils.copyFlagBands(sourceProduct, targetProduct, true);
 
         return targetProduct;
     }

@@ -140,29 +140,29 @@ public class MerisReflectanceCorrectionOp extends Operator {
             copyBandGroup(aeAerosolProduct, "rho_aeAer");
         }
         if (exportAlphaAot) {
-            ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct);
-            ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct);
+            ProductUtils.copyBand("alpha", aeAerosolProduct, targetProduct, true);
+            ProductUtils.copyBand("aot", aeAerosolProduct, targetProduct, true);
         }
 
         if (icolAerosolCase2 && icolAerosolForWater) {
-            ProductUtils.copyBand("rhoW9", aeAerosolProduct, targetProduct);
+            ProductUtils.copyBand("rhoW9", aeAerosolProduct, targetProduct, true);
         }
 
         aeFlagBand = targetProduct.addBand("ae_flags", ProductData.TYPE_UINT8);
         aeFlagBand.setDescription("Adjacency-Effect flags");
 
-        ProductUtils.copyBand("land_flag_ray_conv", aeRayProduct, targetProduct);
-        ProductUtils.copyBand("cloud_flag_ray_conv", aeRayProduct, targetProduct);
-        ProductUtils.copyBand("land_flag_aer_conv", aeAerosolProduct, targetProduct);
-        ProductUtils.copyBand("cloud_flag_aer_conv", aeAerosolProduct, targetProduct);
+        ProductUtils.copyBand("land_flag_ray_conv", aeRayProduct, targetProduct, true);
+        ProductUtils.copyBand("cloud_flag_ray_conv", aeRayProduct, targetProduct, true);
+        ProductUtils.copyBand("land_flag_aer_conv", aeAerosolProduct, targetProduct, true);
+        ProductUtils.copyBand("cloud_flag_aer_conv", aeAerosolProduct, targetProduct, true);
 
         // create and add the flags coding
         FlagCoding flagCoding = createFlagCoding(aeFlagBand.getName());
         targetProduct.getFlagCodingGroup().add(flagCoding);
         aeFlagBand.setSampleCoding(flagCoding);
 
-        OperatorUtils.copyFlagBandsWithImages(l1bProduct, targetProduct);
-        OperatorUtils.copyFlagBandsWithImages(aeAerosolProduct, targetProduct);
+        ProductUtils.copyFlagBands(l1bProduct, targetProduct, true);
+        ProductUtils.copyFlagBands(aeAerosolProduct, targetProduct, true);//needed ???
     }
 
     private FlagCoding createFlagCoding(String bandName) {
@@ -228,7 +228,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
         for (Band srcBand : sourceBands) {
             String srcBandName = srcBand.getName();
             if (srcBandName.startsWith(bandPrefix)) {
-                ProductUtils.copyBand(srcBandName, sourceProduct, targetProduct);
+                ProductUtils.copyBand(srcBandName, sourceProduct, targetProduct, true);
             }
         }
     }

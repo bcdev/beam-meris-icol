@@ -35,7 +35,6 @@ public class TestImageOp extends Operator {
         String[] sourceNames = sourceProduct.getBandNames();
         for (String name : sourceNames) {
             Band sourceBand = sourceProduct.getBand(name);
-            RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
             if (!sourceBand.isFlagBand()) {
                 Band targetBand = targetProduct.addBand(name, sourceBand.getDataType());
                 targetBand.setSpectralBandIndex(sourceBand.getSpectralBandIndex());
@@ -54,7 +53,7 @@ public class TestImageOp extends Operator {
         targetProduct.setStartTime(sourceProduct.getStartTime());
         targetProduct.setEndTime(sourceProduct.getEndTime());
         ProductUtils.copyTiePointGrids(sourceProduct, targetProduct);
-        ProductUtils.copyFlagBands(sourceProduct, targetProduct);
+        ProductUtils.copyFlagBands(sourceProduct, targetProduct, true);
 
         return targetProduct;
     }
