@@ -45,8 +45,10 @@ public class MerisBand11And15Op extends Operator {
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType, true);
 
         for (String bandName : corrReflProduct.getBandNames()) {
-            boolean copySrcImage = !bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15");
-            ProductUtils.copyBand(bandName, corrReflProduct, targetProduct, copySrcImage);
+            if (!targetProduct.containsRasterDataNode(bandName)) {
+                boolean copySrcImage = !bandName.equals("rho_toa_11") && !bandName.equals("rho_toa_15");
+                ProductUtils.copyBand(bandName, corrReflProduct, targetProduct, copySrcImage);
+            }
         }
         ProductUtils.copyBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME, l1bProduct, targetProduct, true);
     }

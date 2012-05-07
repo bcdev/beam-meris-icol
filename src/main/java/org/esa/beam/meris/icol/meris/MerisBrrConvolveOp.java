@@ -77,19 +77,21 @@ public class MerisBrrConvolveOp extends Operator {
 
         Convoluter convoluter = new Convoluter(kernelJAI, openclConvolution);
         Band[] srcBands = brrProduct.getBands();
-        for (Band srcBand: srcBands) {
+        for (Band srcBand : srcBands) {
             String srcBandName = srcBand.getName();
             if (!srcBand.isFlagBand() && srcBandName.startsWith(bandPrefix)) {
-                String targetBandName  = bandPrefix + "_conv_" + srcBandName.substring(bandPrefix.length()+1, srcBandName.length());
-                Band targetBand = ProductUtils.copyBand(srcBandName, brrProduct, targetBandName, targetProduct, false);
-                final MultiLevelImage sourceImage = srcBand.getSourceImage();
-                RenderedImage outputImage;
-                try {
-                    outputImage = convoluter.convolve(sourceImage);
-                } catch (IOException e) {
-                    throw new OperatorException("cannot create convolved image", e);
+                String targetBandName = bandPrefix + "_conv_" + srcBandName.substring(bandPrefix.length() + 1, srcBandName.length());
+                if (!targetProduct.containsRasterDataNode(targetBandName)) {
+                    Band targetBand = ProductUtils.copyBand(srcBandName, brrProduct, targetBandName, targetProduct, false);
+                    final MultiLevelImage sourceImage = srcBand.getSourceImage();
+                    RenderedImage outputImage;
+                    try {
+                        outputImage = convoluter.convolve(sourceImage);
+                    } catch (IOException e) {
+                        throw new OperatorException("cannot create convolved image", e);
+                    }
+                    targetBand.setSourceImage(outputImage);
                 }
-                targetBand.setSourceImage(outputImage);
             }
         }
         convoluter.dispose();

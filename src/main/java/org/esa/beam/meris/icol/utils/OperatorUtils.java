@@ -1,10 +1,12 @@
 package org.esa.beam.meris.icol.utils;
 
 import com.bc.ceres.core.PrintWriterProgressMonitor;
+import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.datamodel.TiePointGrid;
 import org.esa.beam.framework.gpf.Operator;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.Tile;
@@ -72,12 +74,15 @@ public class OperatorUtils {
         for (int srcIndex = 0; srcIndex < numSrcBands; srcIndex++) {
             if (!IcolUtils.isIndexToSkip(srcIndex, bandsToSkip)) {
                 Band srcBand = srcProduct.getBandAt(srcIndex);
-                Band targetBand = targetProduct.addBand(targetPrefix + "_" + (srcIndex + 1), ProductData.TYPE_FLOAT32);
+                final String bandName = targetPrefix + "_" + (srcIndex + 1);
+                if (!targetProduct.containsRasterDataNode(bandName)) {
+                    Band targetBand = targetProduct.addBand(bandName, ProductData.TYPE_FLOAT32);
                 ProductUtils.copySpectralBandProperties(srcBand, targetBand);
                 targetBand.setNoDataValueUsed(true);
                 targetBand.setNoDataValue(noDataValue);
                 targetBands[targetIndex] = targetBand;
                 targetIndex++;
+                }
             } else {
                 // skip this src index
                 if (!compactTargetArray) {
@@ -164,4 +169,55 @@ public class OperatorUtils {
             throw new OperatorException(String.format("Failed to persist product %s: %s", oldName, e.getMessage()), e);
         }
     }
+
+    /**
+     * checks for mandatory properties of MERIS input product
+     *
+     * @param sourceProduct  - the source product
+     */
+    public static void validateMerisInputBands(Product sourceProduct) {
+
+        if (sourceProduct.getStartTime() == null) {
+            throw new OperatorException(String.format("Start time missing in input product."));
+        }
+        if (sourceProduct.getEndTime() == null) {
+            throw new OperatorException(String.format("End time missing in input product."));
+        }
+
+
+        // we need a detector index band...
+        final Band detectorIndexBand = sourceProduct.getBand(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME);
+        if (detectorIndexBand == null) {
+            throw new OperatorException(String.format("Mandatory band '%s' missing in input product.",
+                                                      EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME));
+        }
+        // we need a sun zenith TPG...
+        final TiePointGrid sunZenihTPG = sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME);
+        if (sunZenihTPG == null) {
+            throw new OperatorException(String.format("Mandatory tie point grid '%s' missing in input product.",
+                                                      EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME));
+        }
+
+        // we will need bands radiance_1, ..., radiance_15
+        for (int i = 0; i < EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS; i++) {
+            final Band band = sourceProduct.getBand(EnvisatConstants.MERIS_L1B_SPECTRAL_BAND_NAMES[i]);
+            if (band == null) {
+                throw new OperatorException(String.format("Mandatory band '%s' missing in input product.",
+                                                          EnvisatConstants.MERIS_L1B_SPECTRAL_BAND_NAMES[i]));
+            }
+
+            // for each band, we will need spectral band index, spectral wavelength
+            if (band.getSpectralBandIndex() < 0 || band.getSpectralBandIndex() > 14) {
+                throw new OperatorException(String.format("Input band '%s' has invalid spectral index %d.",
+                                                          EnvisatConstants.MERIS_L1B_SPECTRAL_BAND_NAMES[i],
+                                                          band.getSpectralBandIndex()));
+            }
+            if (band.getSpectralWavelength() < 402 || band.getSpectralWavelength() > 910) {
+                throw new OperatorException(String.format("Input band '%s' has spectral wavelength %d - out of range.",
+                                                          EnvisatConstants.MERIS_L1B_SPECTRAL_BAND_NAMES[i],
+                                                          band.getSpectralBandIndex()));
+            }
+        }
+    }
+
 }

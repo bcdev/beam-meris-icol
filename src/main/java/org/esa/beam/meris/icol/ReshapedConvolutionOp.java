@@ -81,7 +81,7 @@ public class ReshapedConvolutionOp extends Operator {
         targetProduct = new Product("P", "PT", sourceProduct.getSceneRasterWidth(), sourceProduct.getSceneRasterHeight());
         String[] sourceNames = sourceProduct.getBandNames();
         for (String name : sourceNames) {
-            if (name.startsWith(namePrefix)) {
+            if (name.startsWith(namePrefix) && !targetProduct.containsRasterDataNode(name)) {
                 Band targetBand = ProductUtils.copyBand(name, sourceProduct, targetProduct, false);
                 RenderedImage sourceImage = sourceProduct.getBand(name).getSourceImage();
                 if (correctionMode == IcolConstants.AE_CORRECTION_MODE_RAYLEIGH) {

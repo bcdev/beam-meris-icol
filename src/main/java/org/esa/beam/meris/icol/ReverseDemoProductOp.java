@@ -42,114 +42,118 @@ import java.awt.Rectangle;
  */
 public class ReverseDemoProductOp extends MerisBasisOp {
 
-    @SourceProduct(alias="rhotoa")
+    @SourceProduct(alias = "rhotoa")
     private Product rhoToaProduct;
-    
-    @SourceProduct(alias="gascor")
+
+    @SourceProduct(alias = "gascor")
     private Product gasCorProduct;
-    @SourceProduct(alias="ae_ray")
+    @SourceProduct(alias = "ae_ray")
     private Product aeRayProduct;
-    @SourceProduct(alias="ae_aerosol")
+    @SourceProduct(alias = "ae_aerosol")
     private Product aeAerosolProduct;
-    @SourceProduct(alias="aemask")
+    @SourceProduct(alias = "aemask")
     private Product aemaskProduct;
-    
+
     @TargetProduct
     private Product targetProduct;
-    
+
     @Override
     public void initialize() throws OperatorException {
         targetProduct = createCompatibleProduct(rhoToaProduct, "MER", "MER_L1N");
         Band[] sourceBands = rhoToaProduct.getBands();
         for (Band srcBand : sourceBands) {
-        	if (srcBand.getName().startsWith("rho_toa")) {
-        		int bandNo = srcBand.getSpectralBandIndex()+1;
-        		Band targetBand = targetProduct.addBand("rho_toa_AERC_" + bandNo, ProductData.TYPE_FLOAT32);
-//        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
-        		targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
-        		targetBand.setNoDataValue(srcBand.getNoDataValue());
-        	}
-		}
+            if (srcBand.getName().startsWith("rho_toa")) {
+                int bandNo = srcBand.getSpectralBandIndex() + 1;
+                final String bandName = "rho_toa_AERC_" + bandNo;
+                if (!targetProduct.containsRasterDataNode(bandName)) {
+                    Band targetBand = targetProduct.addBand(bandName, ProductData.TYPE_FLOAT32);
+                    ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+                    targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
+                    targetBand.setNoDataValue(srcBand.getNoDataValue());
+                }
+            }
+        }
         for (Band srcBand : sourceBands) {
-        	if (srcBand.getName().startsWith("rho_toa")) {
-        		int bandNo = srcBand.getSpectralBandIndex()+1;
-        		Band targetBand = targetProduct.addBand("rho_toa_AEAC_" + bandNo, ProductData.TYPE_FLOAT32);
-//        		ProductUtils.copySpectralAttributes(srcBand, targetBand);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
-        		targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
-        		targetBand.setNoDataValue(srcBand.getNoDataValue());
-        	}
-		}
+            if (srcBand.getName().startsWith("rho_toa")) {
+                int bandNo = srcBand.getSpectralBandIndex() + 1;
+                final String bandName = "rho_toa_AEAC_" + bandNo;
+                if (!targetProduct.containsRasterDataNode(bandName)) {
+                    Band targetBand = targetProduct.addBand(bandName, ProductData.TYPE_FLOAT32);
+                    ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+                    targetBand.setNoDataValueUsed(srcBand.isNoDataValueUsed());
+                    targetBand.setNoDataValue(srcBand.getNoDataValue());
+                }
+            }
+        }
     }
-    
+
     @Override
     public void computeTile(Band band, Tile targetTile, ProgressMonitor pm) throws OperatorException {
 
-    	Rectangle rectangle = targetTile.getRectangle();
+        Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height);
         try {
-			int bandId = band.getSpectralBandIndex();
-			int bandNumber = bandId + 1;
-			if (bandId == -1) {
-				System.out.println("-1 !!!!!!!!!!!!!!");
-				return;
-			} else if (bandId == 10|| bandId== 14) {
-				Tile radianceR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-						targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
-					}
-					pm.worked(1);
-				}
-			} else {
-				boolean totalCorrection = true;
-				if (band.getName().startsWith("rho_toa_AERC_")) {
-					totalCorrection = false;
-				}
-			
-				Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-				Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-				
-				Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_"+bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-				Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_"+bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-			
-				Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-				Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" +  bandNumber), rectangle,
-                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+            int bandId = band.getSpectralBandIndex();
+            int bandNumber = bandId + 1;
+            if (bandId == -1) {
+                System.out.println("-1 !!!!!!!!!!!!!!");
+                return;
+            } else if (bandId == 10 || bandId == 14) {
+                Tile radianceR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle,
+                                               BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                    for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                        targetTile.setSample(x, y, radianceR.getSampleDouble(x, y));
+                    }
+                    pm.worked(1);
+                }
+            } else {
+                boolean totalCorrection = true;
+                if (band.getName().startsWith("rho_toa_AERC_")) {
+                    totalCorrection = false;
+                }
 
-				for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
-					for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-						double rhoToa = 0;
-						double gasCorValue = gasCor.getSampleDouble(x, y);
-						if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
-							double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-							double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
-							double corrected;
-							if (totalCorrection) {
-								corrected = gasCorValue - aeRayleighValue - aeAerosolValue;
-							} else {
-								corrected = gasCorValue - aeRayleighValue;
-							}
-							if (corrected > 0) {
-								double tgValue = tg.getSampleDouble(x, y);
-								rhoToa = corrected * tgValue;
-							}
-						}
-						if (rhoToa == 0) {
-							rhoToa = rhoToaR.getSampleDouble(x, y);
-						}
-						targetTile.setSample(x, y, rhoToa);
-					}
-					pm.worked(1);
-				}
-			}
+                Tile gasCor = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                                            BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile tg = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
+                                        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+
+                Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,
+                                                BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle,
+                                               BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+
+                Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), rectangle,
+                                         BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                Tile rhoToaR = getSourceTile(rhoToaProduct.getBand("rho_toa_" + bandNumber), rectangle,
+                                             BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+
+                for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
+                    for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
+                        double rhoToa = 0;
+                        double gasCorValue = gasCor.getSampleDouble(x, y);
+                        if (aep.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                            double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
+                            double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
+                            double corrected;
+                            if (totalCorrection) {
+                                corrected = gasCorValue - aeRayleighValue - aeAerosolValue;
+                            } else {
+                                corrected = gasCorValue - aeRayleighValue;
+                            }
+                            if (corrected > 0) {
+                                double tgValue = tg.getSampleDouble(x, y);
+                                rhoToa = corrected * tgValue;
+                            }
+                        }
+                        if (rhoToa == 0) {
+                            rhoToa = rhoToaR.getSampleDouble(x, y);
+                        }
+                        targetTile.setSample(x, y, rhoToa);
+                    }
+                    pm.worked(1);
+                }
+            }
         } catch (Exception e) {
             throw new OperatorException(e);
         } finally {

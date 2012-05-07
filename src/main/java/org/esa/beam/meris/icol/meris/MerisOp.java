@@ -42,6 +42,7 @@ import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 
 import javax.media.jai.JAI;
 import java.util.HashMap;
@@ -136,7 +137,9 @@ public class MerisOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // only for debugging purpose!!
+        // JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // only for debugging purpose!!
+
+        OperatorUtils.validateMerisInputBands(sourceProduct);
 
         if (tileSize > 0) {
             sourceProduct.setPreferredTileSize(tileSize, tileSize);

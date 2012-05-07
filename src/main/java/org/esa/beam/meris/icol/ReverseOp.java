@@ -72,7 +72,7 @@ public class ReverseOp extends MerisBasisOp {
         targetProduct = createCompatibleProduct(l1bProduct, "MER", "MER_L1N");
         Band[] sourceBands = l1bProduct.getBands();
         for (Band srcBand : sourceBands) {
-            if (srcBand.getName().startsWith("radiance")) {
+            if (srcBand.getName().startsWith("radiance") && !targetProduct.containsRasterDataNode(srcBand.getName())) {
                 ProductUtils.copyBand(srcBand.getName(), l1bProduct, targetProduct, false);
             }
         }
