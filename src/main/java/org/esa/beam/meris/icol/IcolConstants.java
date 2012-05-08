@@ -1,5 +1,7 @@
 package org.esa.beam.meris.icol;
 
+import java.util.regex.Pattern;
+
 /**
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
@@ -18,4 +20,12 @@ public class IcolConstants {
 
     public static final int AE_CORRECTION_MODE_RAYLEIGH = 0;
     public static final int AE_CORRECTION_MODE_AEROSOL= 1;
+
+    /**
+     * A pattern which matches MERIS L1b product types
+     *
+     * @see java.util.regex.Matcher
+     */
+    public static final Pattern MERIS_L1_AMORGOS_TYPE_PATTERN = Pattern.compile("MER_..._1N");
+
 }

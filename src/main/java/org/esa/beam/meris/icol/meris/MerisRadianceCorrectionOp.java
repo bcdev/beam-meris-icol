@@ -87,7 +87,9 @@ public class MerisRadianceCorrectionOp extends Operator {
                 ProductUtils.copyBand(bandName, l1bProduct, targetProduct, false);
             } else if (bandName.equals(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME) ||
                     bandName.endsWith(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME)) {
-                ProductUtils.copyBand(bandName, l1bProduct, targetProduct, true);
+                if (!targetProduct.containsRasterDataNode(bandName)) {
+                    ProductUtils.copyBand(bandName, l1bProduct, targetProduct, true);
+                }
             }
         }
         ProductUtils.copyFlagBands(aeAerosolProduct, targetProduct, true);

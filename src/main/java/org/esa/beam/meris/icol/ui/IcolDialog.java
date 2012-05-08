@@ -28,6 +28,7 @@ import org.esa.beam.framework.gpf.ui.SingleTargetProductDialog;
 import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
 import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
+import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.meris.MerisOp;
 import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.tm.TmOp;
@@ -88,18 +89,20 @@ public class IcolDialog extends SingleTargetProductDialog {
         }
         if (form.isEnvisatOutputFormatSelected() && !form.isEnvisatSourceProduct(sourceProduct)) {
             showErrorDialog("If " + EnvisatConstants.ENVISAT_FORMAT_NAME + " is selected as output format the " +
-                            "source product must be in the same format.");
+                                    "source product must be in the same format.");
             return false;
         }
 
         final String productType = sourceProduct.getProductType();
         // input product must be either:
         //    - MERIS L1b
+        //    - MERIS L1 AMORGOS corrected (L1N)
         //    - Landsat TM5 GeoTIFF  (L1T)
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
-            !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
-            !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+                !(IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) &&
+                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+                !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
         }
@@ -107,9 +110,9 @@ public class IcolDialog extends SingleTargetProductDialog {
             String[] tiePointGridNames = sourceProduct.getTiePointGridNames();
             List<String> gridNames = Arrays.asList(tiePointGridNames);
             if (!gridNames.contains(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME) ||
-                !gridNames.contains(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME) ||
-                !gridNames.contains(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME) ||
-                !gridNames.contains(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME)) {
+                    !gridNames.contains(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME) ||
+                    !gridNames.contains(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME) ||
+                    !gridNames.contains(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME)) {
                 showErrorDialog("The specify MERIS L1b source product doesn't contain tie-points");
                 return false;
             }
@@ -123,10 +126,11 @@ public class IcolDialog extends SingleTargetProductDialog {
         final Product sourceProduct = model.getSourceProduct();
         String productType = sourceProduct.getProductType();
         if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) ||
-            (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
-            (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+                (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
+                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             outputProduct = createLandsat5Product();
-        } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {
+        } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() ||
+                   IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
         }
         return outputProduct;
