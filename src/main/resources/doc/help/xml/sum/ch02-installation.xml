@@ -51,13 +51,17 @@
                     MERIS Surface Directional Reflectance (SDR) Processor
                 </listitem>
                 <listitem>
+                    BEAM Watermask Operator
+                </listitem>
+                <listitem>
                     GETASSE30 DEM reader (required for LANDSAT TM processing)
                 </listitem>
                 <listitem>
                     GETASSE30 DEM (required for LANDSAT TM processing)
                 </listitem>
             </itemizedlist>
-            The MERIS L2 Auxdata, the BRR and SDR processor modules and the GETASSE30 DEM reader can also be installed with the
+            The MERIS L2 Auxdata, the BRR and SDR processor modules,
+            the BEAM Watermask Operator, and the GETASSE30 DEM reader can also be installed with the
             BEAM module manager. See again BEAM help documentation for details.
         </para>
         <para>
