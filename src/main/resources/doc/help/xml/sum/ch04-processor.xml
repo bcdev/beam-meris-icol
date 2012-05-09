@@ -43,12 +43,12 @@
                     </listitem>
                     <listitem>
                         LANDSAT TM: Select a L1 product given in GEOTIFF (original product) or BEAM-DIMAP format
-                        ('Geometry' product, see<xref linkend="sum.products.input" xrefstyle="select: label"/>).
+                        ('Geometry' product, see <xref linkend="sum.products.input" xrefstyle="select: label"/>).
                         A large number of Landsat TM products in GEOTIFF format can be found at the USGS
-                        Earth Explorer site ([RD-5]). To process TM GEOTIFF data in ICOL, do the following steps:
+                        Earth Explorer site ([RD-6]). To process TM GEOTIFF data in ICOL, do the following steps:
                         <itemizedlist mark='bullet'>
                             <listitem>
-                                The data from [RD-5]usually come
+                                The data from [RD-6]usually come
                                 in gzipped format named like 'LT5...tar.gz'. If so, unpack this archive.
                             </listitem>
                             <listitem>
@@ -187,34 +187,37 @@
             <itemizedlist mark='bullet'>
                 <listitem>
                     'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
-                    If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)
-                    is performed using OpenCL libraries. Under suitable conditions, this results in a significant
-                    speed-up
-                    of the processor. However, this option is based on a rather new technology, and the implementation
-                    in
-                    ICOL+
-                    is still somewhat experimental. There are the following limitations:
-                    <itemizedlist mark='bullet'>
-                        <listitem>
-                            Suitable GPU hardware must be integrated in the computer and properly be installed.
-                            In general, this procedure is machine- and platform-dependent and is completely separate
-                            from
-                            the
-                            ICOL+ installation.
-                        </listitem>
-                        <listitem>
-                            The current implementation is applicable only for an aerosol type which is unique (constant)
-                            over the computed scene.
-                        </listitem>
-                        <listitem>
-                            The efficiency of the procedure depends on the dimensions of the particular scene and is
-                            parameter-dependent. Currently, a set of constant, hard-coded parameters is being used
-                            which is very likely not perfect for many cases.
-                        </listitem>
-                    </itemizedlist>
-                    A more detailed description of the OpenCL issue is beyond the scope of this manual. A good
-                    literature
-                    starting point is e.g. [RD-4].
+                    <para>
+                        This option is in an experimental stage and disabled in the current ICOL version.
+                    </para>
+                    <!--If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)-->
+                    <!--is performed using OpenCL libraries. Under suitable conditions, this results in a significant-->
+                    <!--speed-up-->
+                    <!--of the processor. However, this option is based on a rather new technology, and the implementation-->
+                    <!--in-->
+                    <!--ICOL+-->
+                    <!--is still somewhat experimental. There are the following limitations:-->
+                    <!--<itemizedlist mark='bullet'>-->
+                        <!--<listitem>-->
+                            <!--Suitable GPU hardware must be integrated in the computer and properly be installed.-->
+                            <!--In general, this procedure is machine- and platform-dependent and is completely separate-->
+                            <!--from-->
+                            <!--the-->
+                            <!--ICOL+ installation.-->
+                        <!--</listitem>-->
+                        <!--<listitem>-->
+                            <!--The current implementation is applicable only for an aerosol type which is unique (constant)-->
+                            <!--over the computed scene.-->
+                        <!--</listitem>-->
+                        <!--<listitem>-->
+                            <!--The efficiency of the procedure depends on the dimensions of the particular scene and is-->
+                            <!--parameter-dependent. Currently, a set of constant, hard-coded parameters is being used-->
+                            <!--which is very likely not perfect for many cases.-->
+                        <!--</listitem>-->
+                    <!--</itemizedlist>-->
+                    <!--A more detailed description of the OpenCL issue is beyond the scope of this manual. A good-->
+                    <!--literature-->
+                    <!--starting point is e.g. [RD-5].-->
                 </listitem>
             </itemizedlist>
         </sect2>

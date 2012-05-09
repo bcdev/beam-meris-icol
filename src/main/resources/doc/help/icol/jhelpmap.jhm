@@ -11,7 +11,7 @@
   <mapID target="sum.introduction.referenceDocuments" url="ch01s06.html"/>
   <mapID target="sum.installation" url="ch02.html"/>
   <mapID target="sum.installation.plugin" url="ch02.html#sum.installation.plugin"/>
-  <mapID target="figure.installation.beammodules" url="ch02.html#figure.installation.beammodules"/>
+  <mapID target="figure.installation.beammodulemanager" url="ch02.html#figure.installation.beammodulemanager"/>
   <mapID target="sum.installation.addons" url="ch02s02.html"/>
   <mapID target="sum.products" url="ch03.html"/>
   <mapID target="sum.products.input" url="ch03.html#sum.products.input"/>

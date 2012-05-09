@@ -1,67 +1,32 @@
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-    <title>4.6. Processing from command line</title>
-    <meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
-    <link rel="start" href="index.html" title="ICOL+ Software User Manual">
-    <link rel="up" href="ch04.html" title="Chapter 4. ICOL+ User Interface">
-    <link rel="prev" href="ch04s05.html" title="4.5. Control Buttons">
-</head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="sect1" lang="en">
-    <div class="titlepage">
-        <div>
-            <div><h2 class="title" style="clear: both"><a name="sum.processor.gpt"></a>4.6. Processing from command line
-            </h2></div>
-        </div>
-    </div>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>4.6. Processing from command line</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="ch04.html" title="Chapter 4. ICOL+ User Interface"><link rel="prev" href="ch04s05.html" title="4.5. Control Buttons"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.processor.gpt"></a>4.6. Processing from command line</h2></div></div></div>
 
-    Since the ICOL+ processor makes use of the BEAM graph processing framework, it can be
-    used also as a command line tool outside BEAM-VISAT. The graph processing is invoked
-    by the command
-    <div class="itemizedlist">
-        <ul type="bullet">
-            <li style="list-style-type: disc">
+        Since the ICOL+ processor makes use of the BEAM graph processing framework, it can be
+        used also as a command line tool outside BEAM-VISAT. The graph processing is invoked
+        by the command
+        <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                 ${BEAM-INSTALL-DIR}/bin/gpt
-            </li>
-        </ul>
-    </div>
+            </li></ul></div>
 
-    To obtain general help on the graph processing, use the command
-    <div class="itemizedlist">
-        <ul type="bullet">
-            <li style="list-style-type: disc">
+        To obtain general help on the graph processing, use the command
+        <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                 ${BEAM-INSTALL-DIR}/bin/gpt -h
-            </li>
-        </ul>
-    </div>
+            </li></ul></div>
 
-    Specific help on the ICOL+ processor (MERIS or LANDSAT TM), can be obtained with
-    <div class="itemizedlist">
-        <ul type="bullet">
-            <li style="list-style-type: disc">
+        Specific help on the ICOL+ processor (MERIS or LANDSAT TM), can be obtained with
+        <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                 ${BEAM-INSTALL-DIR}/bin/gpt -h icol.Meris
-            </li>
-            <li style="list-style-type: disc">
+            </li><li style="list-style-type: disc">
                 ${BEAM-INSTALL-DIR}/bin/gpt -h icol.ThematicMapper
-            </li>
-        </ul>
-    </div>
-    In this case, information on the usage and a list of all available parameters are given.
-    (see<a class="xref" href="ch04s06.html#figure.processor.gpt" title="Figure 4.9. ICOL+ command line processing">Figure 4.9</a>).
+            </li></ul></div>
+        In this case, information on the usage and a list of all available parameters are given.
+        (see<a class="xref" href="ch04s06.html#figure.processor.gpt" title="Figure 4.9. ICOL+ command line processing">Figure 4.9</a>).
 
-    <div class="figure"><a name="figure.processor.gpt"></a>
+        <div class="figure"><a name="figure.processor.gpt"></a><div class="figure-contents"><div><img src="figures/icol_gpt.png" alt="ICOL+ command line processing"></div></div><p class="title"><b>Figure 4.9. ICOL+ command line processing</b></p></div><br class="figure-break">
 
-        <div class="figure-contents">
-            <div><img src="figures/icol_gpt.png" alt="ICOL+ command line processing"></div>
-        </div>
-        <p class="title"><b>Figure 4.9. ICOL+ command line processing</b></p></div>
-    <br class="figure-break">
-
-    If MERIS N1 products shall be written as output result a graph xml file has to be created.
-    This xml file should concatenate the icol.Meris operator and the Meris.N1Patcher operator.
-    A possible graph xml file would look like the following. For demonstration purpose only
-    the necessary parameter have been set.
+        If MERIS N1 products shall be written as output result a graph xml file has to be created.
+        This xml file should concatenate the icol.Meris operator and the Meris.N1Patcher operator.
+        A possible graph xml file would look like the following. For demonstration purpose only
+        the necessary parameter have been set.
         <pre class="programlisting">
             
             &lt;graph id="N1Icol"&gt;
@@ -87,12 +52,9 @@
             
         </pre>
 
-    This graph can be invoked by the following call on the command line:
+        This graph can be invoked by the following call on the command line:
         <pre class="programlisting">
             
                gpt &lt;graph-file.xml&gt; -Pn1TargetFile=&lt;path-to-target-file&gt; -Sn1Product=&lt;path-to-source-file&gt;
             
-        </pre>
-</div>
-</body>
-</html>
+        </pre></div></body></html>

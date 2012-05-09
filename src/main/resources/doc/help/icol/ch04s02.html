@@ -31,28 +31,6 @@
                     (same as over land).
                 </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.advanced"></a>4.2.3. 'Advanced Options' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
-                    If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)
-                    is performed using OpenCL libraries. Under suitable conditions, this results in a significant
-                    speed-up
-                    of the processor. However, this option is based on a rather new technology, and the implementation
-                    in
-                    ICOL+
-                    is still somewhat experimental. There are the following limitations:
-                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                            Suitable GPU hardware must be integrated in the computer and properly be installed.
-                            In general, this procedure is machine- and platform-dependent and is completely separate
-                            from
-                            the
-                            ICOL+ installation.
-                        </li><li style="list-style-type: disc">
-                            The current implementation is applicable only for an aerosol type which is unique (constant)
-                            over the computed scene.
-                        </li><li style="list-style-type: disc">
-                            The efficiency of the procedure depends on the dimensions of the particular scene and is
-                            parameter-dependent. Currently, a set of constant, hard-coded parameters is being used
-                            which is very likely not perfect for many cases.
-                        </li></ul></div>
-                    A more detailed description of the OpenCL issue is beyond the scope of this manual. A good
-                    literature
-                    starting point is e.g. [RD-4].
-                </li></ul></div></div></div></body></html>
+                    <p>
+                        This option is in an experimental stage and disabled in the current ICOL version.
+                    </p></li></ul></div></div></div></body></html>

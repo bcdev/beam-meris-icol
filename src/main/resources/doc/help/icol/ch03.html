@@ -1,9 +1,13 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 3. ICOL+ Products</title><meta name="generator" content="DocBook XSL Stylesheets V1.73.2"><link rel="start" href="index.html" title="ICOL+ Software User Manual"><link rel="up" href="index.html" title="ICOL+ Software User Manual"><link rel="prev" href="ch02s02.html" title="2.2. Additional Requirements"><link rel="next" href="ch03s02.html" title="3.2. Output Products"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="sum.products"></a>Chapter 3. ICOL+ Products</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="ch03.html#sum.products.input">3.1. Input Products</a></span></dt><dt><span class="sect1"><a href="ch03s02.html">3.2. Output Products</a></span></dt><dd><dl><dt><span class="sect2"><a href="ch03s02.html#sum.products.output.meris">3.2.1. MERIS</a></span></dt><dt><span class="sect2"><a href="ch03s02.html#sum.products.output.landsat">3.2.2. LANDSAT</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sum.products.input"></a>3.1. Input Products</h2></div></div></div><p>
             The input products which can be processed with the ICOL+ processor are:
             </p><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                    MERIS L1b radiance files (.N1 format or BEAM DIMAP format)
+                    MERIS L1b radiance files (.N1 format or BEAM DIMAP format, product type 'MER_..._1P')
                 </li><li style="list-style-type: disc">
                     MERIS L1b radiance files (BEAM DIMAP format, i.e. subsets of original .N1 files)
+                </li><li style="list-style-type: disc">
+                    MERIS L1 ortho-corrected radiance files (BEAM DIMAP format, product types 'MER_RRG_1P', 'MER_FRG_1P')
+                </li><li style="list-style-type: disc">
+                    MERIS L1 AMORGOS ([RD-4]) corrected radiance files (BEAM DIMAP format, product type 'MER_..._1N')
                 </li><li style="list-style-type: disc">
                     MERIS L2 cloud product (BEAM DIMAP format): An optional input product which must contain
                     a suitable cloud classification flag band which can then be used to define an alternative cloud mask

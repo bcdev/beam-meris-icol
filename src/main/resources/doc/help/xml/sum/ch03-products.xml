@@ -8,10 +8,16 @@
             The input products which can be processed with the ICOL+ processor are:
             <itemizedlist mark='bullet'>
                 <listitem>
-                    MERIS L1b radiance files (.N1 format or BEAM DIMAP format)
+                    MERIS L1b radiance files (.N1 format or BEAM DIMAP format, product type 'MER_..._1P')
                 </listitem>
                 <listitem>
                     MERIS L1b radiance files (BEAM DIMAP format, i.e. subsets of original .N1 files)
+                </listitem>
+                <listitem>
+                    MERIS L1 ortho-corrected radiance files (BEAM DIMAP format, product types 'MER_RRG_1P', 'MER_FRG_1P')
+                </listitem>
+                <listitem>
+                    MERIS L1 AMORGOS ([RD-4]) corrected radiance files (BEAM DIMAP format, product type 'MER_..._1N')
                 </listitem>
                 <listitem>
                     MERIS L2 cloud product (BEAM DIMAP format): An optional input product which must contain
@@ -40,6 +46,9 @@
                     MERIS L1c radiances: The MERIS radiances for bands 1-15 corrected for the adjacency effect.
                     This product can be retrieved in either original .N1 format or BEAM DIMAP format (user option).
                 </listitem>
+            </itemizedlist>
+            OR alternatively (user option):
+            <itemizedlist mark='bullet'>
                 <listitem>
                     MERIS L1c TOA reflectances: AE corrected radiances for bands 1-15 converted to TOA reflectances.
                     This product is provided in BEAM DIMAP format.
@@ -61,7 +70,213 @@
                         <listitem>
                             Angstrom coefficient and aerosol optical thickness at 865nm.
                         </listitem>
+                        <listitem>
+                            'land_flag_ray_conv': Binary land-water mask smoothed onto interval [0,1] using
+                            Rayleigh weighting function.
+                        </listitem>
+                        <listitem>
+                            'land_flag_aer_conv': Binary land-water mask smoothed onto interval [0,1] using
+                            aerosol weighting function.
+                        </listitem>
+                        <listitem>
+                            'cloud_flag_ray_conv': Binary cloud mask smoothed onto interval [0,1] using
+                            Rayleigh weighting function.
+                        </listitem>
+                        <listitem>
+                            'cloud_flag_aer_conv': Binary cloud mask smoothed onto interval [0,1] using
+                            aerosol weighting function.
+                        </listitem>
                     </itemizedlist>
+                </listitem>
+            </itemizedlist>
+            Flag bands:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    <para>
+                        MERIS L1 flag band
+                    </para>
+                    <para>
+                        The coding of the MERIS L1 flags is listed in Table 3.1.
+
+                        <table frame='all'>
+                            <title>MERIS L1 flags</title>
+                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                                <colspec colname='c1'/>
+                                <colspec colname='c2'/>
+                                <colspec colname='c3'/>
+                                <thead>
+                                    <row>
+                                        <entry>Name</entry>
+                                        <entry>Value</entry>
+                                        <entry>Description</entry>
+                                    </row>
+                                </thead>
+                                <tbody>
+                                    <row>
+                                        <entry>COSMETIC</entry>
+                                        <entry>1</entry>
+                                        <entry>Pixel is cosmetic</entry>
+                                    </row>
+                                    <row>
+                                        <entry>DUPLICATED</entry>
+                                        <entry>2</entry>
+                                        <entry>Pixel has been duplicated (filled in)</entry>
+                                    </row>
+                                    <row>
+                                        <entry>GLINT_RISK</entry>
+                                        <entry>4</entry>
+                                        <entry>Pixel has glint risk</entry>
+                                    </row>
+                                    <row>
+                                        <entry>SUSPECT</entry>
+                                        <entry>8</entry>
+                                        <entry>Pixel is suspect</entry>
+                                    </row>
+                                    <row>
+                                        <entry>LAND_OCEAN</entry>
+                                        <entry>16</entry>
+                                        <entry>Pixel is over land, not ocean</entry>
+                                    </row>
+                                    <row>
+                                        <entry>BRIGHT</entry>
+                                        <entry>32</entry>
+                                        <entry>Pixel is bright</entry>
+                                    </row>
+                                    <row>
+                                        <entry>COASTLINE</entry>
+                                        <entry>64</entry>
+                                        <entry>Pixel is part of a coastline</entry>
+                                    </row>
+                                    <row>
+                                        <entry>INVALID</entry>
+                                        <entry>128</entry>
+                                        <entry>Pixel is invalid</entry>
+                                    </row>
+                                </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        ICOL aerosol retrieval flag band (not for patched N1 file, see
+                        <xref linkend="sum.processor.io" xrefstyle="select: label"/>)
+                    </para>
+                    <para>
+                        The coding of the ICOL aerosol retrieval flags is listed in Table 3.2.
+                        <table frame='all'>
+                            <title>ICOL aerosol retrieval flags (MERIS)</title>
+                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                                <colspec colname='c1'/>
+                                <colspec colname='c2'/>
+                                <colspec colname='c3'/>
+                                <thead>
+                                    <row>
+                                        <entry>Name</entry>
+                                        <entry>Value</entry>
+                                        <entry>Description</entry>
+                                    </row>
+                                </thead>
+                                <tbody>
+                                    <row>
+                                        <entry>bad_aerosol_model</entry>
+                                        <entry>1</entry>
+                                        <entry>No appropriate aerosol model could be applied for given pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>bad_aot_model</entry>
+                                        <entry>2</entry>
+                                        <entry>No appropriate AOT model could be applied for given pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>high_turbid_water</entry>
+                                        <entry>4</entry>
+                                        <entry>Turbidity was identified as high for this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>sunglint</entry>
+                                        <entry>8</entry>
+                                        <entry>Sun glint present in this pixel</entry>
+                                    </row>
+                                </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        Adjacency effect flag band (only in case of TOA reflectances output)
+                    </para>
+                    <para>
+                        The coding of the adjacency effect flags is listed in Table 3.3.
+                        <table frame='all'>
+                            <title>Adjacency effect flags (MERIS)</title>
+                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                                <colspec colname='c1'/>
+                                <colspec colname='c2'/>
+                                <colspec colname='c3'/>
+                                <thead>
+                                    <row>
+                                        <entry>Name</entry>
+                                        <entry>Value</entry>
+                                        <entry>Description</entry>
+                                    </row>
+                                </thead>
+                                <tbody>
+                                    <row>
+                                        <entry>ae_mask_rayleigh</entry>
+                                        <entry>1</entry>
+                                        <entry>Pixel is inside Rayleigh AE correction mask</entry>
+                                    </row>
+                                    <row>
+                                        <entry>ae_mask_aerosol</entry>
+                                        <entry>2</entry>
+                                        <entry>Pixel is inside aerosol AE correction mask</entry>
+                                    </row>
+                                    <row>
+                                        <entry>landcons</entry>
+                                        <entry>4</entry>
+                                        <entry>Consolidated land pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>cloud</entry>
+                                        <entry>8</entry>
+                                        <entry>Cloud pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>ae_applied_rayleigh</entry>
+                                        <entry>16</entry>
+                                        <entry>Rayleigh AE correction was applied to this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>ae_applied_aerosol</entry>
+                                        <entry>32</entry>
+                                        <entry>Aerosol AE correction was applied to this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>alpha_out_of_range</entry>
+                                        <entry>64</entry>
+                                        <entry>Alpha value is out of range for this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>aot_out_of_range</entry>
+                                        <entry>128</entry>
+                                        <entry>AOT value is out of range for this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>high_turbid_water</entry>
+                                        <entry>256</entry>
+                                        <entry>Turbidity was identified as high for this pixel</entry>
+                                    </row>
+                                    <row>
+                                        <entry>sunglint</entry>
+                                        <entry>512</entry>
+                                        <entry>Sun glint present in this pixel</entry>
+                                    </row>
+                                </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
                 </listitem>
             </itemizedlist>
         </sect2>
@@ -102,10 +317,10 @@
                           </equation>
                           -->
 
-                        The coding of the cloud classification flag is listed in the following table:
+                        The coding of the cloud classification flag is listed in Table 3.4.
 
                         <table frame='all'>
-                            <title>Cloud classification flags</title>
+                            <title>Cloud classification flags (Landsat TM)</title>
                             <tgroup cols='3' align='left' colsep='1' rowsep='1'>
                                 <colspec colname='c1'/>
                                 <colspec colname='c2'/>
@@ -152,10 +367,10 @@
                     </para>
 
                     <para>
-                        The coding of the land classification flag is listed in the following table:
+                        The coding of the land classification flag is listed in Table 3.5.
 
                         <table frame='all'>
-                            <title>Land classification flags</title>
+                            <title>Land classification flags (Landsat TM)</title>
                             <tgroup cols='3' align='left' colsep='1' rowsep='1'>
                                 <colspec colname='c1'/>
                                 <colspec colname='c2'/>

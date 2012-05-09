@@ -4,7 +4,9 @@
             <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     MERIS L1c radiances: The MERIS radiances for bands 1-15 corrected for the adjacency effect.
                     This product can be retrieved in either original .N1 format or BEAM DIMAP format (user option).
-                </li><li style="list-style-type: disc">
+                </li></ul></div>
+            OR alternatively (user option):
+            <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     MERIS L1c TOA reflectances: AE corrected radiances for bands 1-15 converted to TOA reflectances.
                     This product is provided in BEAM DIMAP format.
                     Within this product, the following quantities are optionally provided (user option):
@@ -19,7 +21,38 @@
                             AE aerosol correction term (bands 1-15)
                         </li><li style="list-style-type: disc">
                             Angstrom coefficient and aerosol optical thickness at 865nm.
-                        </li></ul></div></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.products.output.landsat"></a>3.2.2. LANDSAT</h3></div></div></div>
+                        </li><li style="list-style-type: disc">
+                            'land_flag_ray_conv': Binary land-water mask smoothed onto interval [0,1] using
+                            Rayleigh weighting function.
+                        </li><li style="list-style-type: disc">
+                            'land_flag_aer_conv': Binary land-water mask smoothed onto interval [0,1] using
+                            aerosol weighting function.
+                        </li><li style="list-style-type: disc">
+                            'cloud_flag_ray_conv': Binary cloud mask smoothed onto interval [0,1] using
+                            Rayleigh weighting function.
+                        </li><li style="list-style-type: disc">
+                            'cloud_flag_aer_conv': Binary cloud mask smoothed onto interval [0,1] using
+                            aerosol weighting function.
+                        </li></ul></div></li></ul></div>
+            Flag bands:
+            <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc"><p>
+                        MERIS L1 flag band
+                    </p><p>
+                        The coding of the MERIS L1 flags is listed in Table 3.1.
+
+                        </p><div class="table"><a name="id476516"></a><p class="title"><b>Table 3.1. MERIS L1 flags</b></p><div class="table-contents"><table summary="MERIS L1 flags" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">COSMETIC</td><td align="left">1</td><td align="left">Pixel is cosmetic</td></tr><tr><td align="left">DUPLICATED</td><td align="left">2</td><td align="left">Pixel has been duplicated (filled in)</td></tr><tr><td align="left">GLINT_RISK</td><td align="left">4</td><td align="left">Pixel has glint risk</td></tr><tr><td align="left">SUSPECT</td><td align="left">8</td><td align="left">Pixel is suspect</td></tr><tr><td align="left">LAND_OCEAN</td><td align="left">16</td><td align="left">Pixel is over land, not ocean</td></tr><tr><td align="left">BRIGHT</td><td align="left">32</td><td align="left">Pixel is bright</td></tr><tr><td align="left">COASTLINE</td><td align="left">64</td><td align="left">Pixel is part of a coastline</td></tr><tr><td align="left">INVALID</td><td align="left">128</td><td align="left">Pixel is invalid</td></tr></tbody></table></div></div><p><br class="table-break">
+                    </p></li><li style="list-style-type: disc"><p>
+                        ICOL aerosol retrieval flag band (not for patched N1 file, see
+                        <a class="xref" href="ch04.html#sum.processor.io" title="4.1. I/O Parameters Tab Pane">Section 4.1</a>)
+                    </p><p>
+                        The coding of the ICOL aerosol retrieval flags is listed in Table 3.2.
+                        </p><div class="table"><a name="id491694"></a><p class="title"><b>Table 3.2. ICOL aerosol retrieval flags (MERIS)</b></p><div class="table-contents"><table summary="ICOL aerosol retrieval flags (MERIS)" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">bad_aerosol_model</td><td align="left">1</td><td align="left">No appropriate aerosol model could be applied for given pixel</td></tr><tr><td align="left">bad_aot_model</td><td align="left">2</td><td align="left">No appropriate AOT model could be applied for given pixel</td></tr><tr><td align="left">high_turbid_water</td><td align="left">4</td><td align="left">Turbidity was identified as high for this pixel</td></tr><tr><td align="left">sunglint</td><td align="left">8</td><td align="left">Sun glint present in this pixel</td></tr></tbody></table></div></div><p><br class="table-break">
+                    </p></li><li style="list-style-type: disc"><p>
+                        Adjacency effect flag band (only in case of TOA reflectances output)
+                    </p><p>
+                        The coding of the adjacency effect flags is listed in Table 3.3.
+                        </p><div class="table"><a name="id470849"></a><p class="title"><b>Table 3.3. Adjacency effect flags (MERIS)</b></p><div class="table-contents"><table summary="Adjacency effect flags (MERIS)" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">ae_mask_rayleigh</td><td align="left">1</td><td align="left">Pixel is inside Rayleigh AE correction mask</td></tr><tr><td align="left">ae_mask_aerosol</td><td align="left">2</td><td align="left">Pixel is inside aerosol AE correction mask</td></tr><tr><td align="left">landcons</td><td align="left">4</td><td align="left">Consolidated land pixel</td></tr><tr><td align="left">cloud</td><td align="left">8</td><td align="left">Cloud pixel</td></tr><tr><td align="left">ae_applied_rayleigh</td><td align="left">16</td><td align="left">Rayleigh AE correction was applied to this pixel</td></tr><tr><td align="left">ae_applied_aerosol</td><td align="left">32</td><td align="left">Aerosol AE correction was applied to this pixel</td></tr><tr><td align="left">alpha_out_of_range</td><td align="left">64</td><td align="left">Alpha value is out of range for this pixel</td></tr><tr><td align="left">aot_out_of_range</td><td align="left">128</td><td align="left">AOT value is out of range for this pixel</td></tr><tr><td align="left">high_turbid_water</td><td align="left">256</td><td align="left">Turbidity was identified as high for this pixel</td></tr><tr><td align="left">sunglint</td><td align="left">512</td><td align="left">Sun glint present in this pixel</td></tr></tbody></table></div></div><p><br class="table-break">
+                    </p></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.products.output.landsat"></a>3.2.2. LANDSAT</h3></div></div></div>
 
             The LANDSAT TM output products which can be derived using the ICOL+ processor are:
             <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
@@ -42,16 +75,16 @@
                     </p><p>
                         
 
-                        The coding of the cloud classification flag is listed in the following table:
+                        The coding of the cloud classification flag is listed in Table 3.4.
 
-                        </p><div class="table"><a name="id482156"></a><p class="title"><b>Table 3.1. Cloud classification flags</b></p><div class="table-contents"><table summary="Cloud classification flags" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_CLOUD</td><td align="left">0</td><td align="left">Pixel was finally specified as cloudy (if all flags below are set)
+                        </p><div class="table"><a name="id473356"></a><p class="title"><b>Table 3.4. Cloud classification flags (Landsat TM)</b></p><div class="table-contents"><table summary="Cloud classification flags (Landsat TM)" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_CLOUD</td><td align="left">0</td><td align="left">Pixel was finally specified as cloudy (if all flags below are set)
                                         </td></tr><tr><td align="left">F_BRIGHT</td><td align="left">1</td><td align="left">Brightness flag (set if TM3 &lt; BT)</td></tr><tr><td align="left">F_NDVI</td><td align="left">2</td><td align="left">NDVI flag (set if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
                                         </td></tr><tr><td align="left">F_NDSI</td><td align="left">4</td><td align="left">NDSI flag (set if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
                                         </td></tr><tr><td align="left">F_TEMP</td><td align="left">8</td><td align="left">Temperature flag (set if TM6 &lt; TM6T_CLOUD)</td></tr></tbody></table></div></div><p><br class="table-break">
                     </p><p>
-                        The coding of the land classification flag is listed in the following table:
+                        The coding of the land classification flag is listed in Table 3.5.
 
-                        </p><div class="table"><a name="id468645"></a><p class="title"><b>Table 3.2. Land classification flags</b></p><div class="table-contents"><table summary="Land classification flags" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_LANDCONS</td><td align="left">0</td><td align="left">Pixel was classified as land</td></tr><tr><td align="left">F_LOINLD</td><td align="left">1</td><td align="left">Pixel was classified as inland waters (currently no algorithm implemented and set to false)
+                        </p><div class="table"><a name="id483056"></a><p class="title"><b>Table 3.5. Land classification flags (Landsat TM)</b></p><div class="table-contents"><table summary="Land classification flags (Landsat TM)" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="left">Value</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">F_LANDCONS</td><td align="left">0</td><td align="left">Pixel was classified as land</td></tr><tr><td align="left">F_LOINLD</td><td align="left">1</td><td align="left">Pixel was classified as inland waters (currently no algorithm implemented and set to false)
                                         </td></tr><tr><td align="left">F_NDVI</td><td align="left">2</td><td align="left">NDVI flag (set if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
                                         </td></tr><tr><td align="left">F_TEMP</td><td align="left">8</td><td align="left">Temperature flag (set if TM6 &gt; TM6T_LAND (summer), TM6 &lt; TM6T_LAND (winter))</td></tr><tr><td align="left">F_ICE</td><td align="left">16</td><td align="left">Pixel was classified as ice (currently no algorithm implemented and set to false)</td></tr></tbody></table></div></div><p><br class="table-break">
                     </p></li></ul></div></div></div></body></html>

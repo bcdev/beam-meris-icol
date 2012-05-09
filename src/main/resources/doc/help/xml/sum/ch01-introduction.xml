@@ -96,6 +96,9 @@
                         AE - Adjacency Effect
                     </listitem>
                     <listitem>
+                        AMORGOS - Accurate MERIS Ortho-Rectified Geo-location Operational Software
+                    </listitem>
+                    <listitem>
                         AOT - Aerosol Optical Thickness
                     </listitem>
                     <listitem>
@@ -123,6 +126,9 @@
                         FR - Full Resolution
                     </listitem>
                     <listitem>
+                        FRG - Full Resolution Geo/Ortho-corrected
+                    </listitem>
+                    <listitem>
                         GPF - Graph Processing Framework
                     </listitem>
                     <listitem>
@@ -145,6 +151,9 @@
                     </listitem>
                     <listitem>
                         RR - Reduced Resolution
+                    </listitem>
+                    <listitem>
+                        RRG - Reduced Resolution Geo/Ortho-corrected
                     </listitem>
                     <listitem>
                         SoW - Statement of Work
@@ -199,10 +208,13 @@
                     [RD-3] ICOL+ TS. Version 1.0, ICOL+ project deliverable D10, 18 November 2010.
                 </listitem>
                 <listitem>
-                    [RD-4]  Khronos Group OpenCL online documentation: http://www.khronos.org/opencl/
+                    [RD-4]  AMORGOS documentation: http://earth.esa.int/services/amorgos/download/
                 </listitem>
                 <listitem>
-                    [RD-5]  USGS Earth Explorer data archive: http://edcsns17.cr.usgs.gov/EarthExplorer/
+                    [RD-5]  Khronos Group OpenCL online documentation: http://www.khronos.org/opencl/
+                </listitem>
+                <listitem>
+                    [RD-6]  USGS Earth Explorer data archive: http://edcsns17.cr.usgs.gov/EarthExplorer/
                 </listitem>
             </itemizedlist>
         </para>
