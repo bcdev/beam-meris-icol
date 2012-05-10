@@ -36,6 +36,9 @@
 
     <changelog>
         <![CDATA[
+            <p>Changes in 2.9<br/>
+            [ICOL-?] This ICOL version uses an improved land-water database which is based on SRTM data.
+            This is more precise than the MERIS L1b land-water and coastline flags.
             <p>Changes in 2.7.4<br/>
             [ICOL-?] Missing metadata written to ICOL product
             <p>Changes in 2.6<br/>
