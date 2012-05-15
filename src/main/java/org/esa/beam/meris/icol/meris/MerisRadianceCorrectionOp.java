@@ -93,6 +93,13 @@ public class MerisRadianceCorrectionOp extends Operator {
             }
         }
         ProductUtils.copyFlagBands(aeAerosolProduct, targetProduct, true);
+        // finally make sure that icolized MERIS product contain all other bands of original product
+        // (e.g. DEM-related bands corr_lat, corr_lon, altitude)
+        for (String bandName : l1bProduct.getBandNames()) {
+            if (!targetProduct.containsBand(bandName)) {
+                ProductUtils.copyBand(bandName, l1bProduct, targetProduct, true);
+            }
+        }
     }
 
     @Override
