@@ -1,6 +1,6 @@
 package org.esa.beam.meris.icol.ui;
 
-import com.bc.ceres.binding.PropertyContainer;
+import com.bc.ceres.binding.*;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.Binding;
 import com.bc.ceres.swing.binding.BindingContext;
@@ -21,6 +21,7 @@ import org.esa.beam.framework.ui.ModalDialog;
 import org.esa.beam.framework.ui.product.ProductExpressionPane;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -107,6 +108,7 @@ class IcolForm extends JTabbedPane {
 
     private final AppContext appContext;
     private final BindingContext bc;
+    private final PropertyContainer icolContainer;
 
     IcolForm(AppContext appContext, IcolModel icolModel, TargetProductSelector targetProductSelector) {
         this.appContext = appContext;
@@ -123,7 +125,7 @@ class IcolForm extends JTabbedPane {
             public void actionPerformed(ActionEvent e) {
                 updateProductTypeSettings();
                 if (isEnvisatSourceProduct(IcolForm.this.sourceProductSelector.getSelectedProduct()) &&
-                    radianceProductTypeButton.isSelected()) {
+                        radianceProductTypeButton.isSelected()) {
                     valueContainer.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
                 }
             }
@@ -135,6 +137,7 @@ class IcolForm extends JTabbedPane {
             }
         };
         valueContainer.addPropertyChangeListener("formatName", formatNameChangeListener);
+        icolContainer = icolModel.getPropertyContainer();
 
         bindComponents();
         updateUIStates();
@@ -924,6 +927,24 @@ class IcolForm extends JTabbedPane {
             rhoToaProductTypeButton.setEnabled(true);
         }
         setRhoToaBandSelectionPanelEnabled(rhoToaProductTypeButton.isSelected());
+    }
+
+    void updateParameterMap(Map<String, Object> parameterMap) {
+        PropertySet container = bc.getPropertySet();
+        for (Property property: container.getProperties()) {
+            parameterMap.put(property.getName(), container.getValue(property.getName()));
+        }
+    }
+
+    public void updateFormModel(Map<String, Object> parameterMap) throws ValidationException, ConversionException {
+        Property[] properties = icolContainer.getProperties();
+        for (Property property : properties) {
+            String propertyName = property.getName();
+            Object newValue = parameterMap.get(propertyName);
+            if (newValue != null) {
+                property.setValue(newValue);
+            }
+        }
     }
 
     private static class AeAreaRenderer extends DefaultListCellRenderer {

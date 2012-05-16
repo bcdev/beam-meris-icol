@@ -16,7 +16,8 @@ public class IcolAction extends AbstractVisatAction {
 	@Override
     public void actionPerformed(CommandEvent commandEvent) {
 	    if (dialog == null) {
-            dialog = new IcolDialog(getAppContext());
+            final String helpId = "icolProcessor";
+            dialog = new IcolDialog(getAppContext(), helpId);
         }
         dialog.show();
     }

@@ -17,15 +17,14 @@
 package org.esa.beam.meris.icol.ui;
 
 
+import com.bc.ceres.binding.ConversionException;
+import com.bc.ceres.binding.ValidationException;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
-import org.esa.beam.framework.gpf.ui.OperatorMenu;
-import org.esa.beam.framework.gpf.ui.OperatorParameterSupport;
-import org.esa.beam.framework.gpf.ui.SingleTargetProductDialog;
-import org.esa.beam.framework.gpf.ui.TargetProductSelectorModel;
+import org.esa.beam.framework.gpf.ui.*;
 import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.icol.IcolConstants;
@@ -46,24 +45,25 @@ import java.util.Map;
  */
 public class IcolDialog extends SingleTargetProductDialog {
 
-    public static final String TITLE = "ICOL Processor - v2.9";
+    public static final String TITLE = "ICOL Processor - v2.10-SNAPSHOT";
     private IcolForm form;
     private IcolModel model;
 
-    public IcolDialog(AppContext appContext) {
-        super(appContext, TITLE, ID_APPLY_CLOSE_HELP, "icolProcessor",
+    public IcolDialog(AppContext appContext, final String helpID) {
+        super(appContext, TITLE, ID_APPLY_CLOSE_HELP, helpID,
               TargetProductSelectorModel.createEnvisatTargetProductSelectorModel());
 
         model = new IcolModel();
         form = new IcolForm(appContext, model, getTargetProductSelector());
 
         OperatorSpi operatorSpi = GPF.getDefaultInstance().getOperatorSpiRegistry().getOperatorSpi("icol.Meris");
+        ParameterUpdater parameterUpdater = new IcolParameterUpdater();
         final OperatorParameterSupport parameterSupport = new OperatorParameterSupport(operatorSpi.getOperatorClass(),
                                                                                        null,
                                                                                        null,
-                                                                                       null);
+                                                                                       parameterUpdater);
         OperatorMenu menuSupport = new OperatorMenu(this.getJDialog(), operatorSpi.getOperatorClass(),
-                                                    parameterSupport, null);
+                                                    parameterSupport, helpID);
         getJDialog().setJMenuBar(menuSupport.createDefaultMenu());
     }
 
@@ -165,6 +165,19 @@ public class IcolDialog extends SingleTargetProductDialog {
 
         }
 
+    }
+
+    private class IcolParameterUpdater implements ParameterUpdater {
+
+        @Override
+        public void handleParameterSaveRequest(Map<String, Object> parameterMap) {
+            form.updateParameterMap(parameterMap);
+        }
+
+        @Override
+        public void handleParameterLoadRequest(Map<String, Object> parameterMap) throws ValidationException, ConversionException {
+            form.updateFormModel(parameterMap);
+        }
     }
 
 }
