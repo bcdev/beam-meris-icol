@@ -101,7 +101,9 @@ public class IcolDialog extends SingleTargetProductDialog {
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) &&
-                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+//                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+                !(isValidLandsat5ProductType(productType)) &&
+                !(isValidLandsat7ProductType(productType)) &&
                 !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
@@ -125,15 +127,29 @@ public class IcolDialog extends SingleTargetProductDialog {
         Product outputProduct = null;
         final Product sourceProduct = model.getSourceProduct();
         String productType = sourceProduct.getProductType();
-        if ((productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) ||
-                (productType.equals(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
-                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+        if (isValidLandsat5ProductType(productType)) {
             outputProduct = createLandsat5Product();
-        } else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() ||
-                   IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) {
+        } else if (isValidLandsat7ProductType(productType)) {
+            outputProduct = createLandsat5Product();
+        }  else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() ||
+                IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
         }
         return outputProduct;
+    }
+
+    private boolean isValidLandsat5ProductType(String productType) {
+        return (productType.equalsIgnoreCase(TmConstants.LANDSAT5_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX)) ||
+                (productType.equalsIgnoreCase(TmConstants.LANDSAT5_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX)) ||
+                (productType.equalsIgnoreCase(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
+                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX));
+    }
+
+    private boolean isValidLandsat7ProductType(String productType) {
+        return (productType.equalsIgnoreCase(TmConstants.LANDSAT7_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX)) ||
+                (productType.equalsIgnoreCase(TmConstants.LANDSAT7_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX)) ||
+                (productType.equalsIgnoreCase(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
+                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX));
     }
 
     private Product createLandsat5Product() throws OperatorException {

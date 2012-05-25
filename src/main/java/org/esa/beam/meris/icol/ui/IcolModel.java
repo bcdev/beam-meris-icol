@@ -60,8 +60,8 @@ public class IcolModel {
     // Landsat
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
     private int landsatTargetResolution = 0; // 300m
-    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2"})
-    private int landsatOutputProductType = TmConstants.OUTPUT_PRODUCT_TYPE_FULL; // standard product
+    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"})
+    private int landsatOutputProductType = TmConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE; // standard product
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.32")
     private double landsatUserOzoneContent = TmConstants.DEFAULT_OZONE_CONTENT;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.0")

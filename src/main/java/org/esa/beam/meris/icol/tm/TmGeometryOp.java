@@ -101,7 +101,7 @@ public class TmGeometryOp extends TmBasisOp {
         } else {
             productType = "L1G_RR_";
         }
-        targetProduct = new Product(sourceProduct.getName() + "_ICOL", productType, sceneWidth, sceneHeight);
+        targetProduct = new Product(sourceProduct.getName() + "_downscaled", productType, sceneWidth, sceneHeight);
         GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
         if (srcGeoCoding instanceof CrsGeoCoding || srcGeoCoding instanceof MapGeoCoding) {
             MathTransform imageToMapTransform = srcGeoCoding.getImageToMapTransform();

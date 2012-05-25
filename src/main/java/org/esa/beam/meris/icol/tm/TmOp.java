@@ -1,5 +1,6 @@
 package org.esa.beam.meris.icol.tm;
 
+import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -22,7 +23,11 @@ import org.esa.beam.meris.icol.common.ZmaxOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.util.ProductUtils;
+import org.esa.beam.util.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,8 +68,8 @@ public class TmOp extends TmBasisOp {
     private double landsatUserOzoneContent;
     @Parameter(defaultValue="300", valueSet= {"300","1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
-    @Parameter(defaultValue="0", valueSet= {"0","1","2"}, description =
-            "The output product: 0 = full AE corrected product; 1 = only the cloud and land flag bands will be computed; 2 = the source bands will only be downscaled to AE correction grid resolution.")
+    @Parameter(defaultValue="0", valueSet= {"0","1","2","3"}, description =
+            "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
     private int landsatOutputProductType;
 
     @Parameter(defaultValue="true")
@@ -132,29 +137,46 @@ public class TmOp extends TmBasisOp {
     public void initialize() throws OperatorException {
         setStartStopTime();
 
-        // compute geometry product (ATBD D4, section 5.3.1) if not already done...
-        Product geometryProduct = null;
-        if (sourceProduct.getProductType().startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX)) {
-            geometryProduct = sourceProduct;
-        } else {
-            Map<String, Product> geometryInput = new HashMap<String, Product>(1);
-            geometryInput.put("l1g", sourceProduct);
-            Map<String, Object> geometryParameters = new HashMap<String, Object>(3);
-            geometryParameters.put("landsatTargetResolution", landsatTargetResolution);
-            geometryParameters.put("startTime", landsatStartTime);
-            geometryParameters.put("stopTime", landsatStopTime);
-            geometryProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGeometryOp.class), geometryParameters, geometryInput);
+        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE) {
+            targetProduct = createDownscaledProduct();
+            ProductUtils.copyMetadata(sourceProduct, targetProduct);
+            return;
         }
 
-        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_GEOMETRY) {
-            targetProduct = geometryProduct;
+        Product downscaledSourceProduct = null;
+        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_AECORR) {
+            // compute downscaled product (ATBD D4, section 5.3.1) if not already done...
+            downscaledSourceProduct = sourceProduct;
+        }
+
+        if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_UPSCALE) {
+            // check if both original and AE corrected product exists on AE grid, in parent directory...
+            final File sourceProductFileLocation = sourceProduct.getFileLocation();
+            final File downscaledSourceProductFile = new File(sourceProductFileLocation.getParent() + File.separator +
+                                                                    "L1N_" + sourceProduct.getName() + ".dim");
+            final File aeCorrProductFile = new File(sourceProductFileLocation.getParent() + File.separator +
+                                                            "L1N_L1N_" + sourceProduct.getName() + ".dim");
+            Product aeCorrProduct;
+            try {
+                downscaledSourceProduct = ProductIO.readProduct(downscaledSourceProductFile.getAbsolutePath());
+            } catch (IOException e) {
+                throw new OperatorException("Cannot read downscaled source product for AE correction: " + e.getMessage());
+            }
+            try {
+                aeCorrProduct = ProductIO.readProduct(aeCorrProductFile.getAbsolutePath());
+            } catch (IOException e) {
+                throw new OperatorException("Cannot read AE corrected product for upscaling: " + e.getMessage());
+            }
+            Product upscaledProduct = createUpscaledToOriginalProduct(downscaledSourceProduct, aeCorrProduct);
+            targetProduct = upscaledProduct;
+            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 
         // compute conversion to reflectance and temperature (ATBD D4, section 5.3.2)
         Map<String, Product> radianceConversionInput = new HashMap<String, Product>(2);
         radianceConversionInput.put("l1g", sourceProduct);
-        radianceConversionInput.put("geometry", geometryProduct);
+        radianceConversionInput.put("geometry", downscaledSourceProduct);
         Map<String, Object> conversionParameters = new HashMap<String, Object>(2);
         conversionParameters.put("startTime", landsatStartTime);
         conversionParameters.put("stopTime", landsatStopTime);
@@ -163,7 +185,7 @@ public class TmOp extends TmBasisOp {
         // compute gaseous transmittance (ATBD D4, section 5.3.3)
         Map<String, Product> gaseousTransmittanceInput = new HashMap<String, Product>(3);
         gaseousTransmittanceInput.put("l1g", sourceProduct);
-        gaseousTransmittanceInput.put("geometry", geometryProduct);
+        gaseousTransmittanceInput.put("geometry", downscaledSourceProduct);
         Map<String, Object> gaseousTransmittanceParameters = new HashMap<String, Object>(1);
         gaseousTransmittanceParameters.put("ozoneContent", landsatUserOzoneContent);
         Product gaseousTransmittanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGaseousTransmittanceOp.class), gaseousTransmittanceParameters, gaseousTransmittanceInput);
@@ -257,7 +279,7 @@ public class TmOp extends TmBasisOp {
         Map<String, Product> rayleighInput = new HashMap<String, Product>(6);
         rayleighInput.put("refl", conversionProduct);
         rayleighInput.put("land", landProduct);
-        rayleighInput.put("geometry", geometryProduct);
+        rayleighInput.put("geometry", downscaledSourceProduct);
         rayleighInput.put("fresnel", fresnelProduct);
         rayleighInput.put("cloud", cloudProduct);
         rayleighInput.put("ctp", ctpProduct);
@@ -453,16 +475,33 @@ public class TmOp extends TmBasisOp {
         }
 
         // test:
-//        targetProduct = correctionProduct;
+        targetProduct = correctionProduct;
+        ProductUtils.copyMetadata(sourceProduct, targetProduct);
 
         // upscale all bands to Tm full resolution
+//        Product upscaledProduct = createUpscaledToOriginalProduct(downscaledSourceProduct, correctionProduct);
+//        targetProduct = upscaledProduct;
+    }
+
+    private Product createDownscaledProduct() {
+        Product geometryProduct;Map<String, Product> geometryInput = new HashMap<String, Product>(1);
+        geometryInput.put("l1g", sourceProduct);
+        Map<String, Object> geometryParameters = new HashMap<String, Object>(3);
+        geometryParameters.put("landsatTargetResolution", landsatTargetResolution);
+        geometryParameters.put("startTime", landsatStartTime);
+        geometryParameters.put("stopTime", landsatStopTime);
+        geometryProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGeometryOp.class), geometryParameters, geometryInput);
+        return geometryProduct;
+    }
+
+    private Product createUpscaledToOriginalProduct(Product geometryProduct, Product correctionProduct) {
         Map<String, Product> aeUpscaleInput = new HashMap<String, Product>(9);
         aeUpscaleInput.put("l1b", sourceProduct);
         aeUpscaleInput.put("geometry", geometryProduct);
         aeUpscaleInput.put("corrected", correctionProduct);
         Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
 
-        targetProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(TmUpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
     }
 
     /**

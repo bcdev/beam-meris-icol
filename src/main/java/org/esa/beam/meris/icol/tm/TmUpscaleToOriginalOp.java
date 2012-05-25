@@ -1,6 +1,7 @@
 package org.esa.beam.meris.icol.tm;
 
 import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.MetadataAttribute;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
@@ -35,11 +36,25 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-        float xScale = (float) sourceProduct.getSceneRasterWidth() / correctedProduct.getSceneRasterWidth();
-        float yScale = (float) sourceProduct.getSceneRasterHeight() / correctedProduct.getSceneRasterHeight();
-        targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "upscale_" + correctedProduct.getName(), "UPSCALE");
+        final MetadataAttribute widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
+        final MetadataAttribute heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
 
-        for (int i=0; i<sourceProduct.getNumBands(); i++) {
+        if (widthAttr == null || heightAttr == null) {
+            throw new OperatorException("Cannot upscale to original grid - metadata info missing.");
+        }
+
+        final int width = widthAttr.getData().getElemIntAt(0);
+        final int height = heightAttr.getData().getElemIntAt(0);
+
+//        float xScale = (float) sourceProduct.getSceneRasterWidth() / correctedProduct.getSceneRasterWidth();
+        float xScale = (float) width / correctedProduct.getSceneRasterWidth();
+//        float yScale = (float) sourceProduct.getSceneRasterHeight() / correctedProduct.getSceneRasterHeight();
+        float yScale = (float) height / correctedProduct.getSceneRasterHeight();
+        targetProduct = createTargetProduct(sourceProduct, "upscale_" + correctedProduct.getName(),
+                                            sourceProduct.getProductType(),
+                                            width, height);
+
+        for (int i = 0; i < sourceProduct.getNumBands(); i++) {
             Band sourceBand = sourceProduct.getBandAt(i);
 
             Band targetBand;
@@ -73,12 +88,12 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
                     // here we upscale the difference image (i.e., the AE correction)
                     // note that xscale, yscale may be 1 (in fact no upscaling) if source is a geometry product
                     RenderedOp upscaledDiffImage = ScaleDescriptor.create(diffImage,
-                                                                             xScale,
-                                                                             yScale,
-                                                                             0.0f, 0.0f,
-                                                                             Interpolation.getInstance(
-                                                                                     Interpolation.INTERP_BILINEAR),
-                                                                             null);
+                                                                          xScale,
+                                                                          yScale,
+                                                                          0.0f, 0.0f,
+                                                                          Interpolation.getInstance(
+                                                                                  Interpolation.INTERP_BILINEAR),
+                                                                          null);
 //                    this was for debugging only:
 //                    origBand.setSourceImage(sourceImage);
 //                    diffBand.setSourceImage(upscaledDiffImage);
@@ -106,17 +121,24 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 
     }
 
+    private static Product createTargetProduct(Product sourceProduct, String name, String type, int width, int height) {
+
+        Product targetProduct = new Product(name, type, width, height);
+        OperatorUtils.copyProductBase(sourceProduct, targetProduct);
+        return targetProduct;
+    }
+
     private void upscaleDebugBand(String bandName, float xScale, float yScale, int i) {
         Band debugSrcBand = correctedProduct.getBand(bandName + "_" + i);
         Band debugTargetBand = targetProduct.addBand(bandName + "_" + i, ProductData.TYPE_FLOAT32);
         RenderedImage debugSrcImage = debugSrcBand.getSourceImage();
         RenderedOp upscaledDebugSrcImage = ScaleDescriptor.create(debugSrcImage,
-                                                          xScale,
-                                                          yScale,
-                                                          0.0f, 0.0f,
-                                                          Interpolation.getInstance(
-                                                                  Interpolation.INTERP_BILINEAR),
-                                                          null);
+                                                                  xScale,
+                                                                  yScale,
+                                                                  0.0f, 0.0f,
+                                                                  Interpolation.getInstance(
+                                                                          Interpolation.INTERP_BILINEAR),
+                                                                  null);
         debugTargetBand.setSourceImage(upscaledDebugSrcImage);
     }
 

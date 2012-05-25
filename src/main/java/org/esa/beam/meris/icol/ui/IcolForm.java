@@ -21,7 +21,6 @@ import org.esa.beam.framework.ui.ModalDialog;
 import org.esa.beam.framework.ui.product.ProductExpressionPane;
 import org.esa.beam.meris.icol.AeArea;
 import org.esa.beam.meris.icol.tm.TmConstants;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -85,7 +84,8 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField landsatTM60Value;
 
     private ButtonGroup landsatOutputProductTypeGroup;
-    private JRadioButton landsatOutputProductTypeStandardButton;
+    private JRadioButton landsatOutputProductTypeFullAEButton;
+    private JRadioButton landsatOutputProductTypeUpscaleAEButton;
     private JRadioButton landsatOutputProductTypeGeometryButton;
     private JRadioButton landsatOutputProductTypeFlagsButton;
 
@@ -795,27 +795,34 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatOutputProductTypeStandardButton = new JRadioButton("Full AE corrected product");
-        landsatOutputProductTypeStandardButton.setSelected(true);
-        panel.add(landsatOutputProductTypeStandardButton);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-        landsatOutputProductTypeFlagsButton = new JRadioButton("Flag bands only");
-        landsatOutputProductTypeFlagsButton.setSelected(false);
-        panel.add(landsatOutputProductTypeFlagsButton);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
         landsatOutputProductTypeGeometryButton = new JRadioButton(
-                "Geometry product only (input downscaled to AE correction grid)");
+                "Downscale source product to AE correction grid");
         landsatOutputProductTypeGeometryButton.setSelected(false);
         panel.add(landsatOutputProductTypeGeometryButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
+        landsatOutputProductTypeFullAEButton = new JRadioButton("Compute AE corrected product on AE correction grid");
+        landsatOutputProductTypeFullAEButton.setSelected(true);
+        panel.add(landsatOutputProductTypeFullAEButton);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatOutputProductTypeUpscaleAEButton = new JRadioButton("Upscale AE corrected product to original grid");
+        landsatOutputProductTypeUpscaleAEButton.setSelected(true);
+        panel.add(landsatOutputProductTypeUpscaleAEButton);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatOutputProductTypeFlagsButton = new JRadioButton("Flag bands only");
+        landsatOutputProductTypeFlagsButton.setSelected(false);
+        // hide this option for the moment...
+//        panel.add(landsatOutputProductTypeFlagsButton);
+//        panel.add(new JLabel(""));
+//        panel.add(new JLabel(""));
 
         landsatOutputProductTypeGroup = new ButtonGroup();
-        landsatOutputProductTypeGroup.add(landsatOutputProductTypeStandardButton);
-        landsatOutputProductTypeGroup.add(landsatOutputProductTypeFlagsButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeGeometryButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeFullAEButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeUpscaleAEButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeFlagsButton);
 
         ActionListener landsatOutputProductTypeListenerListener = new ActionListener() {
             @Override
@@ -823,7 +830,8 @@ class IcolForm extends JTabbedPane {
                 updateLandsatOutputProductTypeSettings();
             }
         };
-        landsatOutputProductTypeStandardButton.addActionListener(landsatOutputProductTypeListenerListener);
+        landsatOutputProductTypeFullAEButton.addActionListener(landsatOutputProductTypeListenerListener);
+        landsatOutputProductTypeUpscaleAEButton.addActionListener(landsatOutputProductTypeListenerListener);
         landsatOutputProductTypeFlagsButton.addActionListener(landsatOutputProductTypeListenerListener);
         landsatOutputProductTypeGeometryButton.addActionListener(landsatOutputProductTypeListenerListener);
 
@@ -837,11 +845,11 @@ class IcolForm extends JTabbedPane {
     }
 
     private void updateLandsatOutputProductTypeSettings() {
-        if (landsatOutputProductTypeStandardButton.isSelected() || landsatOutputProductTypeFlagsButton.isSelected()) {
+        if (landsatOutputProductTypeFullAEButton.isSelected() || landsatOutputProductTypeFlagsButton.isSelected()) {
             landsatOutputProductTypeFlagsButton.setSelected(false);
             landsatOutputProductTypeGeometryButton.setSelected(false);
         } else {
-            landsatOutputProductTypeStandardButton.setSelected(false);
+            landsatOutputProductTypeFullAEButton.setSelected(false);
             landsatOutputProductTypeGeometryButton.setSelected(false);
         }
     }
