@@ -1,7 +1,6 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.etm;
 
 import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.core.SubProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -13,23 +12,25 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.tm.TmGeometryOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.util.Map;
 
 /**
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.AtmosphericFunctions",
+@OperatorMetadata(alias = "Landsat.EtmAtmosphericFunctions",
         version = "1.0",
         internal = true,
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
-        description = "Landsat atmospheric functions.")
-public class TmGaseousTransmittanceOp extends Operator {
+        description = "Landsat atmospheric functions (L7 ETM+).")
+public class EtmGaseousTransmittanceOp extends Operator {
 
     final int NO_DATA_VALUE = -1;
 
@@ -50,9 +51,9 @@ public class TmGaseousTransmittanceOp extends Operator {
     public void initialize() throws OperatorException {
         targetProduct = OperatorUtils.createCompatibleProduct(geometryProduct, sourceProduct.getName() + "_ICOL", "ICOL");
 
-        gaseousTransmittanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-            gaseousTransmittanceBands[i] = targetProduct.addBand(TmConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i],
+        gaseousTransmittanceBands = new Band[TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
+        for (int i = 0; i < TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS; i++) {
+            gaseousTransmittanceBands[i] = targetProduct.addBand(TmConstants.LANDSAT7_GAS_TRANSMITTANCE_BAND_NAMES[i],
                                                                  ProductData.TYPE_FLOAT32);
             gaseousTransmittanceBands[i].setNoDataValueUsed(true);
             gaseousTransmittanceBands[i].setNoDataValue(NO_DATA_VALUE);
@@ -70,7 +71,7 @@ public class TmGaseousTransmittanceOp extends Operator {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                     final float airMass = airMassTile.getSampleFloat(x, y);
-                    for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                    for (int bandId = 0; bandId < TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                         final double gaseousTransmittance =
                                 Math.exp(-airMass*ozoneContent* TmConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
                         gaseousTransmittanceTile[bandId].setSample(x, y, gaseousTransmittance);
@@ -87,7 +88,7 @@ public class TmGaseousTransmittanceOp extends Operator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(TmGaseousTransmittanceOp.class);
+            super(EtmGaseousTransmittanceOp.class);
         }
     }
 }

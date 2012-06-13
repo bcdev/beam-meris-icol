@@ -20,12 +20,14 @@ import org.esa.beam.meris.icol.common.AdjacencyEffectRayleighOp;
 import org.esa.beam.meris.icol.common.CloudDistanceOp;
 import org.esa.beam.meris.icol.common.CoastDistanceOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
+import org.esa.beam.meris.icol.etm.EtmGaseousCorrectionOp;
+import org.esa.beam.meris.icol.etm.EtmGaseousTransmittanceOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.util.ProductUtils;
-import org.esa.beam.util.io.FileUtils;
 
+import javax.media.jai.JAI;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -37,10 +39,10 @@ import java.util.Map;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "icol.ThematicMapper",
-        version = "1.1",
-        authors = "Marco Zuehlke, Olaf Danne",
-        copyright = "(c) 2007-2009 by Brockmann Consult",
-        description = "Performs a correction of the adjacency effect for LANDSAT TM L1b data.")
+                  version = "1.1",
+                  authors = "Marco Zuehlke, Olaf Danne",
+                  copyright = "(c) 2007-2009 by Brockmann Consult",
+                  description = "Performs a correction of the adjacency effect for LANDSAT TM L1b data.")
 public class TmOp extends TmBasisOp {
 
     // todo: we need the ORIGINAL source product (mandatory) and the geometry product (optional)
@@ -66,75 +68,76 @@ public class TmOp extends TmBasisOp {
     private double landsatUserTm60;
     @Parameter(interval = "[0.01, 1.0]", defaultValue = "0.32", description = "The ozone content to be used by AE correction algorithm.")
     private double landsatUserOzoneContent;
-    @Parameter(defaultValue="300", valueSet= {"300","1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
+    @Parameter(defaultValue = "300", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
-    @Parameter(defaultValue="0", valueSet= {"0","1","2","3"}, description =
+    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"}, description =
             "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
     private int landsatOutputProductType;
 
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyNdviFilter = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyNdsiFilter = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3", description = "The cloud brightness threshold.")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.3", description = "The cloud brightness threshold.")
     private double cloudBrightnessThreshold;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2", description = "The cloud NDVI threshold.")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2", description = "The cloud NDVI threshold.")
     private double cloudNdviThreshold;
-    @Parameter(interval = "[0.0, 10.0]", defaultValue="3.0", description = "The cloud NDSI threshold.")
+    @Parameter(interval = "[0.0, 10.0]", defaultValue = "3.0", description = "The cloud NDSI threshold.")
     private double cloudNdsiThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0", description = "The cloud TM band 6 temperature threshold.")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0", description = "The cloud TM band 6 temperature threshold.")
     private double cloudTM6Threshold;
 
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyNdviFilter = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyTemperatureFilter = true;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2", description = "The land NDVIthreshold.")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2", description = "The land NDVIthreshold.")
     private double landNdviThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0", description = "The land TM band 6 temperature threshold.")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0", description = "The land TM band 6 temperature threshold.")
     private double landTM6Threshold;
     @Parameter(defaultValue = TmConstants.LAND_FLAGS_SUMMER, valueSet = {TmConstants.LAND_FLAGS_SUMMER,
             TmConstants.LAND_FLAGS_WINTER}, description = "The summer/winter option for TM band 6 temperature test.")
     private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
 
     // general
-    private int productType = 0;
+    private static final int productType = 0;
     private boolean reshapedConvolution = true;     // currently no user option
 
-    @Parameter(defaultValue="false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
+    @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
     private boolean openclConvolution = false;      // currently not used in TM
-    @Parameter(defaultValue="64")
+    @Parameter(defaultValue = "64")
     private int tileSize = 64;
     @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
-        description = "The area where the AE correction will be applied.")
+               description = "The area where the AE correction will be applied.")
     private AeArea aeArea = AeArea.COASTAL_OCEAN;
     @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
 
     // LandsatReflectanceConversionOp
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportRhoToa = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportRhoToaRayleigh = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportRhoToaAerosol = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportAeRayleigh = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportAeAerosol = true;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean exportAlphaAot = true;
 
-    
+
     private String landsatStartTime;
     private String landsatStopTime;
 
     @Override
     public void initialize() throws OperatorException {
+//        JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // todo: only for debugging purpose!!
         setStartStopTime();
 
         if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE) {
@@ -151,10 +154,11 @@ public class TmOp extends TmBasisOp {
 
         if (landsatOutputProductType == TmConstants.OUTPUT_PRODUCT_TYPE_UPSCALE) {
             // check if both original and AE corrected product exists on AE grid, in parent directory...
-            final File sourceProductFileLocation = sourceProduct.getFileLocation();
-            final File downscaledSourceProductFile = new File(sourceProductFileLocation.getParent() + File.separator +
-                                                                    "L1N_" + sourceProduct.getName() + ".dim");
-            final File aeCorrProductFile = new File(sourceProductFileLocation.getParent() + File.separator +
+//            final File sourceProductFileLocation = sourceProduct.getFileLocation();
+            final String intermediateProductDir = System.getProperty("user.home");  // todo: make this a parameter
+            final File downscaledSourceProductFile = new File(intermediateProductDir + File.separator +
+                                                                      "L1N_" + sourceProduct.getName() + ".dim");
+            final File aeCorrProductFile = new File(intermediateProductDir + File.separator +
                                                             "L1N_L1N_" + sourceProduct.getName() + ".dim");
             Product aeCorrProduct;
             try {
@@ -188,7 +192,12 @@ public class TmOp extends TmBasisOp {
         gaseousTransmittanceInput.put("geometry", downscaledSourceProduct);
         Map<String, Object> gaseousTransmittanceParameters = new HashMap<String, Object>(1);
         gaseousTransmittanceParameters.put("ozoneContent", landsatUserOzoneContent);
-        Product gaseousTransmittanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGaseousTransmittanceOp.class), gaseousTransmittanceParameters, gaseousTransmittanceInput);
+        Product gaseousTransmittanceProduct = null;
+        if (sourceProduct.getProductType().startsWith("Landsat5")) {
+            gaseousTransmittanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGaseousTransmittanceOp.class), gaseousTransmittanceParameters, gaseousTransmittanceInput);
+        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
+            gaseousTransmittanceProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(EtmGaseousTransmittanceOp.class), gaseousTransmittanceParameters, gaseousTransmittanceInput);
+        }
 
         // now we need to call the operator sequence as for MERIS, but adjusted to Landsat if needed...
 
@@ -227,7 +236,12 @@ public class TmOp extends TmBasisOp {
         gasInput.put("atmFunctions", gaseousTransmittanceProduct);
         Map<String, Object> gasParameters = new HashMap<String, Object>(2);
         gasParameters.put("exportTg", true);
-        Product gasProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGaseousCorrectionOp.class), gasParameters, gasInput);
+        Product gasProduct = null;
+        if (sourceProduct.getProductType().startsWith("Landsat5")) {
+            gasProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmGaseousCorrectionOp.class), gasParameters, gasInput);
+        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
+            gasProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(EtmGaseousCorrectionOp.class), gasParameters, gasInput);
+        }
 
         // Land classification:
         // MERIS: Product landProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(LandClassificationOp.class), ...
@@ -249,7 +263,7 @@ public class TmOp extends TmBasisOp {
         cloudLandMaskParameters.put("landExpression", "land_classif_flags.F_LANDCONS || land_classif_flags.F_ICE");
         cloudLandMaskParameters.put("cloudExpression", "cloud_classif_flags.F_CLOUD");
         Product cloudLandMaskProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudLandMaskOp.class), cloudLandMaskParameters,
-                                 cloudLandMaskInput);
+                                                         cloudLandMaskInput);
 
         FlagCoding landFlagCoding = TmLandClassificationOp.createFlagCoding();
         FlagCoding cloudFlagCoding = TmCloudClassificationOp.createFlagCoding();
@@ -372,12 +386,16 @@ public class TmOp extends TmBasisOp {
         aeRayInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeRayParams = new HashMap<String, Object>(5);
         aeRayParams.put("landExpression", "land_classif_flags.F_LANDCONS");
-        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS")) {
             exportSeparateDebugBands = true;
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
-        aeRayParams.put("instrument", Instrument.TM5);
+        if (sourceProduct.getProductType().startsWith("Landsat5")) {
+            aeRayParams.put("instrument", Instrument.TM5);
+        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
+            aeRayParams.put("instrument", Instrument.ETM7);
+        }
         Product aeRayProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectRayleighOp.class), aeRayParams, aeRayInput);
 
         // AE Aerosol:
@@ -392,7 +410,7 @@ public class TmOp extends TmBasisOp {
         aeAerInput.put("ctp", ctpProduct);
         aeAerInput.put("zmaxCloud", zmaxCloudProduct);
         Map<String, Object> aeAerosolParams = new HashMap<String, Object>(9);
-        if (productType == 0 && System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
+        if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
             exportSeparateDebugBands = true;
         aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
@@ -402,7 +420,7 @@ public class TmOp extends TmBasisOp {
         aeAerosolParams.put("userPSurf", landsatUserPSurf);
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aeAerosolParams.put("instrument", "LANDSAT5 TM");
+        aeAerosolParams.put("instrument", sourceProduct.getProductType());
         Product aeAerProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmAeAerosolOp.class), aeAerosolParams, aeAerInput);
 
         // AE Rayleigh/Aerosol merge:
@@ -420,38 +438,16 @@ public class TmOp extends TmBasisOp {
         // MERIS: correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(MerisRadianceCorrectionOp.class), ...
         // Landsat: provide adjusted TmReflectanceCorrectionOp
         Product correctionProduct = null;
-        if (productType == 0) {
-            // radiance output product
-            Map<String, Product> radianceCorrectionInput = new HashMap<String, Product>(6);
-            radianceCorrectionInput.put("refl", conversionProduct);
-            radianceCorrectionInput.put("gascor", gasProduct);
-            radianceCorrectionInput.put("ae_ray", aeRayProduct);
-            radianceCorrectionInput.put("ae_aerosol", aeAerProduct);
-            radianceCorrectionInput.put("aemaskRayleigh", aemaskRayleighProduct);
-            radianceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
-            Map<String, Object> radianceCorrectionParams = new HashMap<String, Object>(1);
-            correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmRadianceCorrectionOp.class), radianceCorrectionParams, radianceCorrectionInput);
-        } else if (productType == 1) {
-            // Reverse rhoToa:
-            // Landsat: provide adjusted LandsatRhoToaCorrectionOp
-            Map<String, Product> reflectanceCorrectionInput = new HashMap<String, Product>(9);
-            reflectanceCorrectionInput.put("refl", conversionProduct);
-            reflectanceCorrectionInput.put("land", landProduct);
-            reflectanceCorrectionInput.put("cloud", cloudProduct);
-            reflectanceCorrectionInput.put("aemaskRayleigh", aemaskRayleighProduct);
-            reflectanceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
-            reflectanceCorrectionInput.put("gascor", gasProduct);
-            reflectanceCorrectionInput.put("ae_ray", aeRayProduct);
-            reflectanceCorrectionInput.put("ae_aerosol", aeAerProduct);
-            Map<String, Object> reflectanceCorrectionParams = new HashMap<String, Object>(1);
-            reflectanceCorrectionParams.put("exportRhoToa", exportRhoToa);
-            reflectanceCorrectionParams.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
-            reflectanceCorrectionParams.put("exportRhoToaAerosol", exportRhoToaAerosol);
-            reflectanceCorrectionParams.put("exportAeRayleigh", exportAeRayleigh);
-            reflectanceCorrectionParams.put("exportAeAerosol", exportAeAerosol);
-            reflectanceCorrectionParams.put("exportAlphaAot", exportAlphaAot);
-            correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmReflectanceCorrectionOp.class), reflectanceCorrectionParams, reflectanceCorrectionInput);
-        }
+        // radiance output product
+        Map<String, Product> radianceCorrectionInput = new HashMap<String, Product>(6);
+        radianceCorrectionInput.put("refl", conversionProduct);
+        radianceCorrectionInput.put("gascor", gasProduct);
+        radianceCorrectionInput.put("ae_ray", aeRayProduct);
+        radianceCorrectionInput.put("ae_aerosol", aeAerProduct);
+        radianceCorrectionInput.put("aemaskRayleigh", aemaskRayleighProduct);
+        radianceCorrectionInput.put("aemaskAerosol", aemaskAerosolProduct);
+        Map<String, Object> radianceCorrectionParams = new HashMap<String, Object>(1);
+        correctionProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(TmRadianceCorrectionOp.class), radianceCorrectionParams, radianceCorrectionInput);
 
         // output:
         correctionProduct.getFlagCodingGroup().add(cloudFlagCoding);
@@ -484,7 +480,8 @@ public class TmOp extends TmBasisOp {
     }
 
     private Product createDownscaledProduct() {
-        Product geometryProduct;Map<String, Product> geometryInput = new HashMap<String, Product>(1);
+        Product geometryProduct;
+        Map<String, Product> geometryInput = new HashMap<String, Product>(1);
         geometryInput.put("l1g", sourceProduct);
         Map<String, Object> geometryParameters = new HashMap<String, Object>(3);
         geometryParameters.put("landsatTargetResolution", landsatTargetResolution);
@@ -522,21 +519,21 @@ public class TmOp extends TmBasisOp {
         return targetProduct;
     }
 
-     private void setStartStopTime() {
+    private void setStartStopTime() {
         try {
             // finally we need dd-MM-yyyy hh:mm:ss
             if (sourceProduct.getStartTime() != null && sourceProduct.getEndTime() != null) {
                 // this is the case for geometry product
-                landsatStartTime = sourceProduct.getStartTime().toString().substring(0,20);
-                landsatStopTime = sourceProduct.getEndTime().toString().substring(0,20);
+                landsatStartTime = sourceProduct.getStartTime().toString().substring(0, 20);
+                landsatStopTime = sourceProduct.getEndTime().toString().substring(0, 20);
             } else {
                 // this is the case for original input product (GeoTIFF)
                 // here we get yyyy-mm-dd:
-                 String acquisitionDate = sourceProduct.getMetadataRoot()
-                    .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("ACQUISITION_DATE").getData().getElemString();
+                String acquisitionDate = sourceProduct.getMetadataRoot()
+                        .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("ACQUISITION_DATE").getData().getElemString();
 
                 String centerTime = sourceProduct.getMetadataRoot()
-                    .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("SCENE_CENTER_SCAN_TIME").getData().getElemString().substring(0, 8);
+                        .getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("SCENE_CENTER_SCAN_TIME").getData().getElemString().substring(0, 8);
 
                 String landsatCenterTime = LandsatUtils.convertDate(acquisitionDate) + " " + centerTime;
                 landsatStartTime = landsatCenterTime;

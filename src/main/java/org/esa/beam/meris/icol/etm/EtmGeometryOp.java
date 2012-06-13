@@ -1,14 +1,7 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.etm;
 
 import com.bc.ceres.core.ProgressMonitor;
-import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.CrsGeoCoding;
-import org.esa.beam.framework.datamodel.GeoCoding;
-import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.MapGeoCoding;
-import org.esa.beam.framework.datamodel.PixelPos;
-import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.datamodel.*;
 import org.esa.beam.framework.dataop.dem.ElevationModel;
 import org.esa.beam.framework.dataop.dem.ElevationModelDescriptor;
 import org.esa.beam.framework.dataop.dem.ElevationModelRegistry;
@@ -20,12 +13,14 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.tm.TmBasisOp;
+import org.esa.beam.meris.icol.tm.TmConstants;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.util.math.MathUtils;
 import org.opengis.referencing.operation.MathTransform;
 
 import javax.media.jai.BorderExtender;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 
@@ -39,7 +34,7 @@ import java.text.ParseException;
                   authors = "Olaf Danne",
                   copyright = "(c) 2009 by Brockmann Consult",
                   description = "Landsat geometry computation.")
-public class TmGeometryOp extends TmBasisOp {
+public class EtmGeometryOp extends TmBasisOp {
 
     public static final int NO_DATA_VALUE = -1;
     public static final int LANDSAT_ORIGINAL_RESOLUTION = 30;
@@ -95,15 +90,10 @@ public class TmGeometryOp extends TmBasisOp {
         int sceneWidth = sourceProduct.getSceneRasterWidth() / (2 * aveBlock);
         int sceneHeight = sourceProduct.getSceneRasterHeight() / (2 * aveBlock);
 
-        String productType;
-        if (landsatTargetResolution == TmConstants.LANDSAT5_GEOM_FR) {
-            productType = sourceProduct.getProductType() + "_FR_" + "_downscaled";
-        } else {
-            productType = sourceProduct.getProductType() + "_RR_" + "_downscaled";
-        }
+        final String productType = sourceProduct.getProductType() + "_downscaled";
         targetProduct = new Product(sourceProduct.getName() + "_downscaled", productType, sceneWidth, sceneHeight);
         GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
-        if (srcGeoCoding instanceof CrsGeoCoding) {
+        if (srcGeoCoding instanceof CrsGeoCoding || srcGeoCoding instanceof MapGeoCoding) {
             MathTransform imageToMapTransform = srcGeoCoding.getImageToMapTransform();
             if (imageToMapTransform instanceof AffineTransform) {
                 AffineTransform affineTransform = (AffineTransform) imageToMapTransform;
@@ -353,7 +343,7 @@ public class TmGeometryOp extends TmBasisOp {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(TmGeometryOp.class);
+            super(EtmGeometryOp.class);
         }
     }
 }

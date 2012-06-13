@@ -78,7 +78,14 @@ public class TmLandClassificationOp extends TmBasisOp {
         reflectanceBands = new Band[3];
         reflectanceBands[0] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[2]);
         reflectanceBands[1] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[3]);
-        reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[5]);
+        if (sourceProduct.getProductType().startsWith("Landsat5")) {
+            reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[5]);   // .._tm6
+        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
+            // todo: clarify if tm6a or tm6b should be used (seem to be nearly the same)
+            reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[5]);   // .._tm6a
+        } else {
+            throw new OperatorException("Unknown source product type '" + sourceProduct.getProductType() + "' - cannot proceed.");
+        }
 
     }
 

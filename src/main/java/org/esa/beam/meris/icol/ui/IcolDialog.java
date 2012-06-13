@@ -139,17 +139,11 @@ public class IcolDialog extends SingleTargetProductDialog {
     }
 
     private boolean isValidLandsat5ProductType(String productType) {
-        return (productType.equalsIgnoreCase(TmConstants.LANDSAT5_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX)) ||
-                (productType.equalsIgnoreCase(TmConstants.LANDSAT5_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX)) ||
-                (productType.equalsIgnoreCase(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
-                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX));
+        return (productType.toUpperCase().startsWith(TmConstants.LANDSAT5_PRODUCT_TYPE_PREFIX));
     }
 
     private boolean isValidLandsat7ProductType(String productType) {
-        return (productType.equalsIgnoreCase(TmConstants.LANDSAT7_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX)) ||
-                (productType.equalsIgnoreCase(TmConstants.LANDSAT7_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX)) ||
-                (productType.equalsIgnoreCase(TmConstants.LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE)) ||
-                (productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX));
+        return (productType.toUpperCase().startsWith(TmConstants.LANDSAT7_PRODUCT_TYPE_PREFIX));
     }
 
     private Product createLandsat5Product() throws OperatorException {

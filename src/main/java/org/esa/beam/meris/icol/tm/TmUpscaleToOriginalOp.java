@@ -76,7 +76,7 @@ public class TmUpscaleToOriginalOp extends TmBasisOp {
 //                }
 //                targetBand = targetProduct.addBand(srcBandName, dataType);
 
-                if (radianceBandIndex != 6) {
+                if (!srcBandName.startsWith("radiance_6")) {
                     targetBand = targetProduct.addBand(srcBandName, ProductData.TYPE_FLOAT32);
                     Band correctedBand = correctedProduct.getBand(sourceBand.getName());
                     Band geometryBand = geometryProduct.getBand(sourceBand.getName());
