@@ -21,8 +21,8 @@ import org.esa.beam.framework.dataio.ProductIO;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.Operator;
+import org.esa.beam.meris.icol.landsat.tm.TmOp;
 import org.esa.beam.meris.icol.meris.MerisOp;
-import org.esa.beam.meris.icol.tm.TmOp;
 
 import java.io.BufferedWriter;
 import java.io.File;

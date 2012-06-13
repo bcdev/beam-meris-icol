@@ -5,7 +5,7 @@ import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.TiePointGrid;
 import org.esa.beam.framework.gpf.Tile;
-import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 import org.esa.beam.util.math.MathUtils;
 
 import java.text.ParseException;
@@ -205,12 +205,12 @@ public class LandsatUtils {
 
     public static double convertRadToRefl(double rad, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
-        return (double) (float) ((rad * constantTerm) / TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId]);
+        return (double) (float) ((rad * constantTerm) / LandsatConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId]);
     }
 
     public static double convertReflToRad(double refl, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
-        return refl * TmConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId] / constantTerm;
+        return refl * LandsatConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId] / constantTerm;
     }
 
     public static boolean isCoordinatesOutOfBounds(int x, int y, Tile tile) {

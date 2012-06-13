@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.etm;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
@@ -16,6 +16,11 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.HelperFunctions;
 import org.esa.beam.meris.brr.LandClassificationOp;
+import org.esa.beam.meris.icol.landsat.common.CloudClassificationOp;
+import org.esa.beam.meris.icol.landsat.common.DownscaleOp;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
+import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
+import org.esa.beam.meris.icol.landsat.tm.TmGaseousCorrectionOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
@@ -24,20 +29,22 @@ import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.math.MathUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.util.Map;
 
 /**
+ * Class providing Landsat7 ETM+ rayleigh correction
+ *
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.RayleighCorrection",
+@OperatorMetadata(alias = "Landsat7.Etm.EtmRayleighCorrection",
                   version = "1.0",
                   internal = true,
                   authors = "Olaf Danne",
                   copyright = "(c) 2009 by Brockmann Consult",
-                  description = "Landsat TM rayleigh correction.")
-public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
+                  description = "Landsat7 ETM+ rayleigh correction.")
+public class EtmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
     public static final int NO_DATA_VALUE = -1;
     public static final String BRR_BAND_PREFIX = "brr";
@@ -45,7 +52,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     public static final String RAY_CORR_FLAGS = "ray_corr_flags";
 
     protected L2AuxData auxData;
-    protected TmRayleighCorrection rayleighCorrection;
+    protected EtmRayleighCorrection rayleighCorrection;
 
     private Band isLandBand;
     private Band[] brrBands;
@@ -59,8 +66,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     private Band[] sphAlbRBands;
     @SourceProduct(alias = "refl")
     private Product sourceProduct;
-    @SourceProduct(alias = "geometry")
-    private Product geometryProduct;
+    @SourceProduct(alias = "downscaled")
+    private Product downscaledProduct;
     @SourceProduct(alias = "fresnel")
     private Product fresnelProduct;
     @SourceProduct(alias = "land")
@@ -85,7 +92,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     public void initialize() throws OperatorException {
         try {
             auxData = L2AuxDataProvider.getInstance().getAuxdata(sourceProduct);
-            rayleighCorrection = new TmRayleighCorrection(auxData);
+            rayleighCorrection = new EtmRayleighCorrection(auxData);
         } catch (Exception e) {
             throw new OperatorException("could not load L2Auxdata", e);
         }
@@ -115,7 +122,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     }
 
     private Band[] addBandGroup(String prefix) {
-        return OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+        return OperatorUtils.addBandGroup(sourceProduct, LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS,
                                           new int[]{}, targetProduct, prefix, NO_DATA_VALUE, false);
     }
 
@@ -145,10 +152,10 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
             Tile altitudeTile = getSourceTile(
                     sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-            Tile scattAngleTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SCATTERING_ANGLE_BAND_NAME),
+            Tile scattAngleTile = getSourceTile(downscaledProduct.getBand(DownscaleOp.SCATTERING_ANGLE_BAND_NAME),
                                                 rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-            Tile[] rhoNg = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            Tile[] rhoNg = new Tile[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
             for (int i = 0; i < rhoNg.length; i++) {
                 rhoNg[i] = getSourceTile(
                         fresnelProduct.getBand(TmGaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + (i + 1)), rectangle,
@@ -159,9 +166,9 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
             Tile cloudTopPressure = null;
             Tile cloudFlags = null;
             if (cloudProduct != null) {
-                cloudTopPressure = getSourceTile(ctpProduct.getBand(TmConstants.LANDSAT_CTP_BAND_NAME), rectangle,
+                cloudTopPressure = getSourceTile(ctpProduct.getBand(LandsatConstants.LANDSAT_CTP_BAND_NAME), rectangle,
                         BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-                cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle,
+                cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle,
                         BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
@@ -183,15 +190,15 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
             // rayleigh phase function coefficients, PR in DPM
             double[] phaseR = new double[3];
             // rayleigh optical thickness, tauR0 in DPM
-            double[] tauR = new double[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            double[] tauR = new double[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
             // rayleigh reflectance, rhoR4x4 in DPM
-            double[] rhoR = new double[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            double[] rhoR = new double[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
             // rayleigh down transmittance, T_R_thetas_4x4
-            double[] transRs = new double[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            double[] transRs = new double[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
             // rayleigh up transmittance, T_R_thetav_4x4
-            double[] transRv = new double[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            double[] transRv = new double[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
             // rayleigh spherical albedo, SR_4x4
-            double[] sphAlbR = new double[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            double[] sphAlbR = new double[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y += Constants.SUBWIN_HEIGHT) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x += Constants.SUBWIN_WIDTH) {
@@ -208,7 +215,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                                 do_corr[iy - y][ix - x] = true;
                             } else {
                                 do_corr[iy - y][ix - x] = false;
-                                for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                                for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                                     brr[bandId].setSample(ix, iy, BAD_VALUE);
                                 }
                             }
@@ -216,7 +223,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                     }
 
                     if (correctPixel) {
-                        /* average geometry, ozone for window DPM : just use corner pixel ! */
+                        /* average downscaled, ozone for window DPM : just use corner pixel ! */
                         final double szaRad = szaTile.getSampleFloat(x, y) * MathUtils.DTOR;
                         final double vzaRad = vzaTile.getSampleFloat(x, y) * MathUtils.DTOR;
                         final double sins = Math.sin(szaRad);
@@ -237,7 +244,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
 
                         /* correct pressure in presence of clouds */
                         if (cloudProduct != null) {
-                            final boolean isCloud = cloudFlags.getSampleBit(x, y, TmCloudClassificationOp.F_CLOUD);
+                            final boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                             if (isCloud) {
                                 final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x,
                                                                                                         y) / userPSurf;
@@ -249,9 +256,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                         rayleighCorrection.phase_rayleigh(mus, muv, sins, sinv, phaseR);
 
                         /* Rayleigh optical thickness */
-//                        rayleighCorrection.tau_rayleigh(press, tauR);
-                        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-                            tauR[bandId] = TmConstants.LANDSAT5_NOMINAL_RAYLEIGH_OPTICAL_THICKNESS[bandId];
+                        for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
+                            tauR[bandId] = LandsatConstants.LANDSAT7_NOMINAL_RAYLEIGH_OPTICAL_THICKNESS[bandId];
                         }
 
                         /* Rayleigh reflectance*/
@@ -269,8 +275,8 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                         /* process each pixel */
                         for (int iy = y; iy <= yWinEnd; iy++) {
                             for (int ix = x; ix <= xWinEnd; ix++) {
-                                for (int bandId = TmConstants.LANDSAT_RADIANCE_5_BAND_INDEX;
-                                     bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                                for (int bandId = LandsatConstants.LANDSAT_RADIANCE_5_BAND_INDEX;
+                                     bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                                     // apply single scattering approximation
                                     // ICOL D4 ATBD eqs. 26a-c
                                     rhoR[bandId] = 3.0 * tauR[bandId] * (1.0 + cosScattAngle * cosScattAngle) / (16.0 * mus * muv);
@@ -284,7 +290,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                                                                      rhoNg, brr, ix, iy); /*  (2.6.15.4) */
 
                                     /* flag negative Rayleigh-corrected reflectance */
-                                    for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                                    for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                                         rayleigh_refl[bandId].setSample(ix, iy, rhoR[bandId]);
                                         if (brr[bandId].getSampleFloat(ix, iy) <= 0.) {
                                             /* set annotation flag for reflectance product - v4.2 */
@@ -292,7 +298,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
                                         }
                                     }
                                     if (exportRayCoeffs) {
-                                        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                                        for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                                             transRvData[bandId].setSample(ix, iy, transRv[bandId]);
                                             transRsData[bandId].setSample(ix, iy, transRs[bandId]);
                                             tauRData[bandId].setSample(ix, iy, tauR[bandId]);
@@ -321,7 +327,7 @@ public class TmRayleighCorrectionOp extends TmBasisOp implements Constants {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(TmRayleighCorrectionOp.class);
+            super(EtmRayleighCorrectionOp.class);
         }
     }
 }

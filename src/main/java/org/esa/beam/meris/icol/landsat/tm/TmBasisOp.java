@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.tm;
 
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.Operator;

@@ -20,7 +20,7 @@ import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.framework.ui.ModalDialog;
 import org.esa.beam.framework.ui.product.ProductExpressionPane;
 import org.esa.beam.meris.icol.AeArea;
-import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -572,18 +572,18 @@ class IcolForm extends JTabbedPane {
         panel.setBorder(BorderFactory.createTitledBorder("Atmospheric Parameters"));
 
         panel.add(new JLabel("Ozone content (cm atm): "));
-        landsatOzoneContentValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_OZONE_CONTENT));
+        landsatOzoneContentValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_OZONE_CONTENT));
         panel.add(landsatOzoneContentValue);
         panel.add(new JLabel(""));
 
         panel.add(new JLabel("Surface pressure (hPa): "));
-        landsatPSurfValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_SURFACE_PRESSURE));
+        landsatPSurfValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_SURFACE_PRESSURE));
         panel.add(landsatPSurfValue);
         panel.add(new JLabel(""));
 
         panel.add(new JLabel("Surface TM apparent temperature (K): "));
         landsatTM60Value = new JFormattedTextField(
-                Double.toString(TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
+                Double.toString(LandsatConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE));
         panel.add(landsatTM60Value);
         panel.add(new JLabel(""));
 
@@ -622,7 +622,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
 
         cloudBrightnessThresholdValue = new JFormattedTextField(
-                Double.toString(TmConstants.DEFAULT_BRIGHTNESS_THRESHOLD));
+                Double.toString(LandsatConstants.DEFAULT_BRIGHTNESS_THRESHOLD));
         panel.add(new JLabel("Brightness threshold BT: "));
         panel.add(cloudBrightnessThresholdValue);
         panel.add(new JLabel());
@@ -634,7 +634,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        cloudNdviThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDVI_CLOUD_THRESHOLD));
+        cloudNdviThresholdValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_NDVI_CLOUD_THRESHOLD));
         panel.add(new JLabel("NDVI threshold NDVIT: "));
         panel.add(cloudNdviThresholdValue);
         panel.add(new JLabel());
@@ -646,7 +646,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        cloudNdsiThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDSI_THRESHOLD));
+        cloudNdsiThresholdValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_NDSI_THRESHOLD));
         panel.add(new JLabel("NDSI threshold NDSIT: "));
         panel.add(cloudNdsiThresholdValue);
         panel.add(new JLabel());
@@ -658,7 +658,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        cloudTM6ThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_TM6_CLOUD_THRESHOLD));
+        cloudTM6ThresholdValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_TM6_CLOUD_THRESHOLD));
         panel.add(new JLabel("Temperature threshold TM6T (K): "));
         panel.add(cloudTM6ThresholdValue);
         panel.add(new JLabel());
@@ -694,7 +694,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        landNdviThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_NDVI_LAND_THRESHOLD));
+        landNdviThresholdValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_NDVI_LAND_THRESHOLD));
         panel.add(new JLabel("NDVI threshold: "));
         panel.add(landNdviThresholdValue);
         panel.add(new JLabel());
@@ -706,7 +706,7 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel());
         panel.add(new JLabel());
 
-        landTM6ThresholdValue = new JFormattedTextField(Double.toString(TmConstants.DEFAULT_TM6_LAND_THRESHOLD));
+        landTM6ThresholdValue = new JFormattedTextField(Double.toString(LandsatConstants.DEFAULT_TM6_LAND_THRESHOLD));
         panel.add(new JLabel("Temperature threshold TM6T (K): "));
         panel.add(landTM6ThresholdValue);
         panel.add(new JLabel());
@@ -715,12 +715,12 @@ class IcolForm extends JTabbedPane {
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatSummerButton = new JRadioButton(TmConstants.LAND_FLAGS_SUMMER);
+        landsatSummerButton = new JRadioButton(LandsatConstants.LAND_FLAGS_SUMMER);
         landsatSummerButton.setSelected(true);
         panel.add(landsatSummerButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
-        landsatWinterButton = new JRadioButton(TmConstants.LAND_FLAGS_WINTER);
+        landsatWinterButton = new JRadioButton(LandsatConstants.LAND_FLAGS_WINTER);
         landsatWinterButton.setSelected(false);
         panel.add(landsatWinterButton);
         panel.add(new JLabel(""));

@@ -1,11 +1,10 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.common;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.CrsGeoCoding;
 import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.MapGeoCoding;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -20,6 +19,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.util.math.MathUtils;
 import org.opengis.referencing.operation.MathTransform;
@@ -30,16 +30,17 @@ import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 
 /**
+ * Landsat 5 downscaling onto AE correction grid
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.Geometry",
+@OperatorMetadata(alias = "Landsat.Downscale",
                   version = "1.0",
                   internal = true,
                   authors = "Olaf Danne",
                   copyright = "(c) 2009 by Brockmann Consult",
-                  description = "Landsat geometry computation.")
-public class TmGeometryOp extends TmBasisOp {
+                  description = "Landsat downscaling onto AE correction grid.")
+public class DownscaleOp extends TmBasisOp {
 
     public static final int NO_DATA_VALUE = -1;
     public static final int LANDSAT_ORIGINAL_RESOLUTION = 30;
@@ -58,7 +59,6 @@ public class TmGeometryOp extends TmBasisOp {
 
     private GeoCoding sourceGeocoding;
     private ElevationModel getasseElevationModel;
-    private final float SEA_LEVEL_PRESSURE = 1013.25f;
 
     private int aveBlock;
 
@@ -68,7 +68,8 @@ public class TmGeometryOp extends TmBasisOp {
     private Product targetProduct;
     @Parameter
     private int landsatTargetResolution;
-    // TODO: remove parameters, set both start and stop time to SCENE_CENTER_SCAN_TIME (get from PRODUCT_METADATA)
+    @Parameter
+    private String[] radianceBandNames;
     @Parameter
     private String startTime;
     @Parameter
@@ -81,8 +82,7 @@ public class TmGeometryOp extends TmBasisOp {
     public void initialize() throws OperatorException {
 
         final String demName = "GETASSE30";
-        final ElevationModelDescriptor demDescriptor = ElevationModelRegistry.getInstance().getDescriptor(
-                demName);
+        final ElevationModelDescriptor demDescriptor = ElevationModelRegistry.getInstance().getDescriptor(demName);
         if (demDescriptor == null || !demDescriptor.isDemInstalled()) {
             throw new OperatorException("DEM not installed: " + demName + ". Please install with Module Manager.");
         }
@@ -96,22 +96,24 @@ public class TmGeometryOp extends TmBasisOp {
         int sceneHeight = sourceProduct.getSceneRasterHeight() / (2 * aveBlock);
 
         String productType;
-        if (landsatTargetResolution == TmConstants.LANDSAT5_GEOM_FR) {
+        if (landsatTargetResolution == LandsatConstants.LANDSAT_GEOM_FR) {
             productType = sourceProduct.getProductType() + "_FR_" + "_downscaled";
         } else {
             productType = sourceProduct.getProductType() + "_RR_" + "_downscaled";
         }
+
         targetProduct = new Product(sourceProduct.getName() + "_downscaled", productType, sceneWidth, sceneHeight);
-        GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
+
+        final GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
         if (srcGeoCoding instanceof CrsGeoCoding) {
-            MathTransform imageToMapTransform = srcGeoCoding.getImageToMapTransform();
+            final MathTransform imageToMapTransform = srcGeoCoding.getImageToMapTransform();
             if (imageToMapTransform instanceof AffineTransform) {
-                AffineTransform affineTransform = (AffineTransform) imageToMapTransform;
+                final AffineTransform affineTransform = (AffineTransform) imageToMapTransform;
                 final AffineTransform destTransform = new AffineTransform(affineTransform);
-                double scaleX = ((double) sourceProduct.getSceneRasterWidth()) / sceneWidth;
-                double scaleY = ((double) sourceProduct.getSceneRasterHeight()) / sceneHeight;
+                final double scaleX = ((double) sourceProduct.getSceneRasterWidth()) / sceneWidth;
+                final double scaleY = ((double) sourceProduct.getSceneRasterHeight()) / sceneHeight;
                 destTransform.scale(scaleX, scaleY);
-                Rectangle destBounds = new Rectangle(sceneWidth, sceneHeight);
+                final Rectangle destBounds = new Rectangle(sceneWidth, sceneHeight);
                 try {
                     targetProduct.setGeoCoding(new CrsGeoCoding(srcGeoCoding.getMapCRS(), destBounds, destTransform));
                 } catch (Exception e) {
@@ -133,22 +135,10 @@ public class TmGeometryOp extends TmBasisOp {
                     "Start or stop time invalid or has wrong format - must be 'yyyymmdd hh:mm:ss'.");
         }
 
-        if (sourceProduct.getProductType().startsWith("Landsat5")) {
-            // Landsat 5
-            for (int i = 0; i < TmConstants.LANDSAT5_RADIANCE_BAND_NAMES.length; i++) {
-                Band band = targetProduct.addBand(TmConstants.LANDSAT5_RADIANCE_BAND_NAMES[i], ProductData.TYPE_FLOAT32);
-                band.setGeophysicalNoDataValue(NO_DATA_VALUE);
-                band.setNoDataValueUsed(true);
-            }
-        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
-            // Landsat 7
-            for (int i = 0; i < TmConstants.LANDSAT7_RADIANCE_BAND_NAMES.length; i++) {
-                Band band = targetProduct.addBand(TmConstants.LANDSAT7_RADIANCE_BAND_NAMES[i], ProductData.TYPE_FLOAT32);
-                band.setGeophysicalNoDataValue(NO_DATA_VALUE);
-                band.setNoDataValueUsed(true);
-            }
-        } else {
-            throw new OperatorException("Unknown source product type '" + sourceProduct.getProductType() + "' - cannot proceed.");
+        for (int i = 0; i < radianceBandNames.length; i++) {
+            Band band = targetProduct.addBand(radianceBandNames[i], ProductData.TYPE_FLOAT32);
+            band.setGeophysicalNoDataValue(NO_DATA_VALUE);
+            band.setNoDataValueUsed(true);
         }
 
         targetProduct.addBand(LATITUDE_BAND_NAME, ProductData.TYPE_FLOAT32);
@@ -168,8 +158,8 @@ public class TmGeometryOp extends TmBasisOp {
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) throws OperatorException {
 
-        Rectangle targetRectangle = targetTile.getRectangle();
-        Rectangle sourceRectangle = new Rectangle(0, 0, sourceProduct.getSceneRasterWidth(),
+        final Rectangle targetRectangle = targetTile.getRectangle();
+        final Rectangle sourceRectangle = new Rectangle(0, 0, sourceProduct.getSceneRasterWidth(),
                                                   sourceProduct.getSceneRasterHeight());
 
         Tile radianceSourceTile = null;
@@ -183,16 +173,16 @@ public class TmGeometryOp extends TmBasisOp {
         pm.beginTask("Processing frame...", targetRectangle.height);
         try {
             // averaging
-            int x1 = sourceRectangle.x;
-            int x2 = sourceRectangle.x + sourceRectangle.width - 1;
-            int y1 = sourceRectangle.y;
-            int y2 = sourceRectangle.y + sourceRectangle.height - 1;
+            final int x1 = sourceRectangle.x;
+            final int x2 = sourceRectangle.x + sourceRectangle.width - 1;
+            final int y1 = sourceRectangle.y;
+            final int y2 = sourceRectangle.y + sourceRectangle.height - 1;
 
-            int aveSize = 2 * aveBlock;
+            final int aveSize = 2 * aveBlock;
             for (int iSrcY = y1 + aveBlock; iSrcY <= y2 + aveBlock; iSrcY += aveSize) {
                 for (int iSrcX = x1 + aveBlock; iSrcX <= x2 + aveBlock; iSrcX += aveSize) {
-                    int iTarX = ((iSrcX - x1 - aveBlock) / aveSize);
-                    int iTarY = ((iSrcY - y1 - aveBlock) / aveSize);
+                    final int iTarX = ((iSrcX - x1 - aveBlock) / aveSize);
+                    final int iTarY = ((iSrcY - y1 - aveBlock) / aveSize);
 
                     if (!(LandsatUtils.isCoordinatesOutOfBounds(iTarX, iTarY, targetTile))) {
                         final GeoPos geoPosAve = getGeoPosSpatialAverage(iSrcX, iSrcY);
@@ -294,7 +284,7 @@ public class TmGeometryOp extends TmBasisOp {
                 final PixelPos pixelPos = new PixelPos(ix, iy);
                 final GeoPos geoPos = sourceGeocoding.getGeoPos(pixelPos, null);
                 final float alt = getasseElevationModel.getElevation(geoPos);
-                boolean valid = (Double.compare(alt, NO_DATA_VALUE) != 0);
+                final boolean valid = (Double.compare(alt, NO_DATA_VALUE) != 0);
                 if (valid) {
                     n++;
                     altAve += alt;
@@ -325,7 +315,7 @@ public class TmGeometryOp extends TmBasisOp {
             for (int ix = minX; ix <= maxX; ix++) {
                 final PixelPos pixelPos = new PixelPos(ix, iy);
                 final GeoPos geoPos = sourceGeocoding.getGeoPos(pixelPos, null);
-                boolean valid = (Double.compare(geoPos.getLat(), NO_DATA_VALUE) != 0) &&
+                final boolean valid = (Double.compare(geoPos.getLat(), NO_DATA_VALUE) != 0) &&
                         (Double.compare(geoPos.getLon(), NO_DATA_VALUE) != 0);
                 if (valid) {
                     n++;
@@ -353,7 +343,7 @@ public class TmGeometryOp extends TmBasisOp {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(TmGeometryOp.class);
+            super(DownscaleOp.class);
         }
     }
 }

@@ -5,7 +5,7 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.ParameterDescriptorFactory;
 import org.esa.beam.meris.icol.AeArea;
-import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,13 +61,13 @@ public class IcolModel {
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
     private int landsatTargetResolution = 0; // 300m
     @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"})
-    private int landsatOutputProductType = TmConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE; // standard product
+    private int landsatOutputProductType = LandsatConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE; // standard product
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.32")
-    private double landsatUserOzoneContent = TmConstants.DEFAULT_OZONE_CONTENT;
+    private double landsatUserOzoneContent = LandsatConstants.DEFAULT_OZONE_CONTENT;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.0")
-    private double landsatUserPSurf = TmConstants.DEFAULT_SURFACE_PRESSURE;
+    private double landsatUserPSurf = LandsatConstants.DEFAULT_SURFACE_PRESSURE;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "288.0")
-    private double landsatUserTm60 = TmConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE;
+    private double landsatUserTm60 = LandsatConstants.DEFAULT_SURFACE_TM_APPARENT_TEMPERATURE;
 
     @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyBrightnessFilter = true;
@@ -78,25 +78,25 @@ public class IcolModel {
     @Parameter(defaultValue = "true")
     private boolean landsatCloudFlagApplyTemperatureFilter = true;
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.3")
-    private double cloudBrightnessThreshold = TmConstants.DEFAULT_BRIGHTNESS_THRESHOLD;
+    private double cloudBrightnessThreshold = LandsatConstants.DEFAULT_BRIGHTNESS_THRESHOLD;
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
-    private double cloudNdviThreshold = TmConstants.DEFAULT_NDVI_CLOUD_THRESHOLD;
+    private double cloudNdviThreshold = LandsatConstants.DEFAULT_NDVI_CLOUD_THRESHOLD;
     @Parameter(interval = "[0.0, 10.0]", defaultValue = "3.0")
-    private double cloudNdsiThreshold = TmConstants.DEFAULT_NDSI_THRESHOLD;
+    private double cloudNdsiThreshold = LandsatConstants.DEFAULT_NDSI_THRESHOLD;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
-    private double cloudTM6Threshold = TmConstants.DEFAULT_TM6_CLOUD_THRESHOLD;
+    private double cloudTM6Threshold = LandsatConstants.DEFAULT_TM6_CLOUD_THRESHOLD;
 
     @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyNdviFilter = true;
     @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyTemperatureFilter = true;
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
-    private double landNdviThreshold = TmConstants.DEFAULT_NDVI_LAND_THRESHOLD;
+    private double landNdviThreshold = LandsatConstants.DEFAULT_NDVI_LAND_THRESHOLD;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
-    private double landTM6Threshold = TmConstants.DEFAULT_TM6_LAND_THRESHOLD;
-    @Parameter(defaultValue = TmConstants.LAND_FLAGS_SUMMER, valueSet = {TmConstants.LAND_FLAGS_SUMMER,
-            TmConstants.LAND_FLAGS_WINTER})
-    private String landsatSeason = TmConstants.LAND_FLAGS_SUMMER;
+    private double landTM6Threshold = LandsatConstants.DEFAULT_TM6_LAND_THRESHOLD;
+    @Parameter(defaultValue = LandsatConstants.LAND_FLAGS_SUMMER, valueSet = {LandsatConstants.LAND_FLAGS_SUMMER,
+            LandsatConstants.LAND_FLAGS_WINTER})
+    private String landsatSeason = LandsatConstants.LAND_FLAGS_SUMMER;
 
 
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})

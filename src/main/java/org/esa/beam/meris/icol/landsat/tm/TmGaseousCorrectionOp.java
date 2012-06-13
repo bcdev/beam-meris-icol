@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.tm;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
@@ -10,6 +10,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
 import javax.media.jai.BorderExtender;
@@ -17,15 +18,16 @@ import java.awt.Rectangle;
 import java.util.Map;
 
 /**
+ * Landsat TM gaseous absorption correction
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.GaseousCorrection",
+@OperatorMetadata(alias = "Landsat5.Tm.GaseousCorrection",
         version = "1.0",
         internal = true,
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
-        description = "Landsat TM gaseous absorbtion correction.")
+        description = "Landsat TM gaseous absorption correction.")
 public class TmGaseousCorrectionOp extends TmBasisOp {
     public static final String RHO_NG_BAND_PREFIX = "rho_ng";
     public static final String TG_BAND_PREFIX = "tg";
@@ -47,11 +49,11 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
     public void initialize() throws OperatorException {
     	targetProduct = createCompatibleProduct(sourceProduct, "TM", "TM_L2");
 
-        rhoNgBands = OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+        rhoNgBands = OperatorUtils.addBandGroup(sourceProduct, LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
                 new int[]{}, targetProduct, RHO_NG_BAND_PREFIX, NO_DATA_VALUE, false);
 
         if (exportTg) {
-            tgBands = OperatorUtils.addBandGroup(sourceProduct, TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
+            tgBands = OperatorUtils.addBandGroup(sourceProduct, LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS,
                     new int[]{}, targetProduct, TG_BAND_PREFIX, NO_DATA_VALUE, false);
         }
     }
@@ -62,17 +64,17 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
 
-            Tile[] gaseousTransmittanceTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-            for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
+            Tile[] gaseousTransmittanceTile = new Tile[LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            for (int i = 0; i < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
                 gaseousTransmittanceTile[i] =
-                        getSourceTile(atmFunctionsProduct.getBand(TmConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i]), rectangle,
+                        getSourceTile(atmFunctionsProduct.getBand(LandsatConstants.LANDSAT5_GAS_TRANSMITTANCE_BAND_NAMES[i]), rectangle,
                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
-            Tile[] reflectanceTile = new Tile[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-            for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
+            Tile[] reflectanceTile = new Tile[LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
+            for (int i = 0; i < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
                 reflectanceTile[i] =
-                        getSourceTile(sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]), rectangle,
+                        getSourceTile(sourceProduct.getBand(LandsatConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]), rectangle,
                                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
 
@@ -84,10 +86,10 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                    for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                    for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
                         double reflectance = reflectanceTile[bandId].getSampleDouble(x, y);
                         final double gaseousTransmittance = gaseousTransmittanceTile[bandId].getSampleDouble(x, y);
-                        if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) { // TM6 (temperature)
+                        if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) { // TM6 (temperature)
                             reflectance *= gaseousTransmittance;
                         }
                         rhoNgTile[bandId].setSample(x, y, reflectance);
@@ -96,7 +98,7 @@ public class TmGaseousCorrectionOp extends TmBasisOp {
                         }
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
                 pm.worked(1);
             }
         } catch (Exception e) {

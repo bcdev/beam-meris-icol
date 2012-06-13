@@ -28,9 +28,9 @@ import org.esa.beam.framework.gpf.ui.*;
 import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
+import org.esa.beam.meris.icol.landsat.tm.TmOp;
 import org.esa.beam.meris.icol.meris.MerisOp;
-import org.esa.beam.meris.icol.tm.TmConstants;
-import org.esa.beam.meris.icol.tm.TmOp;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -101,10 +101,10 @@ public class IcolDialog extends SingleTargetProductDialog {
         //    - Landsat TM5 Icol 'Geometry' product (L1G)
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) &&
-//                !(productType.equals(TmConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
+//                !(productType.equals(LandsatConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
                 !(isValidLandsat5ProductType(productType)) &&
                 !(isValidLandsat7ProductType(productType)) &&
-                !(productType.startsWith(TmConstants.LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX))) {
+                !(productType.startsWith(LandsatConstants.LANDSAT_DOWNSCALED_PRODUCT_TYPE_PREFIX))) {
             showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
             return false;
         }
@@ -139,11 +139,11 @@ public class IcolDialog extends SingleTargetProductDialog {
     }
 
     private boolean isValidLandsat5ProductType(String productType) {
-        return (productType.toUpperCase().startsWith(TmConstants.LANDSAT5_PRODUCT_TYPE_PREFIX));
+        return (productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX));
     }
 
     private boolean isValidLandsat7ProductType(String productType) {
-        return (productType.toUpperCase().startsWith(TmConstants.LANDSAT7_PRODUCT_TYPE_PREFIX));
+        return (productType.toUpperCase().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX));
     }
 
     private Product createLandsat5Product() throws OperatorException {

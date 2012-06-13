@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.common;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
@@ -7,19 +7,28 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.util.ProductUtils;
 
 import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
+ * Landsat5 TM cloud top pressure
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public class TmCloudTopPressureOp extends TmBasisOp {
+@OperatorMetadata(alias = "Landsat.CloudTopPressure",
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Landsat cloud top pressure.")
+public class CloudTopPressureOp extends TmBasisOp {
 
     private transient Band reflectanceBand6;
 
@@ -33,39 +42,40 @@ public class TmCloudTopPressureOp extends TmBasisOp {
     private double userPSurf;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
     private double userTm60;
+    @Parameter
+    private String thermalBandName;
 
     @Override
     public void initialize() throws OperatorException {
-        // todo: implement
         final int sceneWidth = sourceProduct.getSceneRasterWidth();
         final int sceneHeight = sourceProduct.getSceneRasterHeight();
         targetProduct = new Product(sourceProduct.getName() + "_CTP", "ICOL", sceneWidth, sceneHeight);
 
-        targetProduct.addBand(TmConstants.LANDSAT_CTP_BAND_NAME, ProductData.TYPE_FLOAT32);
+        targetProduct.addBand(LandsatConstants.LANDSAT_CTP_BAND_NAME, ProductData.TYPE_FLOAT32);
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
-        reflectanceBand6 = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_6_BAND_NAME);
+        reflectanceBand6 = sourceProduct.getBand(thermalBandName);
     }
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) throws OperatorException {
 
-        Rectangle rectangle = targetTile.getRectangle();
+        final Rectangle rectangle = targetTile.getRectangle();
 
-        Tile reflectance6Tile = getSourceTile(reflectanceBand6, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-        Tile cloudFlags = getSourceTile(cloudProduct.getBand(TmCloudClassificationOp.CLOUD_FLAGS), rectangle,
+        final Tile reflectance6Tile = getSourceTile(reflectanceBand6, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+        final Tile cloudFlags = getSourceTile(cloudProduct.getBand(CloudClassificationOp.CLOUD_FLAGS), rectangle,
                 BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
         pm.beginTask("Processing frame...", rectangle.height);
         try {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                    final boolean isCloud = cloudFlags.getSampleBit(x, y, TmCloudClassificationOp.F_CLOUD);
+                    final boolean isCloud = cloudFlags.getSampleBit(x, y, CloudClassificationOp.F_CLOUD);
                     double ctp = 300.0; // TBC
                     if (isCloud) {
                         final float tm6 = reflectance6Tile.getSampleFloat(x, y);
-                        ctp = userPSurf + TmConstants.CTP_K_FACTOR * (tm6 - userTm60);
+                        ctp = userPSurf + LandsatConstants.CTP_K_FACTOR * (tm6 - userTm60);
                     }
                     targetTile.setSample(x, y, ctp);
                 }
@@ -84,7 +94,7 @@ public class TmCloudTopPressureOp extends TmBasisOp {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(TmCloudTopPressureOp.class);
+            super(CloudTopPressureOp.class);
         }
     }
 }

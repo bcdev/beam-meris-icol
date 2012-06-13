@@ -3,12 +3,8 @@ package org.esa.beam.meris.icol.utils;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.brr.LandClassificationOp;
 import org.esa.beam.meris.brr.Rad2ReflOp;
 import org.esa.beam.meris.brr.RayleighCorrectionOp;
-import org.esa.beam.meris.icol.common.CoastDistanceOp;
-import org.esa.beam.meris.icol.tm.TmAeMergeOp;
 
 /**
  * @author Olaf Danne
@@ -127,16 +123,6 @@ public class DebugUtils {
         }
     }
 
-    public static void addAeTotalProductDebugBands(Product targetProduct, Product aeTotalProduct) {
-        // (v) rho_r_bracket from AE Rayleigh correction
-        for (Band band : aeTotalProduct.getBands()) {
-            if (band.getName().startsWith(TmAeMergeOp.AE_TOTAL)) {
-                targetProduct.addBand(band);
-            }
-        }
-    }
-
-
     public static void addRad2ReflDebugBands(Product targetProduct, Product rad2ReflProduct) {
         for (Band band : rad2ReflProduct.getBands()) {
             if (band.getName().startsWith(Rad2ReflOp.RHO_TOA_BAND_PREFIX)) {
@@ -147,11 +133,6 @@ public class DebugUtils {
 
 
     public static void addRayleighCorrDebugBands(Product targetProduct, Product rayleighProduct) {
-//        for (Band band:rayleighProduct.getBands()) {
-//            if (band.getName().startsWith(RayleighCorrectionOp.RAYLEIGH_REFL_BAND_PREFIX)) {
-//                targetProduct.addBand(band);
-//            }
-//        }
         // (iii) BRR before AE correction
         for (Band band : rayleighProduct.getBands()) {
             if (band.getName().startsWith(RayleighCorrectionOp.BRR_BAND_PREFIX)) {
@@ -160,43 +141,9 @@ public class DebugUtils {
         }
     }
 
-    public static void addLandProductDebugBands(Product targetProduct, Product landProduct, FlagCoding landFlagCoding) {
-        for (Band band : landProduct.getBands()) {
-            if (band.getName().equals(LandClassificationOp.LAND_FLAGS)) {
-                band.setSampleCoding(landFlagCoding);
-            }
-            targetProduct.addBand(band);
-        }
-    }
-
-    public static void addCloudProductDebugBands(Product targetProduct, Product cloudProduct, FlagCoding cloudFlagCoding) {
-        for (Band band : cloudProduct.getBands()) {
-            if (band.getName().equals(CloudClassificationOp.CLOUD_FLAGS)) {
-                band.setSampleCoding(cloudFlagCoding);
-            }
-            targetProduct.addBand(band);
-        }
-    }
-
     public static void addCtpProductDebugBand(Product targetProduct, Product ctpProduct, String ctpBandName) {
         for (Band band : ctpProduct.getBands()) {
             if (band.getName().equals(ctpBandName)) {
-                targetProduct.addBand(band);
-            }
-        }
-    }
-
-    public static void addAEMaskProductDebugBand(Product targetProduct, Product aemaskProduct, String aemaskBandName) {
-        for (Band band : aemaskProduct.getBands()) {
-            if (band.getName().equals(aemaskBandName)) {
-                targetProduct.addBand(band);
-            }
-        }
-    }
-
-    public static void addCoastDistanceProductDebugBand(Product targetProduct, Product coastDistanceProduct, String coastDistanceBandName) {
-        for (Band band : coastDistanceProduct.getBands()) {
-            if (band.getName().equals(CoastDistanceOp.COAST_DISTANCE)) {
                 targetProduct.addBand(band);
             }
         }

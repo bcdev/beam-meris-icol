@@ -197,18 +197,8 @@ public class MerisOp extends Operator {
                 addDebugBands(rad2reflProduct, ctpProduct, cloudClassificationProduct, landProduct,
                               aemaskRayleighProduct, aemaskAerosolProduct, coastDistanceProduct, zmaxProduct,
                               brrCloudProduct, brrConvolveProduct, aeRayProduct, aeAerProduct, reverseRadianceProduct);
-            } else {
-                // test:
-                // Rayleigh correction
-//                DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrCloudProduct);
-
-                // brr convolution (test)
-//                if (openclConvolution)
-//                    DebugUtils.addRayleighCorrDebugBands(reverseRadianceProduct, brrConvolveProduct);
-                // end test
             }
             targetProduct = reverseRadianceProduct;
-//            targetProduct = constProduct;
         } else if (productType == 1) {
             targetProduct = finalRhoToaProduct;
         }

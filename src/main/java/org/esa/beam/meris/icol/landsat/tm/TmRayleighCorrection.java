@@ -1,6 +1,7 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.tm;
 
 import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.meris.l2auxdata.L2AuxData;
 import org.esa.beam.util.math.FractIndex;
@@ -63,8 +64,8 @@ public class TmRayleighCorrection implements Constants {
             }
         }
 
-        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-            if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
+        for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+            if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
                 double constTerm = (1. - Math.exp(-tauRayl[bandId] * airMass)) / (4. * (mus + muv));
                 for (int is = 0; is < RAYSCATT_NUM_SER; is++) {
                     /* primary scattering reflectance */
@@ -128,8 +129,8 @@ public class TmRayleighCorrection implements Constants {
     public void tau_rayleigh(double press, double[] tauRayl) {
         double ratio = press / auxdata.Pstd;
 
-        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-            if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
+        for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+            if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
                 tauRayl[bandId] = auxdata.tau_R[bandId] * ratio; /* DPM #2.6.15.2-5 */
             } else {
                 /* TM6 - no correction */
@@ -153,8 +154,8 @@ public class TmRayleighCorrection implements Constants {
 
     public void trans_rayleigh(double mu, double[] tauRayl, double[] transRayl) {
 
-        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-            if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
+        for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+            if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
                 double tr = (2. / 3. + mu + (2. / 3. - mu) * Math.exp(-tauRayl[bandId] / mu))
                         / (4. / 3. + tauRayl[bandId]); /* DPM #2.6.15.2-1, -3 */
                 transRayl[bandId] = auxdata.Raytrans[0] + auxdata.Raytrans[1] * tr
@@ -183,8 +184,8 @@ public class TmRayleighCorrection implements Constants {
 
     public void sphAlb_rayleigh(double[] tauRayl, double[] sphalbRayl) {
 
-        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-            if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
+        for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+            if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
                 Interp.interpCoord(tauRayl[bandId], auxdata.Rayalb.getTab(0), lh.ray_index[0]);
                 sphalbRayl[bandId] = Interp.interpolate(auxdata.Rayalb.getJavaArray(), lh.ray_index); /* DPM #2.6.15.3-1 */
             } else {
@@ -212,8 +213,8 @@ public class TmRayleighCorrection implements Constants {
     public void corr_rayleigh(double[] refRayl, double[] sphalbRayl, double[] transRs, double[] transRv,
                               Tile[] rhoNg, Tile[] brr, int x, int y) {
 
-        for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
-            if (bandId != TmConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
+        for (int bandId = 0; bandId < LandsatConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+            if (bandId != LandsatConstants.LANDSAT5_RADIANCE_6_BAND_INDEX) {
                 double dum = (rhoNg[bandId].getSampleFloat(x, y) - refRayl[bandId]) / (transRs[bandId] * transRv[bandId]);      /* DPM 2.6.15.4-5 */
                 brr[bandId].setSample(x, y, dum / (1. + sphalbRayl[bandId] * dum)); /* DPM 2.6.15.4-6 */
             } else {

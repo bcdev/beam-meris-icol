@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.common;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 
@@ -19,16 +20,17 @@ import javax.media.jai.BorderExtender;
 import java.awt.Rectangle;
 
 /**
+ * Class providing Landsat land classification
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.landClassification",
-        version = "1.0",
-        internal = true,
-        authors = "Olaf Danne",
-        copyright = "(c) 2009 by Brockmann Consult",
-        description = "Landsat5 TM land classification.")
-public class TmLandClassificationOp extends TmBasisOp {
+@OperatorMetadata(alias = "Landsat.LandClassification",
+                  version = "1.0",
+                  internal = true,
+                  authors = "Olaf Danne",
+                  copyright = "(c) 2009 by Brockmann Consult",
+                  description = "Landsat land classification.")
+public class LandClassificationOp extends TmBasisOp {
 
     public static final String LAND_FLAGS = "land_classif_flags";
 
@@ -44,17 +46,19 @@ public class TmLandClassificationOp extends TmBasisOp {
     private Product sourceProduct;
     @TargetProduct
     private Product targetProduct;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyNdviFilter;
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue = "true")
     private boolean landsatLandFlagApplyTemperatureFilter;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
     private double landNdviThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
     private double landTM6Threshold;
-    @Parameter(defaultValue = "", valueSet = {TmConstants.LAND_FLAGS_SUMMER,
-            TmConstants.LAND_FLAGS_WINTER})
+    @Parameter(defaultValue = "", valueSet = {LandsatConstants.LAND_FLAGS_SUMMER,
+            LandsatConstants.LAND_FLAGS_WINTER})
     private String landsatSeason;
+    @Parameter
+    private String[] reflectanceBandNames;
 
     @Override
     public void initialize() throws OperatorException {
@@ -69,24 +73,10 @@ public class TmLandClassificationOp extends TmBasisOp {
 
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
-//        reflectanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-//
-//        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-//            reflectanceBands[i] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i]);
-//        }
-
         reflectanceBands = new Band[3];
-        reflectanceBands[0] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[2]);
-        reflectanceBands[1] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[3]);
-        if (sourceProduct.getProductType().startsWith("Landsat5")) {
-            reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[5]);   // .._tm6
-        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
-            // todo: clarify if tm6a or tm6b should be used (seem to be nearly the same)
-            reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[5]);   // .._tm6a
-        } else {
-            throw new OperatorException("Unknown source product type '" + sourceProduct.getProductType() + "' - cannot proceed.");
-        }
-
+        reflectanceBands[0] = sourceProduct.getBand(reflectanceBandNames[2]);
+        reflectanceBands[1] = sourceProduct.getBand(reflectanceBandNames[3]);
+        reflectanceBands[2] = sourceProduct.getBand(reflectanceBandNames[5]);
     }
 
     public static FlagCoding createFlagCoding() {
@@ -109,23 +99,20 @@ public class TmLandClassificationOp extends TmBasisOp {
         Tile[] reflectanceTile = new Tile[reflectanceBands.length];
         for (int i = 0; i < reflectanceTile.length; i++) {
             reflectanceTile[i] = getSourceTile(reflectanceBands[i], rectangle,
-                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                                               BorderExtender.createInstance(BorderExtender.BORDER_COPY));
         }
 
         pm.beginTask("Processing frame...", rectangle.height);
         try {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-//                    final float tm3 = reflectanceTile[2].getSampleFloat(x, y);
-//                    final float tm4 = reflectanceTile[3].getSampleFloat(x, y);
-//                    final float tm6 = reflectanceTile[5].getSampleFloat(x, y);
                     final float tm3 = reflectanceTile[0].getSampleFloat(x, y);
                     final float tm4 = reflectanceTile[1].getSampleFloat(x, y);
                     final float tm6 = reflectanceTile[2].getSampleFloat(x, y);
 
                     if (landsatLandFlagApplyNdviFilter) {
-                        double ndvi = (tm4 - tm3)/(tm4 + tm3);
-                        boolean isNdvi =  (ndvi > landNdviThreshold);
+                        double ndvi = (tm4 - tm3) / (tm4 + tm3);
+                        boolean isNdvi = (ndvi > landNdviThreshold);
                         targetTile.setSample(x, y, F_NDVI, isNdvi);
                     } else {
                         targetTile.setSample(x, y, F_NDVI, false);
@@ -133,10 +120,10 @@ public class TmLandClassificationOp extends TmBasisOp {
 
                     if (landsatLandFlagApplyTemperatureFilter) {
                         boolean isTemp;
-                        if (landsatSeason.equals(TmConstants.LAND_FLAGS_SUMMER)) {
-                            isTemp =  (tm6 > landTM6Threshold);
+                        if (landsatSeason.equals(LandsatConstants.LAND_FLAGS_SUMMER)) {
+                            isTemp = (tm6 > landTM6Threshold);
                         } else {
-                            isTemp =  (tm6 < landTM6Threshold);
+                            isTemp = (tm6 < landTM6Threshold);
                         }
                         targetTile.setSample(x, y, F_TEMP, isTemp);
                     } else {
@@ -144,13 +131,13 @@ public class TmLandClassificationOp extends TmBasisOp {
                     }
 
                     boolean is_ice = false;
-                    // todo: define and implement ice criterion
+                    // todo: RS to define ice criterion
                     targetTile.setSample(x, y, F_ICE, is_ice);
 
                     boolean isLand = isLand(x, y, targetTile);
                     targetTile.setSample(x, y, F_LANDCONS, isLand);
 
-                    // todo: define and implement inland water criterion if needed
+                    // todo: RS to define inland water criterion if needed
                     boolean isInlandWater = false;
                     targetTile.setSample(x, y, F_LOINLD, isInlandWater);
                 }
@@ -183,7 +170,7 @@ public class TmLandClassificationOp extends TmBasisOp {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(TmLandClassificationOp.class);
+            super(LandClassificationOp.class);
         }
     }
 }

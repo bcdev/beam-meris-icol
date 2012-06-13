@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.etm;
+package org.esa.beam.meris.icol.landsat.common;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
@@ -12,25 +12,25 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.meris.icol.tm.TmBasisOp;
-import org.esa.beam.meris.icol.tm.TmConstants;
+import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.util.BitSetter;
 import org.esa.beam.util.ProductUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
+ * Landsat5 TM cloud classification
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.EtmCloudClassification",
-                  version = "1.0",
-                  internal = true,
-                  authors = "Olaf Danne",
-                  copyright = "(c) 2009 by Brockmann Consult",
-                  description = "Landsat5 TM cloud classification.")
-public class EtmCloudClassificationOp extends TmBasisOp {
+@OperatorMetadata(alias = "Landsat.CloudClassification",
+        version = "1.0",
+        internal = true,
+        authors = "Olaf Danne",
+        copyright = "(c) 2009 by Brockmann Consult",
+        description = "Landsat cloud classification.")
+public class CloudClassificationOp extends TmBasisOp {
 
     public static final String CLOUD_FLAGS = "cloud_classif_flags";
 
@@ -46,22 +46,24 @@ public class EtmCloudClassificationOp extends TmBasisOp {
     private Product sourceProduct;
     @TargetProduct
     private Product targetProduct;
-    @Parameter(defaultValue = "true")
+    @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyBrightnessFilter;
-    @Parameter(defaultValue = "true")
+    @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyNdviFilter;
-    @Parameter(defaultValue = "true")
+    @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyNdsiFilter;
-    @Parameter(defaultValue = "true")
+    @Parameter(defaultValue="true")
     private boolean landsatCloudFlagApplyTemperatureFilter;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.3")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.3")
     private double cloudBrightnessThreshold;
-    @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
+    @Parameter(interval = "[0.0, 1.0]", defaultValue="0.2")
     private double cloudNdviThreshold;
-    @Parameter(interval = "[0.0, 10.0]", defaultValue = "3.0")
+    @Parameter(interval = "[0.0, 10.0]", defaultValue="3.0")
     private double cloudNdsiThreshold;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue="300.0")
     private double cloudTM6Threshold;
+    @Parameter
+    private String[] reflectanceBandNames;
 
     @Override
     public void initialize() throws OperatorException {
@@ -77,18 +79,12 @@ public class EtmCloudClassificationOp extends TmBasisOp {
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
 
         reflectanceBands = new Band[5];
-        reflectanceBands[0] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[1]);   // .._tm2
-        reflectanceBands[1] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[2]);   // .._tm3
-        reflectanceBands[2] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[3]);   // .._tm4
-        reflectanceBands[3] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[4]);   // .._tm5
-        if (sourceProduct.getProductType().startsWith("Landsat5")) {
-            reflectanceBands[4] = sourceProduct.getBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[5]);   // .._tm6
-        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
-            // todo: clarify if tm6a or tm6b should be used (seem to be nearly the same)
-            reflectanceBands[4] = sourceProduct.getBand(TmConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[5]);   // .._tm6a
-        } else {
-            throw new OperatorException("Unknown source product type '" + sourceProduct.getProductType() + "' - cannot proceed.");
-        }
+        reflectanceBands[0] = sourceProduct.getBand(reflectanceBandNames[1]);
+        reflectanceBands[1] = sourceProduct.getBand(reflectanceBandNames[2]);
+        reflectanceBands[2] = sourceProduct.getBand(reflectanceBandNames[3]);
+        reflectanceBands[3] = sourceProduct.getBand(reflectanceBandNames[4]);
+        reflectanceBands[4] = sourceProduct.getBand(reflectanceBandNames[5]);
+
     }
 
     public static FlagCoding createFlagCoding() {
@@ -117,12 +113,6 @@ public class EtmCloudClassificationOp extends TmBasisOp {
         try {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-//                    final float tm2 = reflectanceTile[1].getSampleFloat(x, y);
-//                    final float tm3 = reflectanceTile[2].getSampleFloat(x, y);
-//                    final float tm4 = reflectanceTile[3].getSampleFloat(x, y);
-//                    final float tm5 = reflectanceTile[4].getSampleFloat(x, y);
-//                    final float tm6 = reflectanceTile[5].getSampleFloat(x, y);
-
                     final float tm2 = reflectanceTile[0].getSampleFloat(x, y);
                     final float tm3 = reflectanceTile[1].getSampleFloat(x, y);
                     final float tm4 = reflectanceTile[2].getSampleFloat(x, y);
@@ -130,36 +120,36 @@ public class EtmCloudClassificationOp extends TmBasisOp {
                     final float tm6 = reflectanceTile[4].getSampleFloat(x, y);
 
                     if (landsatCloudFlagApplyBrightnessFilter) {
-                        boolean isBright = (tm3 > cloudBrightnessThreshold);
+                        final boolean isBright =  (tm3 > cloudBrightnessThreshold);
                         targetTile.setSample(x, y, F_BRIGHT, isBright);
                     } else {
                         targetTile.setSample(x, y, F_BRIGHT, false);
                     }
 
                     if (landsatCloudFlagApplyNdviFilter) {
-                        double ndvi = (tm4 - tm3) / (tm4 + tm3);
-                        boolean isNdvi = (ndvi < cloudNdviThreshold);
+                        final double ndvi = (tm4 - tm3)/(tm4 + tm3);
+                        final boolean isNdvi =  (ndvi < cloudNdviThreshold);
                         targetTile.setSample(x, y, F_NDVI, isNdvi);
                     } else {
                         targetTile.setSample(x, y, F_NDVI, false);
                     }
 
                     if (landsatCloudFlagApplyNdsiFilter) {
-                        double ndsi = (tm2 - tm5) / (tm2 + tm5);
-                        boolean isNdsi = (ndsi < cloudNdsiThreshold);
+                        final double ndsi = (tm2 - tm5)/(tm2 + tm5);
+                        final boolean isNdsi =  (ndsi < cloudNdsiThreshold);
                         targetTile.setSample(x, y, F_NDSI, isNdsi);
                     } else {
                         targetTile.setSample(x, y, F_NDSI, false);
                     }
 
                     if (landsatCloudFlagApplyTemperatureFilter) {
-                        boolean isTemp = (tm6 < cloudTM6Threshold);
+                        final boolean isTemp =  (tm6 < cloudTM6Threshold);
                         targetTile.setSample(x, y, F_TEMP, isTemp);
                     } else {
                         targetTile.setSample(x, y, F_TEMP, false);
                     }
 
-                    boolean isCloud = isCloud(x, y, targetTile);
+                    final boolean isCloud = isCloud(x, y, targetTile);
                     targetTile.setSample(x, y, F_CLOUD, isCloud);
                 }
                 pm.worked(1);
@@ -172,27 +162,24 @@ public class EtmCloudClassificationOp extends TmBasisOp {
     }
 
     private boolean isCloud(int x, int y, Tile targetTile) {
-        boolean isCloud;
-
         if (!landsatCloudFlagApplyBrightnessFilter &&
-                !landsatCloudFlagApplyNdviFilter &&
-                !landsatCloudFlagApplyNdsiFilter &&
-                !landsatCloudFlagApplyTemperatureFilter) {
+            !landsatCloudFlagApplyNdviFilter &&
+            !landsatCloudFlagApplyNdsiFilter &&
+            !landsatCloudFlagApplyTemperatureFilter) {
             // no filter applied
             return false;
         }
 
-        boolean isCloud1 = (targetTile.getSampleBit(x, y, F_BRIGHT) ||
+        final boolean isCloud1 = (targetTile.getSampleBit(x, y, F_BRIGHT) ||
                 !landsatCloudFlagApplyBrightnessFilter);
-        boolean isCloud2 = (targetTile.getSampleBit(x, y, F_NDVI) ||
+        final boolean isCloud2 = (targetTile.getSampleBit(x, y, F_NDVI) ||
                 !landsatCloudFlagApplyNdviFilter);
-        boolean isCloud3 = (targetTile.getSampleBit(x, y, F_NDSI) ||
+        final boolean isCloud3 = (targetTile.getSampleBit(x, y, F_NDSI) ||
                 !landsatCloudFlagApplyNdsiFilter);
-        boolean isCloud4 = (targetTile.getSampleBit(x, y, F_TEMP) ||
+        final boolean isCloud4 = (targetTile.getSampleBit(x, y, F_TEMP) ||
                 !landsatCloudFlagApplyTemperatureFilter);
 
-        isCloud = isCloud1 && isCloud2 && isCloud3 && isCloud4;
-        return isCloud;
+        return isCloud1 && isCloud2 && isCloud3 && isCloud4;
     }
 
     /**
@@ -201,7 +188,7 @@ public class EtmCloudClassificationOp extends TmBasisOp {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(EtmCloudClassificationOp.class);
+            super(CloudClassificationOp.class);
         }
     }
 }

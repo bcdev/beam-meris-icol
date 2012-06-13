@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.common;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
@@ -26,8 +26,10 @@ import java.awt.image.DataBuffer;
 import java.util.Map;
 
 /**
+ *
+ * Class providing conversion of radiances into reflectances and temperature (TM6) for Landsat
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Landsat.RadConversion",
         version = "1.0",
@@ -35,7 +37,7 @@ import java.util.Map;
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
         description = "Converts radiances into reflectances and temperature (TM6) for Landsat.")
-public class TmRadConversionOp extends Operator {
+public class RadConversionOp extends Operator {
 
     private transient Band[] radianceBands;
     private transient Band[] reflectanceBands;
@@ -45,14 +47,18 @@ public class TmRadConversionOp extends Operator {
 
     @SourceProduct(alias="l1g")
     private Product sourceProduct;
-    @SourceProduct(alias="geometry")
-    private Product geometryProduct;
+    @SourceProduct(alias="downscaled")
+    private Product downscaledProduct;
     @TargetProduct
     private Product targetProduct;
     @Parameter
     private String startTime;
     @Parameter
     private String stopTime;
+    @Parameter
+    private String[] radianceBandNames;
+    @Parameter
+    private String[] reflectanceBandNames;
 
     private double seasonalFactor;
 
@@ -64,36 +70,36 @@ public class TmRadConversionOp extends Operator {
         final String startTimeString = sourceProduct.getStartTime().toString().substring(0,20);
         int daysSince2000 = LandsatUtils.getDaysSince2000(startTimeString);
         seasonalFactor = Utils.computeSeasonalFactor(daysSince2000,
-                                                      TmConstants.SUN_EARTH_DISTANCE_SQUARE);
+                                                      LandsatConstants.SUN_EARTH_DISTANCE_SQUARE);
 
-        radianceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        reflectanceBands = new Band[TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS];
-        int sceneWidth = geometryProduct.getSceneRasterWidth();
-        int sceneHeight = geometryProduct.getSceneRasterHeight();
-        targetProduct = new Product(sourceProduct.getName() + "_ICOL", geometryProduct.getProductType(), sceneWidth, sceneHeight);
-        targetProduct.setStartTime(geometryProduct.getStartTime());
-        targetProduct.setEndTime(geometryProduct.getEndTime());
-        for (int i = 0; i < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; i++) {
-            radianceBands[i] = geometryProduct.getBand(TmConstants.LANDSAT5_RADIANCE_BAND_NAMES[i]);
+        radianceBands = new Band[radianceBandNames.length];
+        reflectanceBands = new Band[radianceBandNames.length];
+        int sceneWidth = downscaledProduct.getSceneRasterWidth();
+        int sceneHeight = downscaledProduct.getSceneRasterHeight();
+        targetProduct = new Product(sourceProduct.getName() + "_ICOL", downscaledProduct.getProductType(), sceneWidth, sceneHeight);
+        targetProduct.setStartTime(downscaledProduct.getStartTime());
+        targetProduct.setEndTime(downscaledProduct.getEndTime());
+        for (int i = 0; i < radianceBandNames.length; i++) {
+            radianceBands[i] = downscaledProduct.getBand(radianceBandNames[i]);
 
-            reflectanceBands[i] = targetProduct.addBand(TmConstants.LANDSAT5_REFLECTANCE_BAND_NAMES[i],
+            reflectanceBands[i] = targetProduct.addBand(reflectanceBandNames[i],
                                                         ProductData.TYPE_FLOAT32);
             reflectanceBands[i].setNoDataValueUsed(true);
             reflectanceBands[i].setNoDataValue(NO_DATA_VALUE);
             reflectanceBands[i].setSpectralBandIndex(i);
         }
 
-        ProductUtils.copyGeoCoding(geometryProduct, targetProduct);
+        ProductUtils.copyGeoCoding(downscaledProduct, targetProduct);
         addTiePointGrids();
     }
     
     private void addTiePointGrids() {
         // Add tie point grids for sun/view zenith/azimuths. Use MERIS notation.
-        Band szaBand = geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME);
-        Band saaBand = geometryProduct.getBand(TmGeometryOp.SUN_AZIMUTH_BAND_NAME);
-        Band vzaBand = geometryProduct.getBand(TmGeometryOp.VIEW_ZENITH_BAND_NAME);
-        Band vaaBand = geometryProduct.getBand(TmGeometryOp.VIEW_AZIMUTH_BAND_NAME);
-        Band altitudeBand = geometryProduct.getBand(TmGeometryOp.ALTITUDE_BAND_NAME);
+        Band szaBand = downscaledProduct.getBand(DownscaleOp.SUN_ZENITH_BAND_NAME);
+        Band saaBand = downscaledProduct.getBand(DownscaleOp.SUN_AZIMUTH_BAND_NAME);
+        Band vzaBand = downscaledProduct.getBand(DownscaleOp.VIEW_ZENITH_BAND_NAME);
+        Band vaaBand = downscaledProduct.getBand(DownscaleOp.VIEW_AZIMUTH_BAND_NAME);
+        Band altitudeBand = downscaledProduct.getBand(DownscaleOp.ALTITUDE_BAND_NAME);
 
         // SZA
         DataBuffer dataBuffer = szaBand.getSourceImage().getData().getDataBuffer();
@@ -102,8 +108,8 @@ public class TmRadConversionOp extends Operator {
             tpgData[i] = dataBuffer.getElemFloat(i);
         }
         TiePointGrid tpg = new TiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME,
-                                               geometryProduct.getSceneRasterWidth(),
-                                               geometryProduct.getSceneRasterHeight(),
+                                               downscaledProduct.getSceneRasterWidth(),
+                                               downscaledProduct.getSceneRasterHeight(),
                                                0.0f, 0.0f, 1.0f, 1.0f, tpgData);
         targetProduct.addTiePointGrid(tpg);
 
@@ -114,8 +120,8 @@ public class TmRadConversionOp extends Operator {
             tpgData[i] = dataBuffer.getElemFloat(i);
         }
         tpg = new TiePointGrid(EnvisatConstants.MERIS_SUN_AZIMUTH_DS_NAME,
-                                               geometryProduct.getSceneRasterWidth(),
-                                               geometryProduct.getSceneRasterHeight(),
+                                               downscaledProduct.getSceneRasterWidth(),
+                                               downscaledProduct.getSceneRasterHeight(),
                                                0.0f, 0.0f, 1.0f, 1.0f, tpgData);
         targetProduct.addTiePointGrid(tpg);
 
@@ -126,8 +132,8 @@ public class TmRadConversionOp extends Operator {
             tpgData[i] = dataBuffer.getElemFloat(i);
         }
         tpg = new TiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME,
-                                               geometryProduct.getSceneRasterWidth(),
-                                               geometryProduct.getSceneRasterHeight(),
+                                               downscaledProduct.getSceneRasterWidth(),
+                                               downscaledProduct.getSceneRasterHeight(),
                                                0.0f, 0.0f, 1.0f, 1.0f, tpgData);
         targetProduct.addTiePointGrid(tpg);
 
@@ -138,8 +144,8 @@ public class TmRadConversionOp extends Operator {
             tpgData[i] = dataBuffer.getElemFloat(i);
         }
         tpg = new TiePointGrid(EnvisatConstants.MERIS_VIEW_AZIMUTH_DS_NAME,
-                                               geometryProduct.getSceneRasterWidth(),
-                                               geometryProduct.getSceneRasterHeight(),
+                                               downscaledProduct.getSceneRasterWidth(),
+                                               downscaledProduct.getSceneRasterHeight(),
                                                0.0f, 0.0f, 1.0f, 1.0f, tpgData);
         targetProduct.addTiePointGrid(tpg);
 
@@ -150,8 +156,8 @@ public class TmRadConversionOp extends Operator {
             tpgData[i] = dataBuffer.getElemFloat(i);
         }
         tpg = new TiePointGrid(EnvisatConstants.MERIS_DEM_ALTITUDE_DS_NAME,
-                                               geometryProduct.getSceneRasterWidth(),
-                                               geometryProduct.getSceneRasterHeight(),
+                                               downscaledProduct.getSceneRasterWidth(),
+                                               downscaledProduct.getSceneRasterHeight(),
                                                0.0f, 0.0f, 1.0f, 1.0f, tpgData);
         targetProduct.addTiePointGrid(tpg);
 
@@ -165,7 +171,7 @@ public class TmRadConversionOp extends Operator {
         	for (int i = 0; i < radianceTile.length; i++) {
         		radianceTile[i] = getSourceTile(radianceBands[i], rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             }
-            Tile szaTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.SUN_ZENITH_BAND_NAME), rectangle,
+            Tile szaTile = getSourceTile(downscaledProduct.getBand(DownscaleOp.SUN_ZENITH_BAND_NAME), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             Tile[] reflectanceTile = OperatorUtils.getTargetTiles(targetTiles, reflectanceBands);
@@ -173,7 +179,7 @@ public class TmRadConversionOp extends Operator {
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                     final double cosSza = Math.cos(szaTile.getSampleFloat(x, y) * MathUtils.DTOR);
-                    for (int bandId = 0; bandId < TmConstants.LANDSAT5_NUM_SPECTRAL_BANDS; bandId++) {
+                    for (int bandId = 0; bandId < radianceBandNames.length; bandId++) {
                         final float rad = radianceTile[bandId].getSampleFloat(x, y);
                         if (bandId == 5) {
                             // ATBD ICOL_D4, eq. (24)
@@ -186,7 +192,7 @@ public class TmRadConversionOp extends Operator {
                         }
                     }
                 }
-                checkForCancellation(pm);
+                checkForCancellation();
 				pm.worked(1);
 			}
         } catch (Exception e) {
@@ -202,7 +208,7 @@ public class TmRadConversionOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(TmRadConversionOp.class);
+            super(RadConversionOp.class);
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.tm;
+package org.esa.beam.meris.icol.landsat.common;
 
 /**
  * This interface is a container for constants specific for LANDSAT-products.
@@ -6,11 +6,11 @@ package org.esa.beam.meris.icol.tm;
  * @author Olaf Danne
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-public interface TmConstants {
+public interface LandsatConstants {
 
     String LANDSAT_INSTRUMENT_NAME_PREFIX = "L5";
     String LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX = "L1T";
-    String LANDSAT_GEOMETRY_PRODUCT_TYPE_PREFIX = "L1G";
+    String LANDSAT_DOWNSCALED_PRODUCT_TYPE_PREFIX = "L1G";
     String LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE = "LANDSAT 5 TM SCENE";
     String LANDSAT5_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM";
     String LANDSAT5_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM_L1T";
@@ -40,7 +40,7 @@ public interface TmConstants {
     int LANDSAT7_RADIANCE_7_BAND_INDEX = 7;
 
     int LANDSAT5_FR_ORIG = 30;
-    int LANDSAT5_GEOM_FR = 300;
+    int LANDSAT_GEOM_FR = 300;
     int LANDSAT5_GEOM_RR = 1200;
 
     int OUTPUT_PRODUCT_TYPE_DOWNSCALE = 0;
@@ -75,7 +75,9 @@ public interface TmConstants {
             831.47f,
             1643.73f,
             11450.0f,
-            2225.20f
+            11450.0f,
+            2225.20f,
+            730.0f  // center of the panchromatic
     };
 
     /**

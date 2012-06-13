@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.etm;
+package org.esa.beam.meris.icol.landsat.etm;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
@@ -12,8 +12,8 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
-import org.esa.beam.meris.icol.tm.TmConstants;
-import org.esa.beam.meris.icol.tm.TmGeometryOp;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
+import org.esa.beam.meris.icol.landsat.common.DownscaleOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
 import javax.media.jai.BorderExtender;
@@ -21,23 +21,24 @@ import java.awt.*;
 import java.util.Map;
 
 /**
+ * Landsat 7 atmospheric functions for gaseous transmittance
+ *
  * @author Olaf Danne
- * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
-@OperatorMetadata(alias = "Landsat.EtmAtmosphericFunctions",
+@OperatorMetadata(alias = "Landsat7.Etm.AtmosphericFunctions",
         version = "1.0",
         internal = true,
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
-        description = "Landsat atmospheric functions (L7 ETM+).")
+        description = "Landsat 7 atmospheric functions for gaseous transmittance.")
 public class EtmGaseousTransmittanceOp extends Operator {
 
     final int NO_DATA_VALUE = -1;
 
     @SourceProduct(alias="l1g")
     private Product sourceProduct;
-    @SourceProduct(alias="geometry")
-    private Product geometryProduct;
+    @SourceProduct(alias="downscaled")
+    private Product downscaledProduct;
 
     @TargetProduct
     private Product targetProduct;
@@ -49,11 +50,11 @@ public class EtmGaseousTransmittanceOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        targetProduct = OperatorUtils.createCompatibleProduct(geometryProduct, sourceProduct.getName() + "_ICOL", "ICOL");
+        targetProduct = OperatorUtils.createCompatibleProduct(downscaledProduct, sourceProduct.getName() + "_ICOL", "ICOL");
 
-        gaseousTransmittanceBands = new Band[TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
-        for (int i = 0; i < TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS; i++) {
-            gaseousTransmittanceBands[i] = targetProduct.addBand(TmConstants.LANDSAT7_GAS_TRANSMITTANCE_BAND_NAMES[i],
+        gaseousTransmittanceBands = new Band[LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS];
+        for (int i = 0; i < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; i++) {
+            gaseousTransmittanceBands[i] = targetProduct.addBand(LandsatConstants.LANDSAT7_GAS_TRANSMITTANCE_BAND_NAMES[i],
                                                                  ProductData.TYPE_FLOAT32);
             gaseousTransmittanceBands[i].setNoDataValueUsed(true);
             gaseousTransmittanceBands[i].setNoDataValue(NO_DATA_VALUE);
@@ -64,16 +65,16 @@ public class EtmGaseousTransmittanceOp extends Operator {
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle rectangle, ProgressMonitor pm) throws OperatorException {
         pm.beginTask("Processing frame...", rectangle.height + 1);
         try {
-            Tile airMassTile = getSourceTile(geometryProduct.getBand(TmGeometryOp.AIR_MASS_BAND_NAME), rectangle,
+            final Tile airMassTile = getSourceTile(downscaledProduct.getBand(DownscaleOp.AIR_MASS_BAND_NAME), rectangle,
                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-            Tile[] gaseousTransmittanceTile = OperatorUtils.getTargetTiles(targetTiles, gaseousTransmittanceBands);
+            final Tile[] gaseousTransmittanceTile = OperatorUtils.getTargetTiles(targetTiles, gaseousTransmittanceBands);
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
 				for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                     final float airMass = airMassTile.getSampleFloat(x, y);
-                    for (int bandId = 0; bandId < TmConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
+                    for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                         final double gaseousTransmittance =
-                                Math.exp(-airMass*ozoneContent* TmConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
+                                Math.exp(-airMass*ozoneContent* LandsatConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
                         gaseousTransmittanceTile[bandId].setSample(x, y, gaseousTransmittance);
                     }
 
