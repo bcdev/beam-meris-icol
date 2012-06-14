@@ -7,8 +7,10 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.OperatorSpi;
 import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
+import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
@@ -41,10 +43,22 @@ public class UpscaleToOriginalOp extends TmBasisOp {
     @TargetProduct
     private Product targetProduct;
 
+    @Parameter
+    private Instrument instrument;
+
     @Override
     public void initialize() throws OperatorException {
-        final MetadataAttribute widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
-        final MetadataAttribute heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
+        MetadataAttribute widthAttr;
+        MetadataAttribute heightAttr;
+        if (instrument == Instrument.ETM7) {
+            widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_PAN");
+            heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_PAN");
+        } else if (instrument == Instrument.TM5) {
+            widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
+            heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
+        } else {
+            throw new OperatorException("Instrument " + instrument.name() + " not supported here.");
+        }
 
         if (widthAttr == null || heightAttr == null) {
             throw new OperatorException("Cannot upscale to original grid - metadata info missing.");

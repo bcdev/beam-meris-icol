@@ -82,11 +82,12 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
+    private JFormattedTextField landsatIntermediateProductDir;
 
     private ButtonGroup landsatOutputProductTypeGroup;
     private JRadioButton landsatOutputProductTypeFullAEButton;
     private JRadioButton landsatOutputProductTypeUpscaleAEButton;
-    private JRadioButton landsatOutputProductTypeGeometryButton;
+    private JRadioButton landsatOutputProductTypeDownscaleButton;
     private JRadioButton landsatOutputProductTypeFlagsButton;
 
     private JCheckBox landsatCloudFlagApplyBrightnessFilterCheckBox;
@@ -198,11 +199,12 @@ class IcolForm extends JTabbedPane {
         bc.bind("sourceProduct", sourceProductSelector.getProductNameComboBox());
         bc.bind("cloudMaskProduct", cloudProductSelector.getProductNameComboBox());
 
-        bc.bind("landsatTargetResolution", landsatResolutionGroup);
+//        bc.bind("landsatTargetResolution", landsatResolutionGroup);
         bc.bind("landsatOutputProductType", landsatOutputProductTypeGroup);
         bc.bind("landsatUserOzoneContent", landsatOzoneContentValue);
         bc.bind("landsatUserPSurf", landsatPSurfValue);
         bc.bind("landsatUserTm60", landsatTM60Value);
+        bc.bind("landsatIntermediateProductDir", landsatIntermediateProductDir);
 
         bc.bind("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilterCheckBox);
         bc.bind("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilterCheckBox);
@@ -566,6 +568,7 @@ class IcolForm extends JTabbedPane {
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(2, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(3, 0, new Insets(0, 24, 0, 0));
 
         JPanel panel = new JPanel(layout);
 
@@ -750,55 +753,64 @@ class IcolForm extends JTabbedPane {
         layout.setColumnWeightX(1, 0.5);
         layout.setColumnWeightX(2, 1);
         layout.setTablePadding(2, 2);
-        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+//        layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
+//        layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
+//        layout.setCellPadding(3, 0, new Insets(10, 24, 0, 0));
+//        layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
+//        layout.setCellPadding(5, 0, new Insets(0, 48, 0, 0));
+//        layout.setCellPadding(6, 0, new Insets(0, 48, 0, 0));
+//        layout.setCellPadding(7, 0, new Insets(10, 24, 0, 0));
+
+        layout.setCellPadding(0, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(3, 0, new Insets(10, 24, 0, 0));
-        layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(5, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(6, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(3, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(4, 0, new Insets(10, 24, 0, 0));
+
 
         JPanel panel = new JPanel(layout);
 
         panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
 
-        panel.add(new JLabel("AE correction grid resolution:"));
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        landsatResolution300Button = new JRadioButton("300 m");
-        landsatResolution300Button.setSelected(true);
-        panel.add(landsatResolution300Button);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-        landsatResolution1200Button = new JRadioButton("1200 m");
-        landsatResolution1200Button.setSelected(false);
-        panel.add(landsatResolution1200Button);
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
-
-        landsatResolutionGroup = new ButtonGroup();
-        landsatResolutionGroup.add(landsatResolution300Button);
-        landsatResolutionGroup.add(landsatResolution1200Button);
-
-        ActionListener landsatResolutionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateLandsatResolutionSettings();
-            }
-        };
-        landsatResolution300Button.addActionListener(landsatResolutionListener);
-        landsatResolution1200Button.addActionListener(landsatResolutionListener);
+        // deactivate this for the moment and set to fixed value
+//        panel.add(new JLabel("AE correction grid resolution:"));
+//        panel.add(new JLabel(""));
+//        panel.add(new JLabel(""));
+//
+//        landsatResolution300Button = new JRadioButton("300 m");
+//        landsatResolution300Button.setSelected(true);
+//        panel.add(landsatResolution300Button);
+//        panel.add(new JLabel(""));
+//        panel.add(new JLabel(""));
+//        landsatResolution1200Button = new JRadioButton("1200 m");
+//        landsatResolution1200Button.setSelected(false);
+//        panel.add(landsatResolution1200Button);
+//        panel.add(new JLabel(""));
+//        panel.add(new JLabel(""));
+//
+//        landsatResolutionGroup = new ButtonGroup();
+//        landsatResolutionGroup.add(landsatResolution300Button);
+//        landsatResolutionGroup.add(landsatResolution1200Button);
+//
+//        ActionListener landsatResolutionListener = new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                updateLandsatResolutionSettings();
+//            }
+//        };
+//        landsatResolution300Button.addActionListener(landsatResolutionListener);
+//        landsatResolution1200Button.addActionListener(landsatResolutionListener);
 
 
         panel.add(new JLabel("Output product type:"));
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        landsatOutputProductTypeGeometryButton = new JRadioButton(
+        landsatOutputProductTypeDownscaleButton = new JRadioButton(
                 "Downscale source product to AE correction grid");
-        landsatOutputProductTypeGeometryButton.setSelected(false);
-        panel.add(landsatOutputProductTypeGeometryButton);
+        landsatOutputProductTypeDownscaleButton.setSelected(false);
+        panel.add(landsatOutputProductTypeDownscaleButton);
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
         landsatOutputProductTypeFullAEButton = new JRadioButton("Compute AE corrected product on AE correction grid");
@@ -819,7 +831,7 @@ class IcolForm extends JTabbedPane {
 //        panel.add(new JLabel(""));
 
         landsatOutputProductTypeGroup = new ButtonGroup();
-        landsatOutputProductTypeGroup.add(landsatOutputProductTypeGeometryButton);
+        landsatOutputProductTypeGroup.add(landsatOutputProductTypeDownscaleButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeFullAEButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeUpscaleAEButton);
         landsatOutputProductTypeGroup.add(landsatOutputProductTypeFlagsButton);
@@ -833,7 +845,13 @@ class IcolForm extends JTabbedPane {
         landsatOutputProductTypeFullAEButton.addActionListener(landsatOutputProductTypeListenerListener);
         landsatOutputProductTypeUpscaleAEButton.addActionListener(landsatOutputProductTypeListenerListener);
         landsatOutputProductTypeFlagsButton.addActionListener(landsatOutputProductTypeListenerListener);
-        landsatOutputProductTypeGeometryButton.addActionListener(landsatOutputProductTypeListenerListener);
+        landsatOutputProductTypeDownscaleButton.addActionListener(landsatOutputProductTypeListenerListener);
+
+        panel.add(new JLabel("Intermediate Product Directory : "));
+        landsatIntermediateProductDir = new JFormattedTextField("");
+        panel.add(landsatIntermediateProductDir);
+        panel.add(new JLabel(""));
+
 
         panel.add(new JPanel());
 
@@ -847,10 +865,17 @@ class IcolForm extends JTabbedPane {
     private void updateLandsatOutputProductTypeSettings() {
         if (landsatOutputProductTypeFullAEButton.isSelected() || landsatOutputProductTypeFlagsButton.isSelected()) {
             landsatOutputProductTypeFlagsButton.setSelected(false);
-            landsatOutputProductTypeGeometryButton.setSelected(false);
+            landsatOutputProductTypeDownscaleButton.setSelected(false);
         } else {
             landsatOutputProductTypeFullAEButton.setSelected(false);
-            landsatOutputProductTypeGeometryButton.setSelected(false);
+            landsatOutputProductTypeDownscaleButton.setSelected(false);
+        }
+
+        Product sourceProduct = sourceProductSelector.getSelectedProduct();
+        final TargetProductSelectorModel selectorModel = targetProductSelector.getModel();
+        if (sourceProduct != null) {
+            String sourceProductName = sourceProduct.getName();
+            updateLandsatProductName(selectorModel, sourceProductName);
         }
     }
 
@@ -907,16 +932,32 @@ class IcolForm extends JTabbedPane {
         final TargetProductSelectorModel selectorModel = targetProductSelector.getModel();
         if (sourceProduct != null) {
             String sourceProductName = sourceProduct.getName();
-            if (sourceProductName.endsWith(".N1")) {
-                sourceProductName = sourceProductName.substring(0, sourceProductName.length() - 3);
-            }
-            if (rhoToaProductTypeButton.isSelected()) {
-                selectorModel.setProductName("L1R_" + sourceProductName);
+            final String productType = sourceProduct.getProductType();
+            if (productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX) ||
+                    productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX)) {
+                updateLandsatProductName(selectorModel, sourceProductName);
             } else {
-                selectorModel.setProductName("L1N_" + sourceProductName);
+                if (sourceProductName.endsWith(".N1")) {
+                    sourceProductName = sourceProductName.substring(0, sourceProductName.length() - 3);
+                }
+                if (rhoToaProductTypeButton.isSelected()) {
+                    selectorModel.setProductName("L1R_" + sourceProductName);
+                } else {
+                    selectorModel.setProductName("L1N_" + sourceProductName);
+                }
             }
         } else {
             selectorModel.setProductName("icol");
+        }
+    }
+
+    private void updateLandsatProductName(TargetProductSelectorModel selectorModel, String sourceProductName) {
+        if (landsatOutputProductTypeDownscaleButton.isSelected()) {
+            selectorModel.setProductName("L1N_" + sourceProductName + "_downscaled");
+        } else if (landsatOutputProductTypeFullAEButton.isSelected()) {
+            selectorModel.setProductName("L1N_" + sourceProductName + "_corrected");
+        } else if (landsatOutputProductTypeUpscaleAEButton.isSelected()) {
+            selectorModel.setProductName("L1N_" + sourceProductName + "_upscaled");
         }
     }
 
@@ -939,7 +980,7 @@ class IcolForm extends JTabbedPane {
 
     void updateParameterMap(Map<String, Object> parameterMap) {
         PropertySet container = bc.getPropertySet();
-        for (Property property: container.getProperties()) {
+        for (Property property : container.getProperties()) {
             parameterMap.put(property.getName(), container.getValue(property.getName()));
         }
     }

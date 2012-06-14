@@ -74,7 +74,7 @@ public class EtmGaseousTransmittanceOp extends Operator {
                     final float airMass = airMassTile.getSampleFloat(x, y);
                     for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                         final double gaseousTransmittance =
-                                Math.exp(-airMass*ozoneContent* LandsatConstants.LANDSAT5_O3_OPTICAL_THICKNESS[bandId]/0.32);
+                                Math.exp(-airMass*ozoneContent* LandsatConstants.LANDSAT7_O3_OPTICAL_THICKNESS[bandId]/0.32);
                         gaseousTransmittanceTile[bandId].setSample(x, y, gaseousTransmittance);
                     }
 

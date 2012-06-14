@@ -29,6 +29,7 @@ import org.esa.beam.framework.ui.AppContext;
 import org.esa.beam.gpf.operators.meris.N1PatcherOp;
 import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
+import org.esa.beam.meris.icol.landsat.etm.EtmOp;
 import org.esa.beam.meris.icol.landsat.tm.TmOp;
 import org.esa.beam.meris.icol.meris.MerisOp;
 
@@ -130,7 +131,7 @@ public class IcolDialog extends SingleTargetProductDialog {
         if (isValidLandsat5ProductType(productType)) {
             outputProduct = createLandsat5Product();
         } else if (isValidLandsat7ProductType(productType)) {
-            outputProduct = createLandsat5Product();
+            outputProduct = createLandsat7Product();
         }  else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() ||
                 IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
@@ -148,9 +149,16 @@ public class IcolDialog extends SingleTargetProductDialog {
 
     private Product createLandsat5Product() throws OperatorException {
         final Product sourceProduct = model.getSourceProduct();
-        Map<String, Object> parameters = model.getLandsat5Parameters();
+        Map<String, Object> parameters = model.getLandsatParameters();
         return GPF.createProduct(OperatorSpi.getOperatorAlias(TmOp.class), parameters, sourceProduct);
     }
+
+    private Product createLandsat7Product() throws OperatorException {
+        final Product sourceProduct = model.getSourceProduct();
+        Map<String, Object> parameters = model.getLandsatParameters();
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(EtmOp.class), parameters, sourceProduct);
+    }
+
 
     private Product createMerisOp() throws Exception {
         Map<String, Product> sourceProducts = new HashMap<String, Product>(2);

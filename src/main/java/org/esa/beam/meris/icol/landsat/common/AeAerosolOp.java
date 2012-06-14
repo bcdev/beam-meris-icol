@@ -87,7 +87,7 @@ public class AeAerosolOp extends TmBasisOp {
     @Parameter
     private String landExpression;
     @Parameter
-    private String instrument;
+    private Instrument instrument;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25")
     private double userPSurf;
     @Parameter
@@ -115,15 +115,12 @@ public class AeAerosolOp extends TmBasisOp {
     private AerosolScatteringFunctions aerosolScatteringFunctions;
     private FresnelReflectionCoefficient fresnelCoefficient;
 
-    private int[] bandsToSkip;
     private double userAot865;
 
     @Override
     public void initialize() throws OperatorException {
         userAot865 = IcolUtils.convertAOT(userAot, userAlpha, userAerosolReferenceWavelength, 865.0);
         targetProduct = createCompatibleProduct(aeRayProduct, "ae_" + aeRayProduct.getName(), "AE");
-
-        bandsToSkip = new int[]{5};
 
         flagBand = targetProduct.addBand(AOT_FLAGS, ProductData.TYPE_UINT8);
         FlagCoding flagCoding = createFlagCoding();
@@ -137,9 +134,9 @@ public class AeAerosolOp extends TmBasisOp {
         rhoAeAcBands = addBandGroup("rho_ray_aeac", -1);
         aeAerBands = addBandGroup("rho_aeAer", 0);
 
-        if (l1bProduct.getProductType().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX)) {
+        if (l1bProduct.getProductType().toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX)) {
             effectiveWavelengths = LandsatConstants.LANDSAT5_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS;
-        } else if (l1bProduct.getProductType().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX)) {
+        } else if (l1bProduct.getProductType().toUpperCase().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX)) {
             effectiveWavelengths = LandsatConstants.LANDSAT7_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS;
         } else {
             throw new OperatorException("AeAerosolOp: Unknown product type '" + l1bProduct.getProductType() + "'.");
@@ -155,7 +152,7 @@ public class AeAerosolOp extends TmBasisOp {
 
         if (reshapedConvolution) {
             icolConvolutionAlgo = new IcolConvolutionJaiConvolve(aeRayProduct, productType, coeffW, "rho_ray_aerc_", iaerConv,
-                                                                 numSpectralBands, bandsToSkip);
+                                                                 numSpectralBands, instrument.bandsToSkip);
         } else {
             icolConvolutionAlgo = new IcolConvolutionKernellLoop(l1bProduct, coeffW, IcolConstants.AE_CORRECTION_MODE_AEROSOL);
         }
@@ -322,7 +319,7 @@ public class AeAerosolOp extends TmBasisOp {
 
                         //Correct from AE with AEROSOLS
                         for (int iwvl = 0; iwvl < numSpectralBands; iwvl++) {
-                            if (IcolUtils.isIndexToSkip(iwvl, bandsToSkip)) {
+                            if (IcolUtils.isIndexToSkip(iwvl, instrument.bandsToSkip)) {
                                 continue;
                             }
                             if (searchIAOT != -1 && aot > AE_AOT_THRESHOLD) {
@@ -380,7 +377,7 @@ public class AeAerosolOp extends TmBasisOp {
                         }
                     } else {
                         for (int iwvl = 0; iwvl < numSpectralBands; iwvl++) {
-                            if (IcolUtils.isIndexToSkip(iwvl, bandsToSkip)) {
+                            if (IcolUtils.isIndexToSkip(iwvl, instrument.bandsToSkip)) {
                                 continue;
                             }
                             rhoAeAcRaster[iwvl].setSample(x, y, rhoRaec[iwvl].getSampleFloat(x, y));
@@ -394,12 +391,12 @@ public class AeAerosolOp extends TmBasisOp {
     }
 
     private Band[] addBandGroup(String prefix, double noDataValue) {
-        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, bandsToSkip, targetProduct, prefix, noDataValue,
+        return OperatorUtils.addBandGroup(l1bProduct, numSpectralBands, instrument.bandsToSkip, targetProduct, prefix, noDataValue,
                                           false);
     }
 
     private Tile[] getTargetTiles(Map<Band, Tile> targetTiles, Band[] bands) {
-        return OperatorUtils.getTargetTiles(targetTiles, bands, bandsToSkip);
+        return OperatorUtils.getTargetTiles(targetTiles, bands, instrument.bandsToSkip);
     }
 
     private FlagCoding createFlagCoding() {
@@ -429,7 +426,7 @@ public class AeAerosolOp extends TmBasisOp {
     private Tile[] getRhoRaecTiles(Rectangle sourceRect) {
         Tile[] rhoRaec = new Tile[numSpectralBands];
         for (int i = 0; i < numSpectralBands; i++) {
-            if (IcolUtils.isIndexToSkip(i, bandsToSkip)) {
+            if (IcolUtils.isIndexToSkip(i, instrument.bandsToSkip)) {
                 continue;
             }
             rhoRaec[i] = getSourceTile(aeRayProduct.getBand("rho_ray_aerc_" + (i + 1)), sourceRect,

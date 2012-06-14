@@ -71,24 +71,23 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
     private void copyRadianceBandGroup(Product srcProduct, String prefix) {
         for (String bandName : srcProduct.getBandNames()) {
             if (bandName.startsWith(prefix)) {
-                final String bandNumber = bandName.substring(bandName.length() - 1);
+                final String bandNumber = bandName.substring(10, 11); // '1' from rho_toa_tm1, but '6' from rho_toa_tm61
                 final int bandId = Integer.parseInt(bandNumber) - 1;
-                if (!IcolUtils.isIndexToSkip(bandId, new int[]{LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX,
-                        LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX})) {
+                if (bandName.endsWith(LandsatConstants.LANDSAT7_RADIANCE_61_BAND_SUFFIX)) {
+                    final String temperatureBandName = "radiance_" + LandsatConstants.LANDSAT7_RADIANCE_61_BAND_SUFFIX;
+                    Band temperatureBand = targetProduct.addBand(temperatureBandName, ProductData.TYPE_FLOAT32);
+                    temperatureBand.setSpectralBandIndex(LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX);
+                    temperatureBand.setNoDataValue(-1);
+                } else if (bandName.endsWith(LandsatConstants.LANDSAT7_RADIANCE_62_BAND_SUFFIX)) {
+                    final String temperatureBandName = "radiance_" + LandsatConstants.LANDSAT7_RADIANCE_62_BAND_SUFFIX;
+                    Band temperatureBand = targetProduct.addBand(temperatureBandName, ProductData.TYPE_FLOAT32);
+                    temperatureBand.setSpectralBandIndex(LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX);
+                    temperatureBand.setNoDataValue(-1);
+                } else {
                     final String radianceBandName = "radiance_" + bandNumber;
                     Band radianceBand = targetProduct.addBand(radianceBandName, ProductData.TYPE_FLOAT32);
                     radianceBand.setSpectralBandIndex(bandId);
                     radianceBand.setNoDataValue(-1);
-                } else if (bandId == LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX) {
-                    final String temperatureBandName = "radiance_" + bandNumber + "a";
-                    Band temperatureBand = targetProduct.addBand(temperatureBandName, ProductData.TYPE_FLOAT32);
-                    temperatureBand.setSpectralBandIndex(bandId);
-                    temperatureBand.setNoDataValue(-1);
-                } else if (bandId == LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX) {
-                    final String temperatureBandName = "radiance_" + bandNumber + "b";
-                    Band temperatureBand = targetProduct.addBand(temperatureBandName, ProductData.TYPE_FLOAT32);
-                    temperatureBand.setSpectralBandIndex(bandId);
-                    temperatureBand.setNoDataValue(-1);
                 }
             }
         }
@@ -141,12 +140,12 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
                             }
                             if (corrected > 0) {
                                 double reflectance = corrected * tgValue;
-                                result = LandsatUtils.convertReflToRad(reflectance, cosSza, bandNumber - 1, seasonalFactor);
+                                result = LandsatUtils.convertReflToRadLandsat7(reflectance, cosSza, bandNumber - 1, seasonalFactor);
                             }
                         }
                         if (result == 0.0) {
                             double reflectance = reflectanceR.getSampleDouble(x, y);
-                            result = LandsatUtils.convertReflToRad(reflectance, cosSza, bandNumber - 1, seasonalFactor);
+                            result = LandsatUtils.convertReflToRadLandsat7(reflectance, cosSza, bandNumber - 1, seasonalFactor);
                         }
                         targetTile.setSample(x, y, result);
                     }
@@ -155,12 +154,12 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
             } else if (copyTm6ab(bandNumber)) {
                 // Landsat7: copy TM6a, TM6b
                 Tile reflectanceR6a = getSourceTile(sourceProduct.getBand
-                        (LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX]),
+                        (LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX]),
                                                     rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                 Tile reflectanceR6b = getSourceTile(sourceProduct.getBand
-                        (LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX]),
+                        (LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES[LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX]),
                                                     rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
-                if (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX + 1) {
+                if (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX + 1) {
                     for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                         for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                             double temperatureTM6a = reflectanceR6a.getSampleDouble(x, y);
@@ -168,7 +167,7 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
                         }
                     }
                 }
-                if (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX + 1) {
+                if (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX + 1) {
                     for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                         for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
                             double temperatureTM6b = reflectanceR6b.getSampleDouble(x, y);
@@ -186,15 +185,15 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
 
     private boolean copyTm6ab(int bandNumber) {
         return sourceProduct.getProductType().startsWith("Landsat7") &&
-                (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX + 1 ||
-                        bandNumber == LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX + 1);
+                (bandNumber == LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX + 1 ||
+                        bandNumber == LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX + 1);
     }
 
     private boolean bandToWrite(String bandName, int bandNumber) {
         return bandName.startsWith(LandsatConstants.LANDSAT_RADIANCE_BAND_PREFIX) &&
                 !IcolUtils.isIndexToSkip(bandNumber - 1,
-                                         new int[]{LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX,
-                                                 LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX});
+                                         new int[]{LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX,
+                                                 LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX});
     }
 
     public static class Spi extends OperatorSpi {

@@ -17,9 +17,8 @@ import org.esa.beam.meris.icol.IcolConstants;
 import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.common.*;
 import org.esa.beam.meris.icol.landsat.common.*;
-import org.esa.beam.meris.icol.landsat.etm.EtmGaseousCorrectionOp;
-import org.esa.beam.meris.icol.landsat.etm.EtmGaseousTransmittanceOp;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
+import org.esa.beam.meris.icol.landsat.tm.TmRadConversionOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
@@ -65,8 +64,8 @@ public class EtmOp extends TmBasisOp {
     private double landsatUserTm60;
     @Parameter(interval = "[0.01, 1.0]", defaultValue = "0.32", description = "The ozone content to be used by AE correction algorithm.")
     private double landsatUserOzoneContent;
-    @Parameter(defaultValue = "300", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
-    private int landsatTargetResolution;
+//    @Parameter(defaultValue = "1200", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
+//    private int landsatTargetResolution;
     @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"}, description =
             "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
     private int landsatOutputProductType;
@@ -100,8 +99,13 @@ public class EtmOp extends TmBasisOp {
             LandsatConstants.LAND_FLAGS_WINTER}, description = "The summer/winter option for TM band 6 temperature test.")
     private String landsatSeason = LandsatConstants.LAND_FLAGS_SUMMER;
 
+    @Parameter
+    private String landsatIntermediateProductDir;
+
     // general
     private static final int productType = 0;
+    private static final int landsatTargetResolution = 1200;
+
     private boolean reshapedConvolution = true;     // currently no user option
 
     @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
@@ -145,20 +149,20 @@ public class EtmOp extends TmBasisOp {
 
         Product downscaledSourceProduct = null;
 
+        final File downscaledSourceProductFile = new File(landsatIntermediateProductDir + File.separator +
+                                                                  "L1N_" + sourceProduct.getName() + ".dim");
+        try {
+            downscaledSourceProduct = ProductIO.readProduct(downscaledSourceProductFile.getAbsolutePath());
+        } catch (IOException e) {
+            throw new OperatorException("Cannot read downscaled source product for AE correction: " + e.getMessage());
+        }
+
         if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_UPSCALE) {
             // check if both original and AE corrected product exists on AE grid, in parent directory...
-//            final File sourceProductFileLocation = sourceProduct.getFileLocation();
-            final String intermediateProductDir = System.getProperty("user.home");  // todo: make this a parameter
-            final File downscaledSourceProductFile = new File(intermediateProductDir + File.separator +
-                                                                      "L1N_" + sourceProduct.getName() + ".dim");
-            final File aeCorrProductFile = new File(intermediateProductDir + File.separator +
-                                                            "L1N_L1N_" + sourceProduct.getName() + ".dim");
+
+            final File aeCorrProductFile = new File(landsatIntermediateProductDir + File.separator +
+                                                            "L1N_" + sourceProduct.getName() + ".dim");
             Product aeCorrProduct;
-            try {
-                downscaledSourceProduct = ProductIO.readProduct(downscaledSourceProductFile.getAbsolutePath());
-            } catch (IOException e) {
-                throw new OperatorException("Cannot read downscaled source product for AE correction: " + e.getMessage());
-            }
             try {
                 aeCorrProduct = ProductIO.readProduct(aeCorrProductFile.getAbsolutePath());
             } catch (IOException e) {
@@ -171,10 +175,11 @@ public class EtmOp extends TmBasisOp {
         }
 
         // for the remaining option, we now have to go for the full AE correction chain...
-        if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_AECORR) {
-            // compute downscaled product (ATBD D4, section 5.3.1) if not already done...
-            downscaledSourceProduct = sourceProduct;
-        }
+
+//        if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_AECORR) {
+//            compute downscaled product (ATBD D4, section 5.3.1) if not already done...
+//            downscaledSourceProduct = sourceProduct;
+//        }
 
         // compute conversion to reflectance and temperature (ATBD D4, section 5.3.2)
         Product conversionProduct = createConversionProduct(downscaledSourceProduct);
@@ -295,7 +300,7 @@ public class EtmOp extends TmBasisOp {
         aeAerosolParams.put("userPSurf", landsatUserPSurf);
         aeAerosolParams.put("reshapedConvolution", reshapedConvolution);
         aeAerosolParams.put("landExpression", "land_classif_flags.F_LANDCONS");
-        aeAerosolParams.put("instrument", sourceProduct.getProductType());
+        aeAerosolParams.put("instrument", Instrument.ETM7);
         aeAerosolParams.put("numSpectralBands", LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS);
         aeAerosolParams.put("effectiveWavelenghts", LandsatConstants.LANDSAT7_SPECTRAL_BAND_EFFECTIVE_WAVELENGTHS);
         return GPF.createProduct(OperatorSpi.getOperatorAlias(AeAerosolOp.class), aeAerosolParams, aeAerInput);
@@ -319,11 +324,7 @@ public class EtmOp extends TmBasisOp {
         }
         aeRayParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
         aeRayParams.put("reshapedConvolution", reshapedConvolution);
-        if (sourceProduct.getProductType().startsWith("Landsat5")) {
-            aeRayParams.put("instrument", Instrument.TM5);
-        } else if (sourceProduct.getProductType().startsWith("Landsat7")) {
-            aeRayParams.put("instrument", Instrument.ETM7);
-        }
+        aeRayParams.put("instrument", Instrument.ETM7);
         return GPF.createProduct(OperatorSpi.getOperatorAlias(AdjacencyEffectRayleighOp.class), aeRayParams, aeRayInput);
     }
 
@@ -509,9 +510,7 @@ public class EtmOp extends TmBasisOp {
         Map<String, Object> conversionParameters = new HashMap<String, Object>(4);
         conversionParameters.put("startTime", landsatStartTime);
         conversionParameters.put("stopTime", landsatStopTime);
-        conversionParameters.put("radianceBandNames", LandsatConstants.LANDSAT7_RADIANCE_BAND_NAMES);
-        conversionParameters.put("reflectanceBandNames", LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES);
-        return GPF.createProduct(OperatorSpi.getOperatorAlias(RadConversionOp.class), conversionParameters, radianceConversionInput);
+        return GPF.createProduct(OperatorSpi.getOperatorAlias(EtmRadConversionOp.class), conversionParameters, radianceConversionInput);
     }
 
     private Product createDownscaledProduct() {
@@ -533,6 +532,7 @@ public class EtmOp extends TmBasisOp {
         aeUpscaleInput.put("downscaled", downscaledProduct);
         aeUpscaleInput.put("corrected", correctionProduct);
         Map<String, Object> aeUpscaleParams = new HashMap<String, Object>(9);
+        aeUpscaleParams.put("instrument", Instrument.ETM7);
 
         return GPF.createProduct(OperatorSpi.getOperatorAlias(UpscaleToOriginalOp.class), aeUpscaleParams, aeUpscaleInput);
     }

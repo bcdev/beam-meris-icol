@@ -8,16 +8,9 @@ package org.esa.beam.meris.icol.landsat.common;
  */
 public interface LandsatConstants {
 
-    String LANDSAT_INSTRUMENT_NAME_PREFIX = "L5";
-    String LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX = "L1T";
     String LANDSAT_DOWNSCALED_PRODUCT_TYPE_PREFIX = "L1G";
-    String LANDSAT_DIMAP_SUBSET_PRODUCT_TYPE = "LANDSAT 5 TM SCENE";
     String LANDSAT5_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM";
-    String LANDSAT5_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM_L1T";
-    String LANDSAT5_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM_L1G";
     String LANDSAT7_PRODUCT_TYPE_PREFIX = "LANDSAT7_ETM+";
-    String LANDSAT7_GEOTIFF_L1T_PRODUCT_TYPE_PREFIX = "LANDSAT7_ETM+_L1T";
-    String LANDSAT7_GEOTIFF_L1G_PRODUCT_TYPE_PREFIX = "LANDSAT7_ETM+_L1G";
 
     String LANDSAT5_RADIANCE_1_BAND_NAME = "radiance_1";
     String LANDSAT5_RADIANCE_2_BAND_NAME = "radiance_2";
@@ -26,6 +19,7 @@ public interface LandsatConstants {
     String LANDSAT5_RADIANCE_5_BAND_NAME = "radiance_5";
     String LANDSAT5_RADIANCE_6_BAND_NAME = "radiance_6";
     String LANDSAT5_RADIANCE_7_BAND_NAME = "radiance_7";
+    String LANDSAT7_RADIANCE_8_BAND_NAME = "radiance_8";
 
     int LANDSAT_RADIANCE_1_BAND_INDEX = 0;
     int LANDSAT_RADIANCE_2_BAND_INDEX = 1;
@@ -35,9 +29,13 @@ public interface LandsatConstants {
     int LANDSAT5_RADIANCE_6_BAND_INDEX = 5;
     int LANDSAT5_RADIANCE_7_BAND_INDEX = 6;
 
-    int LANDSAT7_RADIANCE_6a_BAND_INDEX = 5;
-    int LANDSAT7_RADIANCE_6b_BAND_INDEX = 6;
+    int LANDSAT7_RADIANCE_61_BAND_INDEX = 5;
+    int LANDSAT7_RADIANCE_62_BAND_INDEX = 6;
     int LANDSAT7_RADIANCE_7_BAND_INDEX = 7;
+    int LANDSAT7_RADIANCE_8_BAND_INDEX = 8;
+
+    String LANDSAT7_RADIANCE_61_BAND_SUFFIX = "61";
+    String LANDSAT7_RADIANCE_62_BAND_SUFFIX = "62";
 
     int LANDSAT5_FR_ORIG = 30;
     int LANDSAT_GEOM_FR = 300;
@@ -47,11 +45,6 @@ public interface LandsatConstants {
     int OUTPUT_PRODUCT_TYPE_AECORR = 1;
     int OUTPUT_PRODUCT_TYPE_UPSCALE = 2;
     int OUTPUT_PRODUCT_TYPE_FLAGS = 3;
-
-    String LANDSAT5_GASEOUS_TRANSMITTANCE_BAND_NAME = "gas_transmittance";
-    String LANDSAT5_RAYLEIGH_SCATTERING_BAND_NAME = "rayleigh_scatt";
-    String LANDSAT5_FRESNEL_REFLECTION_BAND_NAME = "fresnel_reflec";
-    String LANDSAT5_AEROSOL_SCATTERING_BAND_NAME = "aerosol_scatt";
 
     String LANDSAT_CTP_BAND_NAME = "ctp";
 
@@ -99,9 +92,10 @@ public interface LandsatConstants {
             LANDSAT5_RADIANCE_3_BAND_NAME,
             LANDSAT5_RADIANCE_4_BAND_NAME,
             LANDSAT5_RADIANCE_5_BAND_NAME,
-            LANDSAT5_RADIANCE_6_BAND_NAME + "a",
-            LANDSAT5_RADIANCE_6_BAND_NAME + "b",
+            LANDSAT5_RADIANCE_6_BAND_NAME + "1",
+            LANDSAT5_RADIANCE_6_BAND_NAME + "2",
             LANDSAT5_RADIANCE_7_BAND_NAME,
+            LANDSAT7_RADIANCE_8_BAND_NAME,
     };
 
 
@@ -116,8 +110,9 @@ public interface LandsatConstants {
     String LANDSAT_REFLECTANCE_7_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm7";
 
     String LANDSAT5_REFLECTANCE_6_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm6";
-    String LANDSAT7_REFLECTANCE_6a_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm6a";
-    String LANDSAT7_REFLECTANCE_6b_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm6b";
+    String LANDSAT7_REFLECTANCE_6a_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm61";
+    String LANDSAT7_REFLECTANCE_6b_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm62";
+    String LANDSAT7_REFLECTANCE_8_BAND_NAME = LANDSAT_REFLECTANCE_BAND_PREFIX + "_tm8";
 
     /**
      * The names of the Meris Level 1 spectral band names.
@@ -139,8 +134,9 @@ public interface LandsatConstants {
             LANDSAT_REFLECTANCE_4_BAND_NAME, // 3
             LANDSAT_REFLECTANCE_5_BAND_NAME, // 4
             LANDSAT7_REFLECTANCE_6a_BAND_NAME, // 5
-            LANDSAT7_REFLECTANCE_6b_BAND_NAME, // 5
-            LANDSAT_REFLECTANCE_7_BAND_NAME, // 6
+            LANDSAT7_REFLECTANCE_6b_BAND_NAME, // 6
+            LANDSAT_REFLECTANCE_7_BAND_NAME, // 7
+            LANDSAT7_REFLECTANCE_8_BAND_NAME, // 8
     };
 
     int LANDSAT5_NUM_SPECTRAL_BANDS = LANDSAT5_RADIANCE_BAND_NAMES.length;
@@ -156,8 +152,9 @@ public interface LandsatConstants {
     String LANDSAT_GAS_TRANSMITTANCE_7_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX + "_tm7";
 
     String LANDSAT5_GAS_TRANSMITTANCE_6_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX + "_tm6";
-    String LANDSAT7_GAS_TRANSMITTANCE_6a_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX  + "_tm6a";
-    String LANDSAT7_GAS_TRANSMITTANCE_6b_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX  + "_tm6b";
+    String LANDSAT7_GAS_TRANSMITTANCE_6a_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX  + "_tm61";
+    String LANDSAT7_GAS_TRANSMITTANCE_6b_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX  + "_tm62";
+    String LANDSAT7_GAS_TRANSMITTANCE_8_BAND_NAME = LANDSAT_GAS_TRANSMITTANCE_BAND_PREFIX  + "_tm8";
 
     /**
      * The names of the gaseous transmittance spectral band names.
@@ -178,8 +175,9 @@ public interface LandsatConstants {
             LANDSAT_GAS_TRANSMITTANCE_4_BAND_NAME, // 3
             LANDSAT_GAS_TRANSMITTANCE_5_BAND_NAME, // 4
             LANDSAT7_GAS_TRANSMITTANCE_6a_BAND_NAME, // 5
-            LANDSAT7_GAS_TRANSMITTANCE_6b_BAND_NAME, // 5
-            LANDSAT_GAS_TRANSMITTANCE_7_BAND_NAME, // 6
+            LANDSAT7_GAS_TRANSMITTANCE_6b_BAND_NAME, // 6
+            LANDSAT_GAS_TRANSMITTANCE_7_BAND_NAME, // 7
+            LANDSAT7_GAS_TRANSMITTANCE_8_BAND_NAME, // 8
     };
 
 
@@ -193,8 +191,9 @@ public interface LandsatConstants {
     String LANDSAT_RAYLEIGH_SCATT_7_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX + "_tm7";
 
     String LANDSAT5_RAYLEIGH_SCATT_6_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX + "_tm6";
-    String LANDSAT7_RAYLEIGH_SCATT_6a_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX  + "_tm6a";
-    String LANDSAT7_RAYLEIGH_SCATT_6b_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX  + "_tm6b";
+    String LANDSAT7_RAYLEIGH_SCATT_6a_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX  + "_tm61";
+    String LANDSAT7_RAYLEIGH_SCATT_6b_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX  + "_tm62";
+    String LANDSAT7_RAYLEIGH_SCATT_8_BAND_NAME = LANDSAT_RAYLEIGH_SCATT_BAND_PREFIX  + "_tm8";
 
 
     /**
@@ -216,8 +215,9 @@ public interface LandsatConstants {
             LANDSAT_RAYLEIGH_SCATT_4_BAND_NAME, // 3
             LANDSAT_RAYLEIGH_SCATT_5_BAND_NAME, // 4
             LANDSAT7_RAYLEIGH_SCATT_6a_BAND_NAME, // 5
-            LANDSAT7_RAYLEIGH_SCATT_6b_BAND_NAME, // 5
-            LANDSAT_RAYLEIGH_SCATT_7_BAND_NAME, // 6
+            LANDSAT7_RAYLEIGH_SCATT_6b_BAND_NAME, // 6
+            LANDSAT_RAYLEIGH_SCATT_7_BAND_NAME, // 7
+            LANDSAT7_RAYLEIGH_SCATT_8_BAND_NAME, // 8
     };
 
     String LANDSAT_AEROSOL_SCATT_BAND_PREFIX = "aerosol_scatt";
@@ -230,8 +230,9 @@ public interface LandsatConstants {
     String LANDSAT_AEROSOL_SCATT_7_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm7";
 
     String LANDSAT5_AEROSOL_SCATT_6_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm6";
-    String LANDSAT7_AEROSOL_SCATT_6a_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm6a";
-    String LANDSAT7_AEROSOL_SCATT_6b_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm6b";
+    String LANDSAT7_AEROSOL_SCATT_6a_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm61";
+    String LANDSAT7_AEROSOL_SCATT_6b_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm62";
+    String LANDSAT7_AEROSOL_SCATT_8_BAND_NAME = LANDSAT_AEROSOL_SCATT_BAND_PREFIX + "_tm8";
 
     /**
      * The names of the aerosol scattering spectral band names.
@@ -253,8 +254,9 @@ public interface LandsatConstants {
             LANDSAT_AEROSOL_SCATT_4_BAND_NAME, // 3
             LANDSAT_AEROSOL_SCATT_5_BAND_NAME, // 4
             LANDSAT7_AEROSOL_SCATT_6a_BAND_NAME, // 5
-            LANDSAT7_AEROSOL_SCATT_6b_BAND_NAME, // 5
-            LANDSAT_AEROSOL_SCATT_7_BAND_NAME, // 6
+            LANDSAT7_AEROSOL_SCATT_6b_BAND_NAME, // 6
+            LANDSAT_AEROSOL_SCATT_7_BAND_NAME, // 7
+            LANDSAT7_AEROSOL_SCATT_8_BAND_NAME, // 8
     };
 
     float[] LANDSAT5_SOLAR_IRRADIANCES = {  // official USGC values, see also ICOL_D4, table 2
@@ -274,7 +276,8 @@ public interface LandsatConstants {
             230.8f,
             0.0f, // dummy
             0.0f, // dummy
-            84.9f
+            84.9f,
+            1533.0f // TBD for panchromatic band, use band 3 value for the moment
     };
 
     double SUN_EARTH_DISTANCE_SQUARE  = 2.240237947541881E22; // this is from current MERIS L2 Auxdata
@@ -313,7 +316,8 @@ public interface LandsatConstants {
             0.00128f,
             0.0f, // dummy
             0.0f, // dummy
-            0.00038f
+            0.00038f,
+            0.04858f // TBD for panchromatic band, use band 3 value for the moment
     };
 
 
@@ -334,7 +338,8 @@ public interface LandsatConstants {
             0.0f,
             0.0f, // dummy
             0.0f, // dummy
-            0.0f
+            0.0f,
+            0.00183f // TBD for panchromatic band, use band 3 value for the moment
     };
 
 }

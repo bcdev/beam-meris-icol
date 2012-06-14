@@ -137,12 +137,12 @@ public class TmRadianceCorrectionOp extends TmBasisOp {
                             }
                             if (corrected > 0) {
                                 double reflectance = corrected * tgValue;
-                                result = LandsatUtils.convertReflToRad(reflectance, cosSza, bandNumber-1, seasonalFactor);
+                                result = LandsatUtils.convertReflToRadLandsat5(reflectance, cosSza, bandNumber - 1, seasonalFactor);
                             }
                         }
                         if (result == 0.0) {
                             double reflectance  = reflectanceR.getSampleDouble(x, y);
-                            result = LandsatUtils.convertReflToRad(reflectance, cosSza, bandNumber-1, seasonalFactor);
+                            result = LandsatUtils.convertReflToRadLandsat5(reflectance, cosSza, bandNumber - 1, seasonalFactor);
                         }
                         targetTile.setSample(x, y, result);
                     }

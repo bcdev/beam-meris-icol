@@ -90,8 +90,8 @@ public class EtmGaseousCorrectionOp extends TmBasisOp {
                     for (int bandId = 0; bandId < LandsatConstants.LANDSAT7_NUM_SPECTRAL_BANDS; bandId++) {
                         double reflectance = reflectanceTile[bandId].getSampleDouble(x, y);
                         final double gaseousTransmittance = gaseousTransmittanceTile[bandId].getSampleDouble(x, y);
-                        if (bandId != LandsatConstants.LANDSAT7_RADIANCE_6a_BAND_INDEX &&
-                                bandId != LandsatConstants.LANDSAT7_RADIANCE_6b_BAND_INDEX) { // TM6a, TM6b (temperatures)
+                        if (bandId != LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX &&
+                                bandId != LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX) { // TM6a, TM6b (temperatures)
                             reflectance *= gaseousTransmittance;
                         }
                         rhoNgTile[bandId].setSample(x, y, reflectance);

@@ -102,7 +102,7 @@ public class DownscaleOp extends TmBasisOp {
             productType = sourceProduct.getProductType() + "_RR_" + "_downscaled";
         }
 
-        targetProduct = new Product(sourceProduct.getName() + "_downscaled", productType, sceneWidth, sceneHeight);
+        targetProduct = new Product(sourceProduct.getName(), productType, sceneWidth, sceneHeight);
 
         final GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
         if (srcGeoCoding instanceof CrsGeoCoding) {

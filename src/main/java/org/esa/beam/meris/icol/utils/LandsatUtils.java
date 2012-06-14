@@ -203,14 +203,24 @@ public class LandsatUtils {
         return merisCompatibleProduct;
     }
 
-    public static double convertRadToRefl(double rad, double cosSza, int bandId, double seasonalFactor) {
+    public static double convertRadToReflLandsat5(double rad, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
         return (double) (float) ((rad * constantTerm) / LandsatConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId]);
     }
 
-    public static double convertReflToRad(double refl, double cosSza, int bandId, double seasonalFactor) {
+    public static double convertRadToReflLandsat7(double rad, double cosSza, int bandId, double seasonalFactor) {
+        final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
+        return (double) (float) ((rad * constantTerm) / LandsatConstants.LANDSAT7_SOLAR_IRRADIANCES[bandId]);
+    }
+
+    public static double convertReflToRadLandsat5(double refl, double cosSza, int bandId, double seasonalFactor) {
         final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
         return refl * LandsatConstants.LANDSAT5_SOLAR_IRRADIANCES[bandId] / constantTerm;
+    }
+
+    public static double convertReflToRadLandsat7(double refl, double cosSza, int bandId, double seasonalFactor) {
+        final double constantTerm = (Math.PI / cosSza) * seasonalFactor;
+        return refl * LandsatConstants.LANDSAT7_SOLAR_IRRADIANCES[bandId] / constantTerm;
     }
 
     public static boolean isCoordinatesOutOfBounds(int x, int y, Tile tile) {

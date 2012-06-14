@@ -1,4 +1,4 @@
-package org.esa.beam.meris.icol.landsat.common;
+package org.esa.beam.meris.icol.landsat.etm;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
@@ -14,6 +14,8 @@ import org.esa.beam.framework.gpf.annotations.OperatorMetadata;
 import org.esa.beam.framework.gpf.annotations.Parameter;
 import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
+import org.esa.beam.meris.icol.landsat.common.DownscaleOp;
+import org.esa.beam.meris.icol.landsat.common.LandsatConstants;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.meris.l2auxdata.Utils;
@@ -21,7 +23,7 @@ import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.image.DataBuffer;
 import java.util.Map;
 
@@ -31,13 +33,13 @@ import java.util.Map;
  *
  * @author Olaf Danne
  */
-@OperatorMetadata(alias = "Landsat.RadConversion",
+@OperatorMetadata(alias = "Landsat7.Etm.RadConversion",
         version = "1.0",
         internal = true,
         authors = "Olaf Danne",
         copyright = "(c) 2009 by Brockmann Consult",
         description = "Converts radiances into reflectances and temperature (TM6) for Landsat.")
-public class RadConversionOp extends Operator {
+public class EtmRadConversionOp extends Operator {
 
     private transient Band[] radianceBands;
     private transient Band[] reflectanceBands;
@@ -55,9 +57,8 @@ public class RadConversionOp extends Operator {
     private String startTime;
     @Parameter
     private String stopTime;
-    @Parameter
+
     private String[] radianceBandNames;
-    @Parameter
     private String[] reflectanceBandNames;
 
     private double seasonalFactor;
@@ -66,6 +67,9 @@ public class RadConversionOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
+
+        radianceBandNames = LandsatConstants.LANDSAT7_RADIANCE_BAND_NAMES;
+        reflectanceBandNames = LandsatConstants.LANDSAT7_REFLECTANCE_BAND_NAMES;
 
         final String startTimeString = sourceProduct.getStartTime().toString().substring(0,20);
         int daysSince2000 = LandsatUtils.getDaysSince2000(startTimeString);
@@ -181,13 +185,14 @@ public class RadConversionOp extends Operator {
                     final double cosSza = Math.cos(szaTile.getSampleFloat(x, y) * MathUtils.DTOR);
                     for (int bandId = 0; bandId < radianceBandNames.length; bandId++) {
                         final float rad = radianceTile[bandId].getSampleFloat(x, y);
-                        if (bandId == 5) {
+                        if (bandId == LandsatConstants.LANDSAT7_RADIANCE_61_BAND_INDEX ||
+                                bandId == LandsatConstants.LANDSAT7_RADIANCE_62_BAND_INDEX) {
                             // ATBD ICOL_D4, eq. (24)
                             final double temperature = k2/Math.log((k1/rad) + 1.0);
                             reflectanceTile[bandId].setSample(x, y, temperature);
                         } else {
                             // ATBD ICOL_D4, eq. (23)
-                            final double aRhoToa = LandsatUtils.convertRadToRefl(rad, cosSza, bandId, seasonalFactor);
+                            final double aRhoToa = LandsatUtils.convertRadToReflLandsat7(rad, cosSza, bandId, seasonalFactor);
                             reflectanceTile[bandId].setSample(x, y, aRhoToa);
                         }
                     }
@@ -208,7 +213,7 @@ public class RadConversionOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(RadConversionOp.class);
+            super(EtmRadConversionOp.class);
         }
     }
 }

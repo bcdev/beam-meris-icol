@@ -58,8 +58,9 @@ public class IcolModel {
     boolean useAdvancedLandWaterMask = true;
 
     // Landsat
-    @Parameter(defaultValue = "0", valueSet = {"0", "1"})
-    private int landsatTargetResolution = 0; // 300m
+    // set this fix for the moment
+//    @Parameter(defaultValue = "0", valueSet = {"0", "1"})
+//    private int landsatTargetResolution = 0; // 300m
     @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"})
     private int landsatOutputProductType = LandsatConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE; // standard product
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.32")
@@ -92,11 +93,13 @@ public class IcolModel {
     private boolean landsatLandFlagApplyTemperatureFilter = true;
     @Parameter(interval = "[0.0, 1.0]", defaultValue = "0.2")
     private double landNdviThreshold = LandsatConstants.DEFAULT_NDVI_LAND_THRESHOLD;
-    @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0")
+    @Parameter(interval = "[200.0, 320.0]", defaultValue = "1200.0")
     private double landTM6Threshold = LandsatConstants.DEFAULT_TM6_LAND_THRESHOLD;
     @Parameter(defaultValue = LandsatConstants.LAND_FLAGS_SUMMER, valueSet = {LandsatConstants.LAND_FLAGS_SUMMER,
             LandsatConstants.LAND_FLAGS_WINTER})
     private String landsatSeason = LandsatConstants.LAND_FLAGS_SUMMER;
+
+    private String landsatIntermediateProductDir = System.getProperty("user.home");
 
 
     @Parameter(defaultValue = "0", valueSet = {"0", "1"})
@@ -119,15 +122,16 @@ public class IcolModel {
         return cloudMaskProduct;
     }
 
-    private int getLandsatTargetResolution() {
-        int landsatTargetResolutionValue = -1;
-        if (landsatTargetResolution == 0) {
-            landsatTargetResolutionValue = 300;
-        } else if (landsatTargetResolution == 1) {
-            landsatTargetResolutionValue = 1200;
-        }
-        return landsatTargetResolutionValue;
-    }
+    // this is fix for the moment
+//    private int getLandsatTargetResolution() {
+//        int landsatTargetResolutionValue = -1;
+//        if (landsatTargetResolution == 0) {
+//            landsatTargetResolutionValue = 300;
+//        } else if (landsatTargetResolution == 1) {
+//            landsatTargetResolutionValue = 1200;
+//        }
+//        return landsatTargetResolutionValue;
+//    }
 
     public int getLandsatOutputProductType() {
         return landsatOutputProductType;
@@ -148,7 +152,7 @@ public class IcolModel {
         return params;
     }
 
-    public Map<String, Object> getLandsat5Parameters() {
+    public Map<String, Object> getLandsatParameters() {
         HashMap<String, Object> params = new HashMap<String, Object>();
         configAeAerosolOp(params);
         configReverseRhoToaOp(params);
@@ -179,7 +183,8 @@ public class IcolModel {
     }
 
     private void configLandsatOp(HashMap<String, Object> params) {
-        params.put("landsatTargetResolution", getLandsatTargetResolution());
+        // this is fix for the moment
+//        params.put("landsatTargetResolution", getLandsatTargetResolution());
         params.put("landsatOutputProductType", getLandsatOutputProductType());
         params.put("landsatUserOzoneContent", landsatUserOzoneContent);
         params.put("landsatUserPSurf", landsatUserPSurf);
@@ -197,6 +202,7 @@ public class IcolModel {
         params.put("landNdviThreshold", landNdviThreshold);
         params.put("landTM6Threshold", landTM6Threshold);
         params.put("landsatSeason", landsatSeason);
+        params.put("landsatIntermediateProductDir", landsatIntermediateProductDir);
     }
 
     private void configGeneral(HashMap<String, Object> params) {
