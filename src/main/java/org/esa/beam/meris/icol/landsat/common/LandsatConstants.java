@@ -12,6 +12,9 @@ public interface LandsatConstants {
     String LANDSAT5_PRODUCT_TYPE_PREFIX = "LANDSAT5_TM";
     String LANDSAT7_PRODUCT_TYPE_PREFIX = "LANDSAT7_ETM+";
 
+    String LANDSAT_DOWNSCALED_PRODUCT_SUFFIX = "_downscaled";
+    String LANDSAT_DOWNSCALED_CORRECTED_PRODUCT_SUFFIX = "_downscaled_corrected";
+
     String LANDSAT5_RADIANCE_1_BAND_NAME = "radiance_1";
     String LANDSAT5_RADIANCE_2_BAND_NAME = "radiance_2";
     String LANDSAT5_RADIANCE_3_BAND_NAME = "radiance_3";

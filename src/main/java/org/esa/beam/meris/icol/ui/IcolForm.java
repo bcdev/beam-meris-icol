@@ -37,6 +37,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -45,6 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,7 +85,7 @@ class IcolForm extends JTabbedPane {
     private JFormattedTextField landsatOzoneContentValue;
     private JFormattedTextField landsatPSurfValue;
     private JFormattedTextField landsatTM60Value;
-    private JFormattedTextField landsatIntermediateProductDir;
+    private JTextField landsatOutputProductsDir;
 
     private ButtonGroup landsatOutputProductTypeGroup;
     private JRadioButton landsatOutputProductTypeFullAEButton;
@@ -113,6 +116,7 @@ class IcolForm extends JTabbedPane {
 
     IcolForm(AppContext appContext, IcolModel icolModel, TargetProductSelector targetProductSelector) {
         this.appContext = appContext;
+
         bc = new BindingContext(icolModel.getPropertyContainer());
         this.targetProductSelector = targetProductSelector;
         sourceProductSelector = new SourceProductSelector(appContext,
@@ -139,6 +143,8 @@ class IcolForm extends JTabbedPane {
         };
         valueContainer.addPropertyChangeListener("formatName", formatNameChangeListener);
         icolContainer = icolModel.getPropertyContainer();
+
+//        icolContainer.setValue("landsatOutputProductsDir", targetProductSelector.getProductDirTextField().getText());
 
         bindComponents();
         updateUIStates();
@@ -193,18 +199,19 @@ class IcolForm extends JTabbedPane {
         bc.bind("aeArea", aeAreaComboBox);
         bc.bind("useAdvancedLandWaterMask", useAdvancedLandWaterMaskCheckBox);
 
-        bc.bind("openclConvolution", openclConvolutionCheckBox);
+        // currently we don't use this
+//        bc.bind("openclConvolution", openclConvolutionCheckBox);
 
         bc.bind("productType", productTypeGroup);
         bc.bind("sourceProduct", sourceProductSelector.getProductNameComboBox());
         bc.bind("cloudMaskProduct", cloudProductSelector.getProductNameComboBox());
 
-//        bc.bind("landsatTargetResolution", landsatResolutionGroup);
+        bc.bind("landsatTargetResolution", landsatResolutionGroup);
         bc.bind("landsatOutputProductType", landsatOutputProductTypeGroup);
         bc.bind("landsatUserOzoneContent", landsatOzoneContentValue);
         bc.bind("landsatUserPSurf", landsatPSurfValue);
         bc.bind("landsatUserTm60", landsatTM60Value);
-        bc.bind("landsatIntermediateProductDir", landsatIntermediateProductDir);
+        bc.bind("landsatOutputProductsDir", landsatOutputProductsDir);
 
         bc.bind("landsatCloudFlagApplyBrightnessFilter", landsatCloudFlagApplyBrightnessFilterCheckBox);
         bc.bind("landsatCloudFlagApplyNdviFilter", landsatCloudFlagApplyNdviFilterCheckBox);
@@ -288,20 +295,22 @@ class IcolForm extends JTabbedPane {
         JPanel aerosolPanel = createAerosolPanel();
         processingParamTab.add(aerosolPanel);
 
-        JPanel advancedOptionsPanel = createAdvancedOptionsPanel();
+        JPanel advancedOptionsPanel = new JPanel();
+        // leave this panel empty for the moment
+//        advancedOptionsPanel = createAdvancedOptionsPanel();
         processingParamTab.add(advancedOptionsPanel);
 
         JPanel landsatProcessingPanel = createLandsatProcessingPanel();
         landsatParamTab.add(landsatProcessingPanel);
+
+        JPanel landsatAtmosphericParametersPanel = createLandsatAtmosphericParametersPanel();
+        landsatParamTab.add(landsatAtmosphericParametersPanel);
 
         JPanel landsatCloudFlagSettingPanel = createLandsatCloudFlagSettingPanel();
         landsatParamTab.add(landsatCloudFlagSettingPanel);
 
         JPanel landsatLandFlagSettingPanel = createLandsatLandFlagSettingPanel();
         landsatParamTab.add(landsatLandFlagSettingPanel);
-
-        JPanel landsatAdvancedOptionsPanel = createLandsatAdvancedOptionsPanel();
-        landsatParamTab.add(landsatAdvancedOptionsPanel);
 
         merisParamTab.add(new JLabel(""));
     }
@@ -434,7 +443,8 @@ class IcolForm extends JTabbedPane {
 
     private void updateUIStates() {
         updateCtpUIstate();
-        openclConvolutionCheckBox.setEnabled(false);
+        // currently we don't use this
+//        openclConvolutionCheckBox.setEnabled(false);
     }
 
     private void updateCtpUIstate() {
@@ -475,9 +485,9 @@ class IcolForm extends JTabbedPane {
         panel.add(aotValue);
         panel.add(new JLabel(""));
 
-        icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
-        icolAerosolForWaterCheckBox.setSelected(true);
-        panel.add(icolAerosolForWaterCheckBox);
+//        icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
+//        icolAerosolForWaterCheckBox.setSelected(true);
+//        panel.add(icolAerosolForWaterCheckBox);
 
         return panel;
     }
@@ -503,10 +513,10 @@ class IcolForm extends JTabbedPane {
         panel.add(aeAreaComboBox);
         panel.add(new JLabel());
 
-        useAdvancedLandWaterMaskCheckBox = new JCheckBox(
-                "Use advanced land/water mask.");
-        useAdvancedLandWaterMaskCheckBox.setSelected(true);
-        panel.add(useAdvancedLandWaterMaskCheckBox);
+//        useAdvancedLandWaterMaskCheckBox = new JCheckBox(
+//                "Use advanced land/water mask.");
+//        useAdvancedLandWaterMaskCheckBox.setSelected(true);
+//        panel.add(useAdvancedLandWaterMaskCheckBox);
 
         return panel;
     }
@@ -521,17 +531,28 @@ class IcolForm extends JTabbedPane {
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
         layout.setCellColspan(1, 0, 2);
+        layout.setCellColspan(2, 0, 2);
+        layout.setCellColspan(3, 0, 2);
+        layout.setCellColspan(4, 0, 2);
         JPanel panel = new JPanel(layout);
 
         panel.setBorder(BorderFactory.createTitledBorder("Processing"));
+
+        icolAerosolForWaterCheckBox = new JCheckBox("Over water, compute aerosol type by AE algorithm");
+        icolAerosolForWaterCheckBox.setSelected(true);
+        panel.add(icolAerosolForWaterCheckBox);
 
         icolAerosolCase2CheckBox = new JCheckBox("Consider case 2 waters in AE algorithm");
         icolAerosolCase2CheckBox.setSelected(false);
         panel.add(icolAerosolCase2CheckBox);
 
+        useAdvancedLandWaterMaskCheckBox = new JCheckBox(
+                "Use advanced land/water mask.");
+        useAdvancedLandWaterMaskCheckBox.setSelected(true);
+        panel.add(useAdvancedLandWaterMaskCheckBox);
+
         return panel;
     }
-
 
     private JPanel createAdvancedOptionsPanel() {
         // table layout with a third 'empty' column
@@ -547,17 +568,18 @@ class IcolForm extends JTabbedPane {
 
         panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
 
-        openclConvolutionCheckBox = new JCheckBox(
-                "Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
-        openclConvolutionCheckBox.setSelected(false);
-        openclConvolutionCheckBox.setEnabled(false);
-        panel.add(openclConvolutionCheckBox);
+        // currently we don't use this
+//        openclConvolutionCheckBox = new JCheckBox(
+//                "Perform convolutions with OpenCL (for unique aerosol type only, GPU hardware required)");
+//        openclConvolutionCheckBox.setSelected(false);
+//        openclConvolutionCheckBox.setEnabled(false);
+//        panel.add(openclConvolutionCheckBox);
 
         return panel;
     }
 
 
-    private JPanel createLandsatProcessingPanel() {
+    private JPanel createLandsatAtmosphericParametersPanel() {
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
@@ -745,63 +767,49 @@ class IcolForm extends JTabbedPane {
         return panel;
     }
 
-    private JPanel createLandsatAdvancedOptionsPanel() {
+    private JPanel createLandsatProcessingPanel() {
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setColumnWeightX(0, 0.1);
-        layout.setColumnWeightX(1, 0.5);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(0, 0.0);
+        layout.setColumnWeightX(1, 1.0);
+        layout.setColumnWeightX(2, 0.0);
         layout.setTablePadding(2, 2);
-//        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
-//        layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
-//        layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
-//        layout.setCellPadding(3, 0, new Insets(10, 24, 0, 0));
-//        layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
-//        layout.setCellPadding(5, 0, new Insets(0, 48, 0, 0));
-//        layout.setCellPadding(6, 0, new Insets(0, 48, 0, 0));
-//        layout.setCellPadding(7, 0, new Insets(10, 24, 0, 0));
 
-        layout.setCellPadding(0, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
+        layout.setCellPadding(1, 0, new Insets(10, 24, 0, 0));
         layout.setCellPadding(2, 0, new Insets(0, 48, 0, 0));
         layout.setCellPadding(3, 0, new Insets(0, 48, 0, 0));
-        layout.setCellPadding(4, 0, new Insets(10, 24, 0, 0));
-
+        layout.setCellPadding(4, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(5, 0, new Insets(10, 24, 0, 0));
+        layout.setCellPadding(6, 0, new Insets(0, 48, 0, 0));
+        layout.setCellPadding(7, 0, new Insets(0, 48, 0, 0));
 
         JPanel panel = new JPanel(layout);
 
-        panel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+        panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
-        // deactivate this for the moment and set to fixed value
-//        panel.add(new JLabel("AE correction grid resolution:"));
-//        panel.add(new JLabel(""));
-//        panel.add(new JLabel(""));
-//
-//        landsatResolution300Button = new JRadioButton("300 m");
-//        landsatResolution300Button.setSelected(true);
-//        panel.add(landsatResolution300Button);
-//        panel.add(new JLabel(""));
-//        panel.add(new JLabel(""));
-//        landsatResolution1200Button = new JRadioButton("1200 m");
-//        landsatResolution1200Button.setSelected(false);
-//        panel.add(landsatResolution1200Button);
-//        panel.add(new JLabel(""));
-//        panel.add(new JLabel(""));
-//
-//        landsatResolutionGroup = new ButtonGroup();
-//        landsatResolutionGroup.add(landsatResolution300Button);
-//        landsatResolutionGroup.add(landsatResolution1200Button);
-//
-//        ActionListener landsatResolutionListener = new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                updateLandsatResolutionSettings();
-//            }
-//        };
-//        landsatResolution300Button.addActionListener(landsatResolutionListener);
-//        landsatResolution1200Button.addActionListener(landsatResolutionListener);
+        panel.add(new JLabel("Output Products Directory : "));
+        landsatOutputProductsDir = new JFormattedTextField("");
+        panel.add(landsatOutputProductsDir);
+        landsatOutputProductsDir.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateIOTargetProductDir();
+            }
 
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateIOTargetProductDir();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateIOTargetProductDir();
+            }
+        });
+        panel.add(new JLabel(""));
 
         panel.add(new JLabel("Output product type:"));
         panel.add(new JLabel(""));
@@ -847,15 +855,41 @@ class IcolForm extends JTabbedPane {
         landsatOutputProductTypeFlagsButton.addActionListener(landsatOutputProductTypeListenerListener);
         landsatOutputProductTypeDownscaleButton.addActionListener(landsatOutputProductTypeListenerListener);
 
-        panel.add(new JLabel("Intermediate Product Directory : "));
-        landsatIntermediateProductDir = new JFormattedTextField("");
-        panel.add(landsatIntermediateProductDir);
+        panel.add(new JLabel("AE correction grid resolution:"));
+        panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
+        landsatResolution300Button = new JRadioButton("300 m");
+        landsatResolution300Button.setSelected(true);
+        panel.add(landsatResolution300Button);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+        landsatResolution1200Button = new JRadioButton("1200 m");
+        landsatResolution1200Button.setSelected(false);
+        panel.add(landsatResolution1200Button);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
 
-        panel.add(new JPanel());
+        landsatResolutionGroup = new ButtonGroup();
+        landsatResolutionGroup.add(landsatResolution300Button);
+        landsatResolutionGroup.add(landsatResolution1200Button);
+
+        ActionListener landsatResolutionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateLandsatResolutionSettings();
+            }
+        };
+        landsatResolution300Button.addActionListener(landsatResolutionListener);
+        landsatResolution1200Button.addActionListener(landsatResolutionListener);
+
 
         return panel;
+    }
+
+    private void updateIOTargetProductDir() {
+        targetProductSelector.getProductDirTextField().setText(landsatOutputProductsDir.getText());
+        targetProductSelector.getModel().getValueContainer().setValue("productDir", new File(landsatOutputProductsDir.getText()));
     }
 
     private void updateLandsatResolutionSettings() {
@@ -934,9 +968,12 @@ class IcolForm extends JTabbedPane {
             String sourceProductName = sourceProduct.getName();
             final String productType = sourceProduct.getProductType();
             if (productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX) ||
-                    productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX)) {
+                    productType.toUpperCase().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX)) {
+                setProductDirChooserVisibility(false);
+                targetProductSelector.getProductDirTextField().setText(landsatOutputProductsDir.getText());
                 updateLandsatProductName(selectorModel, sourceProductName);
             } else {
+                setProductDirChooserVisibility(true);
                 if (sourceProductName.endsWith(".N1")) {
                     sourceProductName = sourceProductName.substring(0, sourceProductName.length() - 3);
                 }
@@ -953,12 +990,21 @@ class IcolForm extends JTabbedPane {
 
     private void updateLandsatProductName(TargetProductSelectorModel selectorModel, String sourceProductName) {
         if (landsatOutputProductTypeDownscaleButton.isSelected()) {
-            selectorModel.setProductName("L1N_" + sourceProductName + "_downscaled");
+            selectorModel.setProductName("L1N_" + sourceProductName + LandsatConstants.LANDSAT_DOWNSCALED_PRODUCT_SUFFIX);
+            targetProductSelector.getProductNameTextField().setEnabled(false);
         } else if (landsatOutputProductTypeFullAEButton.isSelected()) {
-            selectorModel.setProductName("L1N_" + sourceProductName + "_corrected");
+            selectorModel.setProductName("L1N_" + sourceProductName + LandsatConstants.LANDSAT_DOWNSCALED_CORRECTED_PRODUCT_SUFFIX);
+            targetProductSelector.getProductNameTextField().setEnabled(false);
         } else if (landsatOutputProductTypeUpscaleAEButton.isSelected()) {
-            selectorModel.setProductName("L1N_" + sourceProductName + "_upscaled");
+            selectorModel.setProductName("L1N_" + sourceProductName);
+            targetProductSelector.getProductNameTextField().setEnabled(true);
         }
+    }
+
+    private void setProductDirChooserVisibility(boolean isVisible) {
+        targetProductSelector.getProductDirTextField().setVisible(isVisible);
+        targetProductSelector.getProductDirChooserButton().setVisible(isVisible);
+        targetProductSelector.getProductDirLabel().setVisible(isVisible);
     }
 
     private void updateProductFormatChange() {

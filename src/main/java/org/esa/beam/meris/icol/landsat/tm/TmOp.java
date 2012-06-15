@@ -69,8 +69,8 @@ public class TmOp extends TmBasisOp {
     private double landsatUserTm60;
     @Parameter(interval = "[0.01, 1.0]", defaultValue = "0.32", description = "The ozone content to be used by AE correction algorithm.")
     private double landsatUserOzoneContent;
-//    @Parameter(defaultValue = "300", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
-//    private int landsatTargetResolution;
+    @Parameter(defaultValue = "1200", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
+    private int landsatTargetResolution;
     @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"}, description =
             "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
     private int landsatOutputProductType;
@@ -106,7 +106,6 @@ public class TmOp extends TmBasisOp {
 
     // general
     private static final int productType = 0;
-    private static final int landsatTargetResolution = 1200;
     private boolean reshapedConvolution = true;     // currently no user option
 
     @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
@@ -119,7 +118,7 @@ public class TmOp extends TmBasisOp {
     @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
     private boolean exportSeparateDebugBands = false;
     @Parameter
-    private String landsatIntermediateProductDir;
+    private String landsatOutputProductsDir;
 
     // LandsatReflectanceConversionOp
     @Parameter(defaultValue = "true")
@@ -152,8 +151,9 @@ public class TmOp extends TmBasisOp {
 
         Product downscaledSourceProduct = null;
 
-        final File downscaledSourceProductFile = new File(landsatIntermediateProductDir + File.separator +
-                                                                  "L1N_" + sourceProduct.getName() + "_downscaled" + ".dim");
+        final File downscaledSourceProductFile = new File(landsatOutputProductsDir + File.separator +
+                                                                  "L1N_" + sourceProduct.getName() +
+                                                                  LandsatConstants.LANDSAT_DOWNSCALED_PRODUCT_SUFFIX + ".dim");
 
         try {
             downscaledSourceProduct = ProductIO.readProduct(downscaledSourceProductFile.getAbsolutePath());
@@ -163,8 +163,9 @@ public class TmOp extends TmBasisOp {
 
         if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_UPSCALE) {
             // check if both original and AE corrected product exists on AE grid, in parent directory...
-            final File aeCorrProductFile = new File(landsatIntermediateProductDir + File.separator +
-                                                            "L1N_" + sourceProduct.getName() + "_corrected" + ".dim");
+            final File aeCorrProductFile = new File(landsatOutputProductsDir + File.separator +
+                                                            "L1N_" + sourceProduct.getName() +
+                                                            LandsatConstants.LANDSAT_DOWNSCALED_CORRECTED_PRODUCT_SUFFIX + ".dim");
             Product aeCorrProduct;
             try {
                 aeCorrProduct = ProductIO.readProduct(aeCorrProductFile.getAbsolutePath());
