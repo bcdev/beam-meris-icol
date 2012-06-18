@@ -123,9 +123,9 @@ public class CoeffW {
 
     public double[] getReshapedRayleighCoeffForRR(int iaer) {
         double[][] wRR = getReshapedRayleighCoeffForRR();
-        for (int i=0; i<wRR[iaer-1].length; i++) {
-            System.out.println("" + wRR[iaer-1][i]);
-        }
+//        for (int i=0; i<wRR[iaer-1].length; i++) {
+//            System.out.println("" + wRR[iaer-1][i]);
+//        }
         return wRR[iaer-1];
     }
 
@@ -293,7 +293,7 @@ public class CoeffW {
         for (int i = 0; i < kernelData.length; i++) {
             sum += kernelData[i];
         }
-        System.out.println("kernel sum = " + sum);
+//        System.out.println("kernel sum = " + sum);
         for (int i = 0; i < kernelData.length; i++) {
             kernelData[i] /= sum;
         }

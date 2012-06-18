@@ -123,12 +123,14 @@ public class MerisOp extends Operator {
     private int productType = 0;
     //    @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;  // currently no user option
-    @Parameter(defaultValue = "false",
-               description = "If set to 'true', the convolution shall be computed on GPU device if available.")
+//    @Parameter(defaultValue = "false",
+//               description = "If set to 'true', the convolution shall be computed on GPU device if available.")
+// currently no user option
     private boolean openclConvolution = false;
-    @Parameter(defaultValue = "64", description = "The tile size used.")
+//    @Parameter(defaultValue = "64", description = "The tile size used.")
+    // currently no user option
     private int tileSize = 64;
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
     @Parameter(defaultValue = "true",

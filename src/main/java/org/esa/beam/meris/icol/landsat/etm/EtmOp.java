@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * @author Olaf Danne
  */
-@OperatorMetadata(alias = "Landsat.EnhancedThematicMapper",
+@OperatorMetadata(alias = "icol.EnhancedThematicMapper",
                   version = "1.1",
                   authors = "Marco Zuehlke, Olaf Danne",
                   copyright = "(c) 2007-2009 by Brockmann Consult",
@@ -54,10 +54,6 @@ public class EtmOp extends TmBasisOp {
     private double userAlpha;
     @Parameter(interval = "[0, 1.5]", defaultValue = "0.2", description = "The aerosol optical thickness at reference wavelength.")
     private double userAot;
-    @Parameter(defaultValue = "false", description = "If set to 'true', case 2 waters are considered by AE correction algorithm.")
-    private boolean icolAerosolCase2 = false;
-    @Parameter(defaultValue = "true", description = "If set to 'true', the aerosol type over water is computed by AE correction algorithm.")
-    private boolean icolAerosolForWater = true;
     @Parameter(interval = "[300.0, 1060.0]", defaultValue = "1013.25", description = "The surface pressure to be used by AE correction algorithm.")
     private double landsatUserPSurf;
     @Parameter(interval = "[200.0, 320.0]", defaultValue = "300.0", description = "The TM band 6 temperature to be used by AE correction algorithm.")
@@ -66,7 +62,7 @@ public class EtmOp extends TmBasisOp {
     private double landsatUserOzoneContent;
     @Parameter(defaultValue = "1200", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
-    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2", "3"}, description =
+    @Parameter(defaultValue = "0", valueSet = {"0", "1", "2"}, description =
             "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
     private int landsatOutputProductType;
 
@@ -107,30 +103,17 @@ public class EtmOp extends TmBasisOp {
 
     private boolean reshapedConvolution = true;     // currently no user option
 
-    @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
-    private boolean openclConvolution = false;      // currently not used in TM
-    @Parameter(defaultValue = "64")
+//    @Parameter(defaultValue = "false", description = "If set to 'true', the convolution shall be computed on GPU device if available.")
+    private boolean openclConvolution = false;      // currently not used as parameter in TM
+//    @Parameter(defaultValue = "64")
+    // currently no user option
     private int tileSize = 64;
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
                description = "The area where the AE correction will be applied.")
-    private AeArea aeArea = AeArea.COASTAL_OCEAN;
-    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
+    private AeArea aeArea = AeArea.EVERYWHERE;
+//    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
+    // currently no user option here
     private boolean exportSeparateDebugBands = false;
-
-    // LandsatReflectanceConversionOp
-    @Parameter(defaultValue = "true")
-    private boolean exportRhoToa = true;
-    @Parameter(defaultValue = "true")
-    private boolean exportRhoToaRayleigh = true;
-    @Parameter(defaultValue = "true")
-    private boolean exportRhoToaAerosol = true;
-    @Parameter(defaultValue = "true")
-    private boolean exportAeRayleigh = true;
-    @Parameter(defaultValue = "true")
-    private boolean exportAeAerosol = true;
-    @Parameter(defaultValue = "true")
-    private boolean exportAlphaAot = true;
-
 
     private String landsatStartTime;
     private String landsatStopTime;
@@ -295,7 +278,7 @@ public class EtmOp extends TmBasisOp {
         if (System.getProperty("additionalOutputBands") != null && System.getProperty("additionalOutputBands").equals("RS"))
             exportSeparateDebugBands = true;
         aeAerosolParams.put("exportSeparateDebugBands", exportSeparateDebugBands);
-        aeAerosolParams.put("icolAerosolForWater", icolAerosolForWater);
+        aeAerosolParams.put("icolAerosolForWater", true);
         aeAerosolParams.put("userAerosolReferenceWavelength", userAerosolReferenceWavelength);
         aeAerosolParams.put("userAlpha", userAlpha);
         aeAerosolParams.put("userAot", userAot);

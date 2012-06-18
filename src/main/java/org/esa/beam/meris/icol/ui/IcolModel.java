@@ -141,11 +141,12 @@ public class IcolModel {
 
     public Map<String, Object> getMerisParameters() {
         HashMap<String, Object> params = new HashMap<String, Object>();
-        configCtp(params);
+        configMerisCtp(params);
         params.put("cloudMaskExpression", cloudMaskExpression);
         params.put("productType", productType);
         configAeAerosolOp(params);
-        configReverseRhoToaOp(params);
+        configMerisProcessing(params);
+        configMerisReverseRhoToaOp(params);
         configGeneral(params);
         return params;
     }
@@ -153,13 +154,12 @@ public class IcolModel {
     public Map<String, Object> getLandsatParameters() {
         HashMap<String, Object> params = new HashMap<String, Object>();
         configAeAerosolOp(params);
-        configReverseRhoToaOp(params);
         configGeneral(params);
         configLandsatOp(params);
         return params;
     }
 
-    private void configReverseRhoToaOp(HashMap<String, Object> params) {
+    private void configMerisReverseRhoToaOp(HashMap<String, Object> params) {
         params.put("exportRhoToaRayleigh", exportRhoToaRayleigh);
         params.put("exportRhoToaAerosol", exportRhoToaAerosol);
         params.put("exportAeRayleigh", exportAeRayleigh);
@@ -167,14 +167,18 @@ public class IcolModel {
         params.put("exportAlphaAot", exportAlphaAot);
     }
 
-    private void configCtp(HashMap<String, Object> params) {
+    private void configMerisCtp(HashMap<String, Object> params) {
         params.put("useUserCtp", useUserCtp);
         params.put("userCtp", userCtp);
     }
 
-    private void configAeAerosolOp(HashMap<String, Object> params) {
+    private void configMerisProcessing(HashMap<String, Object> params) {
         params.put("icolAerosolForWater", icolAerosolForWater);
         params.put("icolAerosolCase2", icolAerosolCase2);
+        params.put("useAdvancedLandWaterMask", useAdvancedLandWaterMask);
+    }
+
+    private void configAeAerosolOp(HashMap<String, Object> params) {
         params.put("userAerosolReferenceWavelength", userAerosolReferenceWavelength);
         params.put("userAlpha", userAlpha);
         params.put("userAot", userAot);
@@ -203,9 +207,8 @@ public class IcolModel {
     }
 
     private void configGeneral(HashMap<String, Object> params) {
-        params.put("tileSize", tileSize);
-        params.put("useAdvancedLandWaterMask", useAdvancedLandWaterMask);
-        params.put("openclConvolution", openclConvolution);
+//        params.put("tileSize", tileSize);    // currently no user option
+//        params.put("openclConvolution", openclConvolution);     // currently no user option
         params.put("aeArea", aeArea);
     }
 }

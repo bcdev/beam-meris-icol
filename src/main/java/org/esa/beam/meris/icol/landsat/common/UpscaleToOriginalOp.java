@@ -48,24 +48,37 @@ public class UpscaleToOriginalOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-        MetadataAttribute widthAttr;
-        MetadataAttribute heightAttr;
-        if (instrument == Instrument.ETM7) {
-            widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_PAN");
-            heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_PAN");
-        } else if (instrument == Instrument.TM5) {
-            widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
-            heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
-        } else {
-            throw new OperatorException("Instrument " + instrument.name() + " not supported here.");
-        }
 
-        if (widthAttr == null || heightAttr == null) {
-            throw new OperatorException("Cannot upscale to original grid - metadata info missing.");
-        }
+        int width = sourceProduct.getSceneRasterWidth();
+        int height = sourceProduct.getSceneRasterHeight();
 
-        final int width = widthAttr.getData().getElemIntAt(0);
-        final int height = heightAttr.getData().getElemIntAt(0);
+//        int width;
+//        int height;
+//        if (instrument == Instrument.ETM7 || instrument == Instrument.TM5) {
+//            if (sourceProduct.getMetadataRoot().getElement("history").getElement("SubsetInfo") != null) {
+//                width = sourceProduct.getSceneRasterWidth();
+//                height = sourceProduct.getSceneRasterHeight();
+//            } else {
+//                MetadataAttribute widthAttr;
+//                MetadataAttribute heightAttr;
+//                if (instrument == Instrument.ETM7) {
+//                    // i.e., this differs from scene raster width/height
+//                    widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_PAN");
+//                    heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_PAN");
+//                } else {
+//                    widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
+//                    heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
+//                }
+//                if (widthAttr == null || heightAttr == null) {
+//                    throw new OperatorException("Cannot upscale to original grid - metadata info missing.");
+//                }
+//                width = widthAttr.getData().getElemIntAt(0);
+//                height = heightAttr.getData().getElemIntAt(0);
+//            }
+//        } else {
+//            throw new OperatorException("Instrument " + instrument.name() + " not supported here.");
+//        }
+
 
         final float xScale = (float) width / correctedProduct.getSceneRasterWidth();
         final float yScale = (float) height / correctedProduct.getSceneRasterHeight();

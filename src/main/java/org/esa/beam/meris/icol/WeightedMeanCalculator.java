@@ -58,10 +58,6 @@ public class WeightedMeanCalculator {
         final Rectangle sourceRect = srcTile.getRectangle();
         ProductData srcData = srcTile.getRawSamples();
 
-        if (x == 124 && y == 142) {
-            System.out.println("x,y = " + x + "," + y);
-        }
-
         int[] counts = new int[extend + 1];
         float[] sum = new float[extend + 1];
 
