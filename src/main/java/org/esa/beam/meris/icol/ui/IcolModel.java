@@ -52,7 +52,7 @@ public class IcolModel {
     private boolean openclConvolution = false;
     @Parameter(defaultValue = "64")
     private int tileSize = 64;
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"})
     private AeArea aeArea;
     @Parameter(defaultValue = "true")
     boolean useAdvancedLandWaterMask = true;
@@ -110,7 +110,7 @@ public class IcolModel {
 
     public IcolModel() {
         propertyContainer = PropertyContainer.createObjectBacked(this, new ParameterDescriptorFactory());
-        aeArea = AeArea.COASTAL_OCEAN;
+        aeArea = AeArea.EVERYWHERE;
     }
 
     public Product getSourceProduct() {

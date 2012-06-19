@@ -109,7 +109,7 @@ public class TmOp extends TmBasisOp {
 //    @Parameter(defaultValue = "64")
     // currently no user option
     private int tileSize = 64;
-    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea = AeArea.EVERYWHERE;
 //    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")

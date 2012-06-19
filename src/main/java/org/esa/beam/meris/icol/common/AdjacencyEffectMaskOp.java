@@ -81,7 +81,7 @@ public class AdjacencyEffectMaskOp extends Operator {
     @Parameter
     private String coastlineExpression;
 
-    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"})
+    @Parameter(defaultValue = "COASTAL_OCEAN", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"})
     private AeArea aeArea;
     @Parameter
     private boolean reshapedConvolution;

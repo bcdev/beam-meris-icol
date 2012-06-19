@@ -120,7 +120,7 @@ class IcolForm extends JTabbedPane {
         bc = new BindingContext(icolModel.getPropertyContainer());
         this.targetProductSelector = targetProductSelector;
         sourceProductSelector = new SourceProductSelector(appContext,
-                                                          "Input-Product (MERIS L1b or Landsat 5 TM L1G GeoTIFF):");
+                                                          "Input-Product (MERIS L1b, Landsat5 TM or Landsat7 ETM+):");
         cloudProductSelector = new SourceProductSelector(appContext, "Cloud-Product:");
         initComponents();
         JComboBox sourceComboBox = sourceProductSelector.getProductNameComboBox();

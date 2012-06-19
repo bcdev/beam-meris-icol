@@ -130,7 +130,7 @@ public class MerisOp extends Operator {
 //    @Parameter(defaultValue = "64", description = "The tile size used.")
     // currently no user option
     private int tileSize = 64;
-    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea;
     @Parameter(defaultValue = "true",

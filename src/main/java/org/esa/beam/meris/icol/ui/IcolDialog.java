@@ -85,7 +85,7 @@ public class IcolDialog extends SingleTargetProductDialog {
     protected boolean verifyUserInput() {
         Product sourceProduct = model.getSourceProduct();
         if (sourceProduct == null) {
-            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM source product.");
+            showErrorDialog("Please specify either a MERIS L1b, a Landsat5 TM or a Landsat7 ETM+ source product.");
             return false;
         }
         if (form.isEnvisatOutputFormatSelected() && !form.isEnvisatSourceProduct(sourceProduct)) {
@@ -98,15 +98,14 @@ public class IcolDialog extends SingleTargetProductDialog {
         // input product must be either:
         //    - MERIS L1b
         //    - MERIS L1 AMORGOS corrected (L1N)
-        //    - Landsat TM5 GeoTIFF  (L1T)
-        //    - Landsat TM5 Icol 'Geometry' product (L1G)
+        //    - Landsat5 TM GeoTIFF
+        //    - Landsat7 ETM+ GeoTIFF
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) &&
-//                !(productType.equals(LandsatConstants.LANDSAT_GEOTIFF_PRODUCT_TYPE_PREFIX)) &&
                 !(isValidLandsat5ProductType(productType)) &&
                 !(isValidLandsat7ProductType(productType)) &&
                 !(productType.startsWith(LandsatConstants.LANDSAT_DOWNSCALED_PRODUCT_TYPE_PREFIX))) {
-            showErrorDialog("Please specify either a MERIS L1b or a Landsat5 TM GeoTIFF or Geometry source product.");
+            showErrorDialog("Please specify either a MERIS L1b, a Landsat5 TM or a Landsat7 ETM+ source product.");
             return false;
         }
         if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) {

@@ -18,7 +18,6 @@ import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.common.*;
 import org.esa.beam.meris.icol.landsat.common.*;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
-import org.esa.beam.meris.icol.landsat.tm.TmRadConversionOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
@@ -108,7 +107,7 @@ public class EtmOp extends TmBasisOp {
 //    @Parameter(defaultValue = "64")
     // currently no user option
     private int tileSize = 64;
-    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"COASTAL_OCEAN", "OCEAN", "COASTAL_ZONE", "EVERYWHERE"},
+    @Parameter(defaultValue = "EVERYWHERE", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"},
                description = "The area where the AE correction will be applied.")
     private AeArea aeArea = AeArea.EVERYWHERE;
 //    @Parameter(defaultValue = "false", description = "If set to 'true', the aerosol and fresnel correction term are exported as bands.")
