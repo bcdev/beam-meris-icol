@@ -21,6 +21,8 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
+import org.esa.beam.util.ProductUtils;
 import org.esa.beam.util.math.MathUtils;
 import org.opengis.referencing.operation.MathTransform;
 
@@ -103,6 +105,7 @@ public class DownscaleOp extends TmBasisOp {
         }
 
         targetProduct = new Product(sourceProduct.getName(), productType, sceneWidth, sceneHeight);
+        OperatorUtils.copyProductBase(sourceProduct, targetProduct);
 
         final GeoCoding srcGeoCoding = sourceProduct.getGeoCoding();
         if (srcGeoCoding instanceof CrsGeoCoding) {
@@ -167,6 +170,7 @@ public class DownscaleOp extends TmBasisOp {
             if (targetBand.getName().equals(sourceBand.getName())) {
                 radianceSourceTile = getSourceTile(sourceBand, sourceRectangle,
                                                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
             }
         }
 

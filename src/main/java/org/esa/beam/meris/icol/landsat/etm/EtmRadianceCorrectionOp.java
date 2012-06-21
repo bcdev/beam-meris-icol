@@ -110,7 +110,6 @@ public class EtmRadianceCorrectionOp extends TmBasisOp {
             Tile tgTile = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.TG_BAND_PREFIX + "_" + bandNumber), rectangle,
                                         BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
-
             //  write reflectances as output, skip TM 6
             if (bandToWrite(bandName, bandNumber)) {
                 Tile aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle,

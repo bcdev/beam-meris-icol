@@ -21,6 +21,7 @@ import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
 import java.io.File;
@@ -124,7 +125,6 @@ public class EtmOp extends TmBasisOp {
 
         if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE) {
             targetProduct = createDownscaledProduct();
-            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 
@@ -154,7 +154,6 @@ public class EtmOp extends TmBasisOp {
             }
             Product upscaledProduct = createUpscaledToOriginalProduct(downscaledSourceProduct, aeCorrProduct);
             targetProduct = upscaledProduct;
-            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 

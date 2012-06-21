@@ -1,6 +1,7 @@
 package org.esa.beam.meris.icol.landsat.tm;
 
 import org.esa.beam.framework.dataio.ProductIO;
+import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.FlagCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
@@ -26,6 +27,7 @@ import org.esa.beam.meris.icol.landsat.etm.EtmGaseousTransmittanceOp;
 import org.esa.beam.meris.icol.meris.CloudLandMaskOp;
 import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
+import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
 import java.io.File;
@@ -128,7 +130,6 @@ public class TmOp extends TmBasisOp {
 
         if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE) {
             targetProduct = createDownscaledProduct();
-            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 
@@ -157,7 +158,6 @@ public class TmOp extends TmBasisOp {
             }
             Product upscaledProduct = createUpscaledToOriginalProduct(downscaledSourceProduct, aeCorrProduct);
             targetProduct = upscaledProduct;
-            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 

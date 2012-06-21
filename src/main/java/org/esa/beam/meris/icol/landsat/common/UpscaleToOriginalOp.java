@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
+import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
 
@@ -52,34 +53,6 @@ public class UpscaleToOriginalOp extends TmBasisOp {
         int width = sourceProduct.getSceneRasterWidth();
         int height = sourceProduct.getSceneRasterHeight();
 
-//        int width;
-//        int height;
-//        if (instrument == Instrument.ETM7 || instrument == Instrument.TM5) {
-//            if (sourceProduct.getMetadataRoot().getElement("history").getElement("SubsetInfo") != null) {
-//                width = sourceProduct.getSceneRasterWidth();
-//                height = sourceProduct.getSceneRasterHeight();
-//            } else {
-//                MetadataAttribute widthAttr;
-//                MetadataAttribute heightAttr;
-//                if (instrument == Instrument.ETM7) {
-//                    // i.e., this differs from scene raster width/height
-//                    widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_PAN");
-//                    heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_PAN");
-//                } else {
-//                    widthAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_SAMPLES_REF");
-//                    heightAttr = sourceProduct.getMetadataRoot().getElement("L1_METADATA_FILE").getElement("PRODUCT_METADATA").getAttribute("PRODUCT_LINES_REF");
-//                }
-//                if (widthAttr == null || heightAttr == null) {
-//                    throw new OperatorException("Cannot upscale to original grid - metadata info missing.");
-//                }
-//                width = widthAttr.getData().getElemIntAt(0);
-//                height = heightAttr.getData().getElemIntAt(0);
-//            }
-//        } else {
-//            throw new OperatorException("Instrument " + instrument.name() + " not supported here.");
-//        }
-
-
         final float xScale = (float) width / correctedProduct.getSceneRasterWidth();
         final float yScale = (float) height / correctedProduct.getSceneRasterHeight();
 
@@ -96,8 +69,8 @@ public class UpscaleToOriginalOp extends TmBasisOp {
             if (srcBandName.startsWith("radiance")) {
                 if (!srcBandName.startsWith("radiance_6")) {
                     targetBand = targetProduct.addBand(srcBandName, ProductData.TYPE_FLOAT32);
-                    Band correctedBand = correctedProduct.getBand(sourceBand.getName());
-                    Band downscaledBand = downscaledProduct.getBand(sourceBand.getName());
+                    Band correctedBand = correctedProduct.getBand(srcBandName);
+                    Band downscaledBand = downscaledProduct.getBand(srcBandName);
 
                     RenderedImage downscaledImage = downscaledBand.getSourceImage();
                     RenderedImage correctedImage = correctedBand.getSourceImage();
@@ -118,8 +91,8 @@ public class UpscaleToOriginalOp extends TmBasisOp {
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {
                     targetBand = targetProduct.addBand(srcBandName, dataType);
-                    ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
                 }
+                ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
             }
         }
     }
