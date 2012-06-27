@@ -25,11 +25,10 @@
                     expression for the AE correction algorithm.
                 </listitem>
                 <listitem>
-                    LANDSAT TM L1b radiance files (GEOTIFF format)
+                    LANDSAT 5 TM L1 radiance files (GEOTIFF format)
                 </listitem>
                 <listitem>
-                    LANDSAT TM L1g radiance files (original GEOTIFF file downscaled to AE correction grid with ICOL+
-                    and saved as BEAM DIMAP file)
+                    LANDSAT 7 ETM+ L1 radiance files (GEOTIFF format)
                 </listitem>
             </itemizedlist>
         </para>
@@ -284,136 +283,156 @@
         <sect2 id="sum.products.output.landsat">
             <title>LANDSAT</title>
 
-            The LANDSAT TM output products which can be derived using the ICOL+ processor are:
+            The LANDSAT TM intermediate output products which can be derived using the ICOL+ processor are:
             <itemizedlist mark='bullet'>
                 <listitem>
-                    LANDSAT TM L1c radiances: The LANDSAT TM radiances for bands 1-5 and 7 corrected for the
-                    adjacency
-                    effect.
+                    Downscaled LANDSAT 5 TM L1 radiances: The LANDSAT 5 TM radiances for bands 1-5 and 7, downscaled to
+                    the AE correction grid.
                     This product is provided in BEAM DIMAP format. It contains the same bands as the GEOTIFF input
                     product.
                 </listitem>
                 <listitem>
-                    LANDSAT TM L1g radiances: The LANDSAT TM radiances for bands 1-7 downscaled to the AE correction
-                    grid.
-                    This product is provided in BEAM DIMAP format. Processing time can be saved if this product is
-                    computed once and then re-used as input for different AE correction processes with varying user
-                    options.
+                    Downscaled LANDSAT 7 ETM+ L1 radiances: The LANDSAT 7 ETM+ radiances for bands 1-5, 7 and 8, downscaled to
+                    the AE correction grid.
+                    This product is provided in BEAM DIMAP format. It contains the same bands as the GEOTIFF input
+                    product.
+                </listitem>
+            </itemizedlist>
+
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    AE corrected LANDSAT 5 TM L1 radiances: The LANDSAT 5 TM radiances for bands 1-5 and 7, corrected
+                    for adjacency effect.
+                    This product is provided in BEAM DIMAP format on the AE correction grid.
+                    It contains the same bands as the GEOTIFF input product, plus cloud and land flag bands (see below).
                 </listitem>
                 <listitem>
-                    <para>
-                        LANDSAT TM L1g flag bands: The LANDSAT TM cloud and land classification flags as used for
-                        the AE
-                        correction (i.e. downscaled to the AE correction grid).
-                        This product is provided in BEAM DIMAP format.
-                    </para>
-                    <para>
-                        <!--
-                          This is what an equation must be written in docbook. The sum.xml must start with '!DOCTYPE equation...'
-                          othrwise the <equation> tag is not recognized!!
-                          Use inlineequation instead of equation to get the eq. within text flow!
-                          <equation>
-                              <alt>a + b &lt; c</alt>
-                          </equation>
-                          -->
+                    AE corrected LANDSAT 7 ETM+ L1 radiances: The LANDSAT 7 ETM+ radiances for bands 1-5 and 7, corrected
+                    for adjacency effect.
+                    This product is provided in BEAM DIMAP format on the AE correction grid.
+                    It contains the same bands as the GEOTIFF input product, plus cloud and land flag bands (see below).
+                </listitem>
+            </itemizedlist>
 
-                        The coding of the cloud classification flag is listed in Table 3.4.
+            <para>
+                <!--
+                This is what an equation must be written in docbook. The sum.xml must start with '!DOCTYPE equation...'
+                othrwise the <equation> tag is not recognized!!
+                Use inlineequation instead of equation to get the eq. within text flow!
+                <equation>
+                    <alt>a + b &lt; c</alt>
+                </equation>
+                -->
 
-                        <table frame='all'>
-                            <title>Cloud classification flags (Landsat TM)</title>
-                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
-                                <colspec colname='c1'/>
-                                <colspec colname='c2'/>
-                                <colspec colname='c3'/>
-                                <thead>
-                                    <row>
-                                        <entry>Name</entry>
-                                        <entry>Value</entry>
-                                        <entry>Description</entry>
-                                    </row>
-                                </thead>
-                                <tbody>
-                                    <row>
-                                        <entry>F_CLOUD</entry>
-                                        <entry>0</entry>
-                                        <entry>Pixel was finally specified as cloudy (if all flags below are set)
-                                        </entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_BRIGHT</entry>
-                                        <entry>1</entry>
-                                        <entry>Brightness flag (set if TM3 &lt; BT)</entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_NDVI</entry>
-                                        <entry>2</entry>
-                                        <entry>NDVI flag (set if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
-                                        </entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_NDSI</entry>
-                                        <entry>4</entry>
-                                        <entry>NDSI flag (set if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
-                                        </entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_TEMP</entry>
-                                        <entry>8</entry>
-                                        <entry>Temperature flag (set if TM6 &lt; TM6T_CLOUD)</entry>
-                                    </row>
-                                </tbody>
-                            </tgroup>
-                        </table>
-                    </para>
+                The coding of the cloud classification flag is listed in Table 3.4.
 
-                    <para>
-                        The coding of the land classification flag is listed in Table 3.5.
+                <table frame='all'>
+                    <title>Cloud classification flags (Landsat TM)</title>
+                    <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                        <colspec colname='c1'/>
+                        <colspec colname='c2'/>
+                        <colspec colname='c3'/>
+                        <thead>
+                            <row>
+                                <entry>Name</entry>
+                                <entry>Value</entry>
+                                <entry>Description</entry>
+                            </row>
+                        </thead>
+                        <tbody>
+                            <row>
+                                <entry>F_CLOUD</entry>
+                                <entry>0</entry>
+                                <entry>Pixel was finally specified as cloudy (if all flags below are set)
+                                </entry>
+                            </row>
+                            <row>
+                                <entry>F_BRIGHT</entry>
+                                <entry>1</entry>
+                                <entry>Brightness flag (set if TM3 &lt; BT)</entry>
+                            </row>
+                            <row>
+                                <entry>F_NDVI</entry>
+                                <entry>2</entry>
+                                <entry>NDVI flag (set if NDVI &lt; NDVIT_CLOUD, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                </entry>
+                            </row>
+                            <row>
+                                <entry>F_NDSI</entry>
+                                <entry>4</entry>
+                                <entry>NDSI flag (set if NDSI &lt; NDSIT, with NDSI = (TM2 - TM5)/(TM2 + TM5))
+                                </entry>
+                            </row>
+                            <row>
+                                <entry>F_TEMP</entry>
+                                <entry>8</entry>
+                                <entry>Temperature flag (set if TM6 &lt; TM6T_CLOUD)</entry>
+                            </row>
+                        </tbody>
+                    </tgroup>
+                </table>
+            </para>
 
-                        <table frame='all'>
-                            <title>Land classification flags (Landsat TM)</title>
-                            <tgroup cols='3' align='left' colsep='1' rowsep='1'>
-                                <colspec colname='c1'/>
-                                <colspec colname='c2'/>
-                                <colspec colname='c3'/>
-                                <thead>
-                                    <row>
-                                        <entry>Name</entry>
-                                        <entry>Value</entry>
-                                        <entry>Description</entry>
-                                    </row>
-                                </thead>
-                                <tbody>
-                                    <row>
-                                        <entry>F_LANDCONS</entry>
-                                        <entry>0</entry>
-                                        <entry>Pixel was classified as land</entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_LOINLD</entry>
-                                        <entry>1</entry>
-                                        <entry>Pixel was classified as inland waters (currently no algorithm implemented and set to false)
-                                        </entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_NDVI</entry>
-                                        <entry>2</entry>
-                                        <entry>NDVI flag (set if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
-                                        </entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_TEMP</entry>
-                                        <entry>8</entry>
-                                        <entry>Temperature flag (set if TM6 &gt; TM6T_LAND (summer), TM6 &lt; TM6T_LAND (winter))</entry>
-                                    </row>
-                                    <row>
-                                        <entry>F_ICE</entry>
-                                        <entry>16</entry>
-                                        <entry>Pixel was classified as ice (currently no algorithm implemented and set to false)</entry>
-                                    </row>
-                                </tbody>
-                            </tgroup>
-                        </table>
-                    </para>
+            <para>
+                The coding of the land classification flag is listed in Table 3.5.
+
+                <table frame='all'>
+                    <title>Land classification flags (Landsat TM)</title>
+                    <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+                        <colspec colname='c1'/>
+                        <colspec colname='c2'/>
+                        <colspec colname='c3'/>
+                        <thead>
+                            <row>
+                                <entry>Name</entry>
+                                <entry>Value</entry>
+                                <entry>Description</entry>
+                            </row>
+                        </thead>
+                        <tbody>
+                            <row>
+                                <entry>F_LANDCONS</entry>
+                                <entry>0</entry>
+                                <entry>Pixel was classified as land</entry>
+                            </row>
+                            <row>
+                                <entry>F_LOINLD</entry>
+                                <entry>1</entry>
+                                <entry>Pixel was classified as inland waters (currently no algorithm implemented and set to false)
+                                </entry>
+                            </row>
+                            <row>
+                                <entry>F_NDVI</entry>
+                                <entry>2</entry>
+                                <entry>NDVI flag (set if NDVI &lt; NDVIT_LAND, with NDVI = (TM4 - TM3)/(TM4 + TM3))
+                                </entry>
+                            </row>
+                            <row>
+                                <entry>F_TEMP</entry>
+                                <entry>8</entry>
+                                <entry>Temperature flag (set if TM6 &gt; TM6T_LAND (summer), TM6 &lt; TM6T_LAND (winter))</entry>
+                            </row>
+                            <row>
+                                <entry>F_ICE</entry>
+                                <entry>16</entry>
+                                <entry>Pixel was classified as ice (currently no algorithm implemented and set to false)</entry>
+                            </row>
+                        </tbody>
+                    </tgroup>
+                </table>
+            </para>
+
+            The LANDSAT TM final output products which can be derived using the ICOL+ processor are:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    LANDSAT 5 TM L1 radiances: The LANDSAT 5 TM radiances for bands 1-5 and 7 corrected for the
+                    adjacency effect. This product is provided in BEAM DIMAP format. It has the same dimensions and contains the same bands
+                    as the GEOTIFF input product.
+                </listitem>
+                <listitem>
+                    LANDSAT 7 ETM+ L1 radiances: The LANDSAT ETM+ radiances for bands 1-5, 7 and 8 corrected for the
+                    adjacency effect. This product is provided in BEAM DIMAP format. It has the same dimensions and contains the same bands
+                    as the GEOTIFF input product.
                 </listitem>
             </itemizedlist>
         </sect2>

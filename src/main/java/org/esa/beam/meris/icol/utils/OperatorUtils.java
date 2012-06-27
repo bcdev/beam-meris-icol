@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.framework.gpf.Tile;
 import org.esa.beam.gpf.operators.standard.WriteOp;
 import org.esa.beam.meris.icol.Instrument;
+import org.esa.beam.util.Guardian;
 import org.esa.beam.util.ProductUtils;
 
 import java.awt.Rectangle;
@@ -77,11 +78,11 @@ public class OperatorUtils {
                 final String bandName = targetPrefix + "_" + (srcIndex + 1);
                 if (!targetProduct.containsRasterDataNode(bandName)) {
                     Band targetBand = targetProduct.addBand(bandName, ProductData.TYPE_FLOAT32);
-                ProductUtils.copySpectralBandProperties(srcBand, targetBand);
-                targetBand.setNoDataValueUsed(true);
-                targetBand.setNoDataValue(noDataValue);
-                targetBands[targetIndex] = targetBand;
-                targetIndex++;
+                    ProductUtils.copySpectralBandProperties(srcBand, targetBand);
+                    targetBand.setNoDataValueUsed(true);
+                    targetBand.setNoDataValue(noDataValue);
+                    targetBands[targetIndex] = targetBand;
+                    targetIndex++;
                 }
             } else {
                 // skip this src index
@@ -129,6 +130,30 @@ public class OperatorUtils {
         return tiles;
     }
 
+    public static void copyBandProperties(Product sourceProduct, Product targetProduct) {
+        for (Band targetBand : targetProduct.getBands()) {
+            final Band sourceBand = sourceProduct.getBand(targetBand.getName());
+            if (sourceBand != null) {
+                copyBandProperties(sourceBand, targetBand);
+            }
+        }
+    }
+
+    public static void copyBandProperties(Band sourceBand, Band targetBand) {
+        Guardian.assertNotNull("source", sourceBand);
+        Guardian.assertNotNull("target", targetBand);
+
+        targetBand.setSpectralWavelength(sourceBand.getSpectralWavelength());
+        targetBand.setSpectralBandwidth(sourceBand.getSpectralBandwidth());
+        targetBand.setSolarFlux(sourceBand.getSolarFlux());
+        targetBand.setDescription(sourceBand.getDescription());
+        targetBand.setUnit(sourceBand.getUnit());
+        targetBand.setName(sourceBand.getName());
+        targetBand.setNoDataValue(sourceBand.getNoDataValue());
+        targetBand.setNoDataValueUsed(sourceBand.isNoDataValueUsed());
+        targetBand.setValidPixelExpression(sourceBand.getValidPixelExpression());
+    }
+
     // @author Norman
 
     /**
@@ -173,7 +198,7 @@ public class OperatorUtils {
     /**
      * checks for mandatory properties of MERIS input product
      *
-     * @param sourceProduct  - the source product
+     * @param sourceProduct - the source product
      */
     public static void validateMerisInputBands(Product sourceProduct) {
 

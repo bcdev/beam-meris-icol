@@ -8,7 +8,7 @@
             in advance:
             <itemizedlist mark='bullet'>
                 <listitem>
-                    BEAM, version 4.10
+                    BEAM, version 4.10.x
                 </listitem>
             </itemizedlist>
             The BEAM software can be obtained from the BEAM download page
@@ -16,14 +16,16 @@
         </para>
 
         <para>
-            The ICOL+ software main package consists of the jar file for the ICOL+ main module (version 2.9):
+            The ICOL+ software main package consists of the jar file for the ICOL+ main module (version 2.9.2):
             <itemizedlist mark='bullet'>
                 <listitem>
-                    beam-meris-icol-2.9.jar
+                    beam-meris-icol-2.9.2.jar
                 </listitem>
             </itemizedlist>
             The ICOL+ software package needs to be installed with the BEAM Module Manager in BEAM/Visat
-            (see <xref linkend="figure.installation.beammodulemanager" xrefstyle="select: label"/> and
+            (see
+            <xref linkend="figure.installation.beammodulemanager" xrefstyle="select: label"/>
+            and
             the corresponding BEAM help documentation
             (http://www.brockmann-consult.de/beam/doc/help/visat/ModuleManager.html)).
         </para>
@@ -36,7 +38,7 @@
     </sect1>
 
     <sect1 id="sum.installation.addons">
-        <title>Additional Requirements</title>
+        <title>Additional Software</title>
         <para>
             To be able to process all options properly, the ICOL+ processor needs the following
             add-ons to be installed in BEAM (if not already done):
@@ -73,5 +75,22 @@
         </para>
     </sect1>
 
-
+    <sect1 id="sum.installation.addons">
+        <title>Hardware and Memory Requirements</title>
+        <para>
+            The ICOL+ processor is a rather complex tool and requires extensive memory resources
+            to work properly:
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    Usage of an up-to-date computer with at least 4GB RAM is strongly recommended. On less
+                    powerful machines, various kinds of failures may occur.
+                </listitem>
+                <listitem>
+                    The standard BEAM/Visat VM options are not sufficient for ICOL+: In the 'bin' folder of the
+                    BEAM 4.10.x installation, edit the file 'visat.vmoptions' and change the 'Xmx' parameter
+                    (maximum Java heap space) from 1024M to at least 3000M. Restart BEAM to enable these new settings.
+                </listitem>
+            </itemizedlist>
+        </para>
+    </sect1>
 </chapter>

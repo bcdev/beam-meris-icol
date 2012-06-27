@@ -14,8 +14,16 @@
                     to be written to the output product. Note that the checkboxes are enabled only if
                     'Compute rhoToa product' was selected above.
                 </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.meris.processing"></a>4.3.3. 'Processing' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
+                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
+                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
+                    (same as over land).
+                </li><li style="list-style-type: disc">
                     'Consider case 2 waters in AE algorithm': With this checkbox the user can select that
                     case 2 waters are considered in the AE correction algorithm.
+                </li><li style="list-style-type: disc">
+                    'Use advanced land/water mask': With this checkbox the user can select that,
+                    instead of the MERIS L1b land flag, a more accurate land mask based on a set of shape files is used.
                 </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.meris.ctp"></a>4.3.4. 'Cloud Top Pressure' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     'Compute by algorithm', 'Use constant value': With this radio button group (toggle button), the user
                     can

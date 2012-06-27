@@ -12,6 +12,7 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.meris.icol.Instrument;
 import org.esa.beam.meris.icol.landsat.tm.TmBasisOp;
+import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.LandsatUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 import org.esa.beam.util.ProductUtils;
@@ -91,8 +92,10 @@ public class UpscaleToOriginalOp extends TmBasisOp {
                     targetBand.setSourceImage(finalAeCorrectedImage);
                 } else {
                     targetBand = targetProduct.addBand(srcBandName, dataType);
+                    targetBand.setSourceImage(sourceBand.getSourceImage());
+                    ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
                 }
-                ProductUtils.copyRasterDataNodeProperties(sourceBand, targetBand);
+                OperatorUtils.copyBandProperties(sourceBand, targetBand);
             }
         }
     }

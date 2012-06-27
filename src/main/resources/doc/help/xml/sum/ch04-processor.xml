@@ -42,8 +42,7 @@
                         MERIS: Select a L1 product given in .N1 or BEAM-DIMAP format
                     </listitem>
                     <listitem>
-                        LANDSAT TM: Select a L1 product given in GEOTIFF (original product) or BEAM-DIMAP format
-                        ('Geometry' product, see <xref linkend="sum.products.input" xrefstyle="select: label"/>).
+                        LANDSAT 5 TM or Landsat 7 ETM+: Select a L1 product given in GEOTIFF.
                         A large number of Landsat TM products in GEOTIFF format can be found at the USGS
                         Earth Explorer site ([RD-6]). To process TM GEOTIFF data in ICOL, do the following steps:
                         <itemizedlist mark='bullet'>
@@ -52,14 +51,17 @@
                                 in gzipped format named like 'LT5...tar.gz'. If so, unpack this archive.
                             </listitem>
                             <listitem>
-                                The unpacked product should consist of seven single .tif files and two metafiles with
-                                suffixes
-                                '_MTL.txt' and '_GCP.txt'.
+                                The unpacked product should consist of seven (TM) or eight (ETM+) single .tif files
+                                and two metafiles with suffixes '_MTL.txt' and '_GCP.txt'.
                             </listitem>
                             <listitem>
                                 Select the file '..._MTL.txt' as input file.
                             </listitem>
                         </itemizedlist>
+                        After successful selection, the target product name field will be disabled and will show
+                        a name with suffix '_downscaled'. This name cannot be changed by the user. Also, the target
+                        directory text field will disappear, as this needs to be set on the LANDSAT TM tab pane (see
+                        below).
                     </listitem>
                 </itemizedlist>
             </listitem>
@@ -91,7 +93,7 @@
                                 (such as Case 2 Regional) within a processing chain.
                             </listitem>
                         </itemizedlist>
-                        For LANDSAT TM, these are:
+                        For LANDSAT TM and ETM+, these are:
                         <itemizedlist mark='bullet'>
                             <listitem>
                                 BEAM-DIMAP
@@ -105,7 +107,7 @@
                         </itemizedlist>
                     </listitem>
                     <listitem>
-                        Select the output product directory by either typing the product path into the text
+                        MERIS only: Select the output product directory by either typing the product path into the text
                         filed or by pressing the file selection button to invoke a standard file dialog.
                     </listitem>
                 </itemizedlist>
@@ -137,16 +139,16 @@
                     (see also<xref linkend="figure.processor.general.aeareas" xrefstyle="select: label"/>):
                     <itemizedlist mark='bullet'>
                         <listitem>
-                            Coastal regions over the ocean
-                        </listitem>
-                        <listitem>
-                            Everywhere over the ocean
+                            Everywhere
                         </listitem>
                         <listitem>
                             Coastal regions over ocean and land
                         </listitem>
                         <listitem>
-                            Everywhere
+                            Coastal regions over the ocean
+                        </listitem>
+                        <listitem>
+                            Everywhere over the ocean
                         </listitem>
                     </itemizedlist>
                 </listitem>
@@ -173,54 +175,48 @@
                     'AOT': A text field to enter the aerosol optical thickness. The default is 0.2, the valid
                     interval is [0.0, 1.5].
                 </listitem>
-                <listitem>
-                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
-                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
-                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
-                    (same as over land).
-                </listitem>
             </itemizedlist>
         </sect2>
 
-        <sect2 id="sum.processor.general.advanced">
-            <title>'Advanced Options' Subpanel</title>
-            <itemizedlist mark='bullet'>
-                <listitem>
-                    'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
-                    <para>
-                        This option is in an experimental stage and disabled in the current ICOL version.
-                    </para>
-                    <!--If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)-->
-                    <!--is performed using OpenCL libraries. Under suitable conditions, this results in a significant-->
-                    <!--speed-up-->
-                    <!--of the processor. However, this option is based on a rather new technology, and the implementation-->
-                    <!--in-->
-                    <!--ICOL+-->
-                    <!--is still somewhat experimental. There are the following limitations:-->
-                    <!--<itemizedlist mark='bullet'>-->
-                        <!--<listitem>-->
-                            <!--Suitable GPU hardware must be integrated in the computer and properly be installed.-->
-                            <!--In general, this procedure is machine- and platform-dependent and is completely separate-->
-                            <!--from-->
-                            <!--the-->
-                            <!--ICOL+ installation.-->
-                        <!--</listitem>-->
-                        <!--<listitem>-->
-                            <!--The current implementation is applicable only for an aerosol type which is unique (constant)-->
-                            <!--over the computed scene.-->
-                        <!--</listitem>-->
-                        <!--<listitem>-->
-                            <!--The efficiency of the procedure depends on the dimensions of the particular scene and is-->
-                            <!--parameter-dependent. Currently, a set of constant, hard-coded parameters is being used-->
-                            <!--which is very likely not perfect for many cases.-->
-                        <!--</listitem>-->
-                    <!--</itemizedlist>-->
-                    <!--A more detailed description of the OpenCL issue is beyond the scope of this manual. A good-->
-                    <!--literature-->
-                    <!--starting point is e.g. [RD-5].-->
-                </listitem>
-            </itemizedlist>
-        </sect2>
+        <!--<sect2 id="sum.processor.general.advanced">-->
+        <!--<title>'Advanced Options' Subpanel</title>-->
+        <!--<itemizedlist mark='bullet'>-->
+        <!--<listitem>-->
+        <!--'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':-->
+        <!--<para>-->
+        <!--This option is in an experimental stage and disabled in the current ICOL version.-->
+        <!--</para>-->
+        <!--If this checkbox is selected, the convolution (the core mathemaical part of the AE correction)-->
+        <!--is performed using OpenCL libraries. Under suitable conditions, this results in a significant-->
+        <!--speed-up-->
+        <!--of the processor. However, this option is based on a rather new technology, and the implementation-->
+        <!--in-->
+        <!--ICOL+-->
+        <!--is still somewhat experimental. There are the following limitations:-->
+        <!--<itemizedlist mark='bullet'>-->
+        <!--<listitem>-->
+        <!--Suitable GPU hardware must be integrated in the computer and properly be installed.-->
+        <!--In general, this procedure is machine- and platform-dependent and is completely separate-->
+        <!--from-->
+        <!--the-->
+        <!--ICOL+ installation.-->
+        <!--</listitem>-->
+        <!--<listitem>-->
+        <!--The current implementation is applicable only for an aerosol type which is unique (constant)-->
+        <!--over the computed scene.-->
+        <!--</listitem>-->
+        <!--<listitem>-->
+        <!--The efficiency of the procedure depends on the dimensions of the particular scene and is-->
+        <!--parameter-dependent. Currently, a set of constant, hard-coded parameters is being used-->
+        <!--which is very likely not perfect for many cases.-->
+        <!--</listitem>-->
+        <!--</itemizedlist>-->
+        <!--A more detailed description of the OpenCL issue is beyond the scope of this manual. A good-->
+        <!--literature-->
+        <!--starting point is e.g. [RD-5].-->
+        <!--</listitem>-->
+        <!--</itemizedlist>-->
+        <!--</sect2>-->
 
     </sect1>
 
@@ -263,8 +259,18 @@
             <title>'Processing' Subpanel</title>
             <itemizedlist mark='bullet'>
                 <listitem>
+                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
+                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
+                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
+                    (same as over land).
+                </listitem>
+                <listitem>
                     'Consider case 2 waters in AE algorithm': With this checkbox the user can select that
                     case 2 waters are considered in the AE correction algorithm.
+                </listitem>
+                <listitem>
+                    'Use advanced land/water mask': With this checkbox the user can select that,
+                    instead of the MERIS L1b land flag, a more accurate land mask based on a set of shape files is used.
                 </listitem>
             </itemizedlist>
         </sect2>
@@ -328,6 +334,66 @@
         </figure>
 
         This tab pane (<xref linkend="figure.processor.landsat" xrefstyle="select: label"/>) consists of four subpanels.
+
+        <sect2 id="sum.processor.landsat.processing">
+            <title>'Processing' Subpanel</title>
+            <itemizedlist mark='bullet'>
+                <listitem>
+                    'Output products directory': In this text field, the user shall specify
+                    the directory where both the intermediate (after downscaling and after AE correction)
+                    and the final product will be written.
+                </listitem>
+                <listitem>
+                    'Output product type': With this radio button group (toggle button), the user can specify
+                    what kind of output he wants to write into the target product:
+                    <itemizedlist mark='bullet'>
+                        <listitem>
+                            'Downscale source product to AE correction grid': The input L1 radiance product
+                            will be downscaled to the AE correction grid.
+                        </listitem>
+                        <listitem>
+                            'Compute AE corrected product on AE correction grid': The AE correction will be done
+                            on the AE correction grid.
+                        </listitem>
+                        <listitem>
+                            'Upscale AE corrected product to original grid': The AE corrected product will be
+                            upscaled to the original resolution of the input product.
+                        </listitem>
+                    </itemizedlist>
+                </listitem>
+                <listitem>
+                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
+                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
+                    resolution.
+                </listitem>
+            </itemizedlist>
+
+            <para>
+                After setting the output products directory and cloud/land flag parameters (see below),
+                the AE correction process of a Landsat TM or ETM+ product MUST be carried out in three
+                subsequent steps:
+                <itemizedlist mark='bullet'>
+                    <listitem>
+                        Select 'Downscale source product to AE correction grid', click 'Run':
+                        The downscaling subprocess will be done, an intermediate product with
+                        prefix 'L1N_' and suffix
+                        '_downscaled' will be written.
+                    </listitem>
+                    <listitem>
+                        Select 'Compute AE corrected product on AE correction grid', click 'Run':
+                        The AE correction subprocess will be done, an intermediate product with
+                        prefix 'L1N_' and suffix
+                        '_downscaled_corrected' will be written.
+                    </listitem>
+                    <listitem>
+                        Select 'Upscale AE corrected product to original grid',
+                        then select the name of the output product on the I/O parameters pane, then click 'Run':
+                        The upscaling subprocess will be done, the final product will be written.
+                    </listitem>
+                </itemizedlist>
+            </para>
+
+        </sect2>
 
         <sect2 id="sum.processor.landsat.atmparams">
             <title>'Atmospheric Parameters' Subpanel</title>
@@ -426,50 +492,6 @@
             </itemizedlist>
         </sect2>
 
-        <sect2 id="sum.processor.landsat.advanced">
-            <title>'Advanced Options' Subpanel</title>
-            <itemizedlist mark='bullet'>
-                <listitem>
-                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
-                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
-                    resolution.
-                </listitem>
-                <listitem>
-                    'Output product type': With this radio button group (toggle button), the user can specify
-                    what kind of output he wants to write into the target product:
-                    <itemizedlist mark='bullet'>
-                        <listitem>
-                            'Full AE corrected product': The AE corrected product with all radiance bands.
-                        </listitem>
-                        <listitem>
-                            'Flag bands only': Only the flag bands
-                            are comoputed and written to the output product.
-                            This option has the advantage that the user can adjust the cloud/land test thresholds
-                            in several runs towards 'optimal' cloud/land masks without computing the AE correction.
-                            This may save computation time significantly since the AE correction needs to be performed
-                            only once in a final run with the 'full' product being written.
-                        </listitem>
-                        <listitem>
-                            'Geometry product only (input downscaled to AE correction grid)': The output product will be
-                            the same
-                            as the input product, but downscaled from the original TM resolution (30m) to the
-                            AE correction grid resolution as selected above.
-                            This option has the advantage that processing time can be saved
-                            for the 'Flag bands only' step described before,
-                            since this product
-                            (a 'Geometry' product following the ATBD notation) needs to be
-                            computed only once and can then re-used as input for different AE correction runs with
-                            varying user options (such as test thresholds as outlined above).
-                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as
-                            well, but
-                            in this case, of course, the AE corrected product cannot be upscaled to the
-                            TM resolution since the information from the original product is missing.
-                        </listitem>
-                    </itemizedlist>
-                </listitem>
-            </itemizedlist>
-        </sect2>
-
     </sect1>
 
     <sect1 id="sum.processor.control">
@@ -520,6 +542,9 @@
             </listitem>
             <listitem>
                 ${BEAM-INSTALL-DIR}/bin/gpt -h icol.ThematicMapper
+            </listitem>
+            <listitem>
+                ${BEAM-INSTALL-DIR}/bin/gpt -h icol.EnhancedThematicMapper
             </listitem>
         </itemizedlist>
         In this case, information on the usage and a list of all available parameters are given.

@@ -38,7 +38,7 @@ import java.util.Map;
 @OperatorMetadata(alias = "icol.EnhancedThematicMapper",
                   version = "1.1",
                   authors = "Marco Zuehlke, Olaf Danne",
-                  copyright = "(c) 2007-2009 by Brockmann Consult",
+                  copyright = "(c) 2007-2012 by Brockmann Consult",
                   description = "Performs a correction of the adjacency effect for LANDSAT ETM+ L1b data.")
 public class EtmOp extends TmBasisOp {
 
@@ -120,11 +120,12 @@ public class EtmOp extends TmBasisOp {
 
     @Override
     public void initialize() throws OperatorException {
-//        JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // todo: only for debugging purpose!!
+//        JAI.getDefaultInstance().getTileScheduler().setParallelism(1); // only for debugging purpose!!
         setStartStopTime();
 
         if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_DOWNSCALE) {
             targetProduct = createDownscaledProduct();
+            ProductUtils.copyMetadata(sourceProduct, targetProduct);
             return;
         }
 
@@ -159,18 +160,11 @@ public class EtmOp extends TmBasisOp {
 
         // for the remaining option, we now have to go for the full AE correction chain...
 
-//        if (landsatOutputProductType == LandsatConstants.OUTPUT_PRODUCT_TYPE_AECORR) {
-//            compute downscaled product (ATBD D4, section 5.3.1) if not already done...
-//            downscaledSourceProduct = sourceProduct;
-//        }
-
         // compute conversion to reflectance and temperature (ATBD D4, section 5.3.2)
         Product conversionProduct = createConversionProduct(downscaledSourceProduct);
 
         // compute gaseous transmittance (ATBD D4, section 5.3.3)
         Product gaseousTransmittanceProduct = createGaseousTransmittanceProduct(downscaledSourceProduct);
-
-        // now we need to call the operator sequence as for MERIS, but adjusted to Landsat if needed...
 
         // Cloud mask
         // MERIS: Product cloudProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CloudClassificationOp.class), ...
@@ -247,6 +241,7 @@ public class EtmOp extends TmBasisOp {
 
         // now we have the final product on the AE correction grid
         targetProduct = correctionProduct;
+        OperatorUtils.copyBandProperties(sourceProduct, targetProduct);
         ProductUtils.copyMetadata(sourceProduct, targetProduct);
     }
 

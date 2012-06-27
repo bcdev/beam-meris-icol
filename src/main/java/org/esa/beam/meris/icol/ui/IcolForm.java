@@ -8,6 +8,7 @@ import com.bc.ceres.swing.selection.AbstractSelectionChangeListener;
 import com.bc.ceres.swing.selection.SelectionChangeEvent;
 import com.bc.jexp.ParseException;
 import com.bc.jexp.Term;
+import org.apache.commons.lang.SystemUtils;
 import org.esa.beam.dataio.envisat.EnvisatConstants;
 import org.esa.beam.dataio.envisat.EnvisatProductReader;
 import org.esa.beam.framework.dataio.ProductReader;
@@ -230,7 +231,11 @@ class IcolForm extends JTabbedPane {
     }
 
     private void initComponents() {
-        setPreferredSize(new Dimension(600, 760));
+        if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) {
+            setPreferredSize(new Dimension(600, 850));
+        } else {
+            setPreferredSize(new Dimension(600, 750));
+        }
 
         TableLayout layoutIO = new TableLayout(1);
         layoutIO.setTableAnchor(TableLayout.Anchor.NORTHWEST);
@@ -789,7 +794,7 @@ class IcolForm extends JTabbedPane {
 
         panel.setBorder(BorderFactory.createTitledBorder("Processing"));
 
-        panel.add(new JLabel("Output Products Directory : "));
+        panel.add(new JLabel("Output products directory : "));
         landsatOutputProductsDir = new JFormattedTextField("");
         panel.add(landsatOutputProductsDir);
         landsatOutputProductsDir.getDocument().addDocumentListener(new DocumentListener() {

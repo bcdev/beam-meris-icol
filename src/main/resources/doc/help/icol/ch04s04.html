@@ -2,7 +2,46 @@
 
         This tab pane (<a class="xref" href="ch04s04.html#figure.processor.landsat" title="Figure 4.7. 'LANDSAT TM' Tab Pane">Figure 4.7</a>) consists of four subpanels.
 
-        <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.atmparams"></a>4.4.1. 'Atmospheric Parameters' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+        <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.processing"></a>4.4.1. 'Processing' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                    'Output products directory': In this text field, the user shall specify
+                    the directory where both the intermediate (after downscaling and after AE correction)
+                    and the final product will be written.
+                </li><li style="list-style-type: disc">
+                    'Output product type': With this radio button group (toggle button), the user can specify
+                    what kind of output he wants to write into the target product:
+                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                            'Downscale source product to AE correction grid': The input L1 radiance product
+                            will be downscaled to the AE correction grid.
+                        </li><li style="list-style-type: disc">
+                            'Compute AE corrected product on AE correction grid': The AE correction will be done
+                            on the AE correction grid.
+                        </li><li style="list-style-type: disc">
+                            'Upscale AE corrected product to original grid': The AE corrected product will be
+                            upscaled to the original resolution of the input product.
+                        </li></ul></div></li><li style="list-style-type: disc">
+                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
+                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
+                    resolution.
+                </li></ul></div><p>
+                After setting the output products directory and cloud/land flag parameters (see below),
+                the AE correction process of a Landsat TM or ETM+ product MUST be carried out in three
+                subsequent steps:
+                </p><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                        Select 'Downscale source product to AE correction grid', click 'Run':
+                        The downscaling subprocess will be done, an intermediate product with
+                        prefix 'L1N_' and suffix
+                        '_downscaled' will be written.
+                    </li><li style="list-style-type: disc">
+                        Select 'Compute AE corrected product on AE correction grid', click 'Run':
+                        The AE correction subprocess will be done, an intermediate product with
+                        prefix 'L1N_' and suffix
+                        '_downscaled_corrected' will be written.
+                    </li><li style="list-style-type: disc">
+                        Select 'Upscale AE corrected product to original grid',
+                        then select the name of the output product on the I/O parameters pane, then click 'Run':
+                        The upscaling subprocess will be done, the final product will be written.
+                    </li></ul></div><p>
+            </p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.atmparams"></a>4.4.2. 'Atmospheric Parameters' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     'Ozone content (cm atm):' : A text field to enter the ozone content value to be used by the
                     AE correction algorithm. The default is 0.32 cm atm, the valid interval is [0.01, 1.0].
                 </li><li style="list-style-type: disc">
@@ -12,7 +51,7 @@
                     'Surface TM apparent temperature (K):' : A text field to enter the ozone content value to be used by
                     the
                     AE correction algorithm. The default is 300 K, the valid interval is [200.0, 320.0].
-                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.cloudflag"></a>4.4.2. 'Cloud Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.cloudflag"></a>4.4.3. 'Cloud Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     With the checkboxes in this subpanel, the user can select subsequent tests
                     (see also<a class="xref" href="ch03s02.html#sum.products.output.landsat" title="3.2.2. LANDSAT">Section 3.2.2</a>)
                     to finally define a cloud flag:
@@ -36,7 +75,7 @@
                             NDSI threshold NDSIT: The default is 3.0, the valid interval is [0.0, 10.0]
                         </li><li style="list-style-type: disc">
                             Temperature threshold TM6T_CLOUD: The default is 300.0, the valid interval is [200.0, 320.0]
-                        </li></ul></div></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.landflag"></a>4.4.3. 'Land Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
+                        </li></ul></div></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.landflag"></a>4.4.4. 'Land Flag Settings' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     With the checkboxes in this subpanel, the user can select subsequent tests
                     (see also<a class="xref" href="ch03s02.html#sum.products.output.landsat" title="3.2.2. LANDSAT">Section 3.2.2</a>)
                     to finally define a land flag:
@@ -55,35 +94,4 @@
                         </li></ul></div></li><li style="list-style-type: disc">
                     'Season': With this radio button group (toggle button), the user can specify if he wants to
                     apply the 'winter' or the 'summer' criterion in the temperature test above.
-                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.landsat.advanced"></a>4.4.4. 'Advanced Options' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                    'AE correction grid resolution': With this radio button group (toggle button), the user can specify
-                    if the LANDSAT TM AE correction shall be performed with a 300m (MERIS FR) or a 1200m (MERIS RR)
-                    resolution.
-                </li><li style="list-style-type: disc">
-                    'Output product type': With this radio button group (toggle button), the user can specify
-                    what kind of output he wants to write into the target product:
-                    <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                            'Full AE corrected product': The AE corrected product with all radiance bands.
-                        </li><li style="list-style-type: disc">
-                            'Flag bands only': Only the flag bands
-                            are comoputed and written to the output product.
-                            This option has the advantage that the user can adjust the cloud/land test thresholds
-                            in several runs towards 'optimal' cloud/land masks without computing the AE correction.
-                            This may save computation time significantly since the AE correction needs to be performed
-                            only once in a final run with the 'full' product being written.
-                        </li><li style="list-style-type: disc">
-                            'Geometry product only (input downscaled to AE correction grid)': The output product will be
-                            the same
-                            as the input product, but downscaled from the original TM resolution (30m) to the
-                            AE correction grid resolution as selected above.
-                            This option has the advantage that processing time can be saved
-                            for the 'Flag bands only' step described before,
-                            since this product
-                            (a 'Geometry' product following the ATBD notation) needs to be
-                            computed only once and can then re-used as input for different AE correction runs with
-                            varying user options (such as test thresholds as outlined above).
-                            In principle it is possible to perform a 'full' AE correction run from a Geometry product as
-                            well, but
-                            in this case, of course, the AE corrected product cannot be upscaled to the
-                            TM resolution since the information from the original product is missing.
-                        </li></ul></div></li></ul></div></div></div></body></html>
+                </li></ul></div></div></div></body></html>

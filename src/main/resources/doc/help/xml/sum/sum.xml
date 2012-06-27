@@ -12,10 +12,10 @@
     <title>ICOL+ Software User Manual</title>
 
     <bookinfo>
-        <issuenum revision="1">1.0</issuenum>
-        <date>09 May 2012</date>
+        <issuenum revision="1">1.2</issuenum>
+        <date>27 June 2012</date>
 
-        <pubsnumber>1.1</pubsnumber>
+        <pubsnumber>1.2</pubsnumber>
 
         <author>
             <firstname>Olaf</firstname>
@@ -33,7 +33,7 @@
             <email>olaf.danne@brockmann-consult.de</email>
         </author>
 
-        <pubdate>09 May 2012</pubdate>
+        <pubdate>27 June 2012</pubdate>
 
         <copyright>
             <year>2010-2012</year>
@@ -54,6 +54,16 @@
 
         <revhistory>
 			<revision>
+                <revnumber>1.1</revnumber>
+                <date>12/06/27</date>
+                <authorinitials>O. Danne</authorinitials>
+                <revdescription>
+                    <para>
+                        Adjustments according to revised Landsat processing part.
+                    </para>
+                </revdescription>
+            </revision>
+            <revision>
                 <revnumber>1.1</revnumber>
                 <date>12/05/09</date>
                 <authorinitials>O. Danne</authorinitials>

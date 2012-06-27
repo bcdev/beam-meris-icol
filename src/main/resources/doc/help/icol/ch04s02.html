@@ -8,13 +8,13 @@
                     AE algorithm shall be applied
                     (see also<a class="xref" href="ch04s02.html#figure.processor.general.aeareas" title="Figure 4.3. Drop-down menu for the selection of the area to apply the AE correction">Figure 4.3</a>):
                     <div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                            Coastal regions over the ocean
-                        </li><li style="list-style-type: disc">
-                            Everywhere over the ocean
+                            Everywhere
                         </li><li style="list-style-type: disc">
                             Coastal regions over ocean and land
                         </li><li style="list-style-type: disc">
-                            Everywhere
+                            Coastal regions over the ocean
+                        </li><li style="list-style-type: disc">
+                            Everywhere over the ocean
                         </li></ul></div></li></ul></div><div class="figure"><a name="figure.processor.general.aeareas"></a><div class="figure-contents"><div><img src="figures/aeApplyMenu.png" alt="Drop-down menu for the selection of the area to apply the AE correction"></div></div><p class="title"><b>Figure 4.3. Drop-down menu for the selection of the area to apply the AE correction</b></p></div><br class="figure-break"></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.aerosoltype"></a>4.2.2. 'Aerosol Type Determination' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
                     'Reference wavelength (nm)': A text field to enter the reference wavelength for Angstrom and
                     AOT values below. The default is 550nm..
@@ -24,13 +24,4 @@
                 </li><li style="list-style-type: disc">
                     'AOT': A text field to enter the aerosol optical thickness. The default is 0.2, the valid
                     interval is [0.0, 1.5].
-                </li><li style="list-style-type: disc">
-                    'Over water, compute aerosol type by AE algorithm': If this checkbox is selected,
-                    the aerosol type over water used for the AE correction will be determined by the algorithm itself.
-                    Otherwise, it will be taken from the Angstrom/AOT combination as set by the user above
-                    (same as over land).
-                </li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sum.processor.general.advanced"></a>4.2.3. 'Advanced Options' Subpanel</h3></div></div></div><div class="itemizedlist"><ul type="bullet"><li style="list-style-type: disc">
-                    'Perform convolution with OpenCL (for unique aerosol type only, GPU hardware required)':
-                    <p>
-                        This option is in an experimental stage and disabled in the current ICOL version.
-                    </p></li></ul></div></div></div></body></html>
+                </li></ul></div></div></div></body></html>
