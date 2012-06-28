@@ -113,7 +113,8 @@ public class LandsatUtils {
         elev *= MathUtils.RTOD;
         azim *= MathUtils.RTOD;
 
-        sa.setZenith(90.0 - elev);
+//        sa.setZenith(90.0 - elev); // obviously, this was wrong (20120628)
+        sa.setZenith(elev);
         sa.setAzimuth(azim);
 
         return sa;

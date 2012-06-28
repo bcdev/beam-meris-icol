@@ -37,13 +37,13 @@ public class LandsatUtilsTest extends TestCase {
         double gmt = 9.54;
         GeoPos geoPos = new GeoPos(55.766f, 13.913f);
         double sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
-        assertEquals(36.986, sunZenith, 0.3);
+        assertEquals(52.868, sunZenith, 0.3);
 
         doy = 164;
         gmt = 8.5;
         geoPos = new GeoPos(32.067326f, 27.566187f);
         sunZenith = LandsatUtils.getSunAngles(geoPos, doy, gmt).getZenith();
-        assertEquals(23.72154, sunZenith, 0.3);
+        assertEquals(66.259, sunZenith, 0.3);
     }
 
     public void testGetSunAzimuth() {
