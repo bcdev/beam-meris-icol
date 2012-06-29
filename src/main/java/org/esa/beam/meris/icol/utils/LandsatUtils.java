@@ -1,6 +1,7 @@
 package org.esa.beam.meris.icol.utils;
 
 import org.esa.beam.dataio.envisat.EnvisatConstants;
+import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.TiePointGrid;
@@ -113,8 +114,7 @@ public class LandsatUtils {
         elev *= MathUtils.RTOD;
         azim *= MathUtils.RTOD;
 
-//        sa.setZenith(90.0 - elev); // obviously, this was wrong (20120628)
-        sa.setZenith(elev);
+        sa.setZenith(90.0 - elev);
         sa.setAzimuth(azim);
 
         return sa;
