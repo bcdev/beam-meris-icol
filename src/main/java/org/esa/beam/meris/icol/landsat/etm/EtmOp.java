@@ -63,7 +63,7 @@ public class EtmOp extends TmBasisOp {
     @Parameter(defaultValue = "1200", valueSet = {"300", "1200"}, description = "The AE correction grid resolution to be used by AE correction algorithm.")
     private int landsatTargetResolution;
     @Parameter(defaultValue = "0", valueSet = {"0", "1", "2"}, description =
-            "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution; 3 = only the cloud and land flag bands will be computed; .")
+            "The output product: 0 = the source bands will only be downscaled to AE correction grid resolution; 1 = compute an AE corrected product; 2 = upscale an AE corrected product to original resolution;.")
     private int landsatOutputProductType;
 
     @Parameter(defaultValue = "true")
