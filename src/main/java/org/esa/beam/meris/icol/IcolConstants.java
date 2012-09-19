@@ -22,10 +22,17 @@ public class IcolConstants {
     public static final int AE_CORRECTION_MODE_AEROSOL= 1;
 
     /**
-     * A pattern which matches MERIS L1b product types
+     * A pattern which matches MERIS L1 Amorgos product type
      *
      * @see java.util.regex.Matcher
      */
     public static final Pattern MERIS_L1_AMORGOS_TYPE_PATTERN = Pattern.compile("MER_..._1N");
+
+    /**
+     * A pattern which matches MERIS L1P product type (as derived i.e. from Coastcolour L1P processing)
+     *
+     * @see java.util.regex.Matcher
+     */
+    public static final Pattern MERIS_L1_CC_L1P_TYPE_PATTERN = Pattern.compile("MER_..._CCL1P");
 
 }

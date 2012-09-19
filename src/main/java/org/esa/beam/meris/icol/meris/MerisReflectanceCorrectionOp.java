@@ -112,8 +112,10 @@ public class MerisReflectanceCorrectionOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
         String productType = l1bProduct.getProductType();
-        int index = productType.indexOf("_1");
-        productType = productType.substring(0, index) + "_1N";
+        final int index = productType.indexOf("_1");
+        if (index != -1) {
+            productType = productType.substring(0, index) + "_1N";
+        }
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "reverseRhoToa", productType, true);
         Band[] allBands = rhoToaProduct.getBands();
         Band[] sourceBands = new Band[15];

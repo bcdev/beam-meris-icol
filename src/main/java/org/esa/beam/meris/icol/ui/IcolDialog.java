@@ -102,6 +102,7 @@ public class IcolDialog extends SingleTargetProductDialog {
         //    - Landsat7 ETM+ GeoTIFF
         if (!(EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) &&
+                !(IcolConstants.MERIS_L1_CC_L1P_TYPE_PATTERN.matcher(productType).matches()) &&
                 !(isValidLandsat5ProductType(productType)) &&
                 !(isValidLandsat7ProductType(productType)) &&
                 !(productType.startsWith(LandsatConstants.LANDSAT_DOWNSCALED_PRODUCT_TYPE_PREFIX))) {
@@ -132,6 +133,7 @@ public class IcolDialog extends SingleTargetProductDialog {
         } else if (isValidLandsat7ProductType(productType)) {
             outputProduct = createLandsat7Product();
         }  else if (EnvisatConstants.MERIS_L1_TYPE_PATTERN.matcher(productType).matches() ||
+                IcolConstants.MERIS_L1_CC_L1P_TYPE_PATTERN.matcher(productType).matches() ||
                 IcolConstants.MERIS_L1_AMORGOS_TYPE_PATTERN.matcher(productType).matches()) {
             outputProduct = createMerisOp();
         }

@@ -66,8 +66,10 @@ public class MerisBrrConvolveOp extends Operator {
         }
 
         String productType = l1bProduct.getProductType();
-        int index = productType.indexOf("_1");
-        productType = productType.substring(0, index) + "_1N";
+        final int index = productType.indexOf("_1");
+        if (index != -1) {
+            productType = productType.substring(0, index) + "_1N";
+        }
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType);
         ProductUtils.copyFlagBands(l1bProduct, targetProduct, true);
 

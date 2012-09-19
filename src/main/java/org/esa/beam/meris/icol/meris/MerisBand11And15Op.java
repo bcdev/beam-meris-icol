@@ -41,7 +41,9 @@ public class MerisBand11And15Op extends Operator {
     @Override
     public void initialize() throws OperatorException {
         String productType = l1bProduct.getProductType();
-        productType = productType.substring(0, productType.indexOf("_1")) + "_1N";
+        if (productType.indexOf("_1") != -1) {
+            productType = productType.substring(0, productType.indexOf("_1")) + "_1N";
+        }
         targetProduct = OperatorUtils.createCompatibleProduct(l1bProduct, "MER", productType, true);
 
         for (String bandName : corrReflProduct.getBandNames()) {
