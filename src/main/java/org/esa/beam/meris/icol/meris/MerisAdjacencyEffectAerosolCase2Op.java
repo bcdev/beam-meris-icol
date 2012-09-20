@@ -79,7 +79,6 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
     private static final double HA = 3000;
     private static final double NO_DATA_VALUE = -1.0;
     private static final double AE_AOT_THRESHOLD = 0.01;
-//    private static final double AE_AOT_THRESHOLD = 0.0;  // todo: just for a RS test, revert later
 
     private Band isLandBand;
 
@@ -231,6 +230,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
         flagCoding.addFlag("bad_aot_model", BitSetter.setFlag(0, 1), null);
         flagCoding.addFlag("high_turbid_water", BitSetter.setFlag(0, 2), null);
         flagCoding.addFlag("sunglint", BitSetter.setFlag(0, 3), null);
+        flagCoding.addFlag("cloud", BitSetter.setFlag(0, 4), null);
         return flagCoding;
     }
 
@@ -362,9 +362,9 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                     lfConvTile.setSample(x, y, lfConv);
                     cfConvTile.setSample(x, y, cfConv);
 
-                    if (l1FlagsTile.getSampleBit(x, y, L1_F_GLINTRISK)) {
-                        flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 8);
-                    }
+                    final boolean isGlintRisk = l1FlagsTile.getSampleBit(x, y, L1_F_GLINTRISK);
+                    flagTile.setSample(x, y, 3, isGlintRisk);
+                    flagTile.setSample(x, y, 4, isCloud);
 
                     if (aep.getSampleInt(x, y) == 1 && rho_13 >= 0.0 && rho_12 >= 0.0) {
                         // attempt to optimise
@@ -389,7 +389,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                         double alpha = computeAlpha(useUserAlpha, rhoRaec[Constants.bb775], y, x, rho_13);
                         int iaer = IcolUtils.determineAerosolModelIndex(alpha);
                         if (iaer < 1 || iaer > 26) {
-                            flagTile.setSample(x, y, 1);
+                            flagTile.setSample(x, y, 0, true);
                         }
 
                         //retrieve ROAG at 865 nm with two bounded AOTs
@@ -567,7 +567,7 @@ public class MerisAdjacencyEffectAerosolCase2Op extends MerisBasisOp {
                                     }
                                 } else {
                                     // raise 'high turbid water' flag
-                                    flagTile.setSample(x, y, flagTile.getSampleInt(x, y) + 4);
+                                    flagTile.setSample(x, y, 2, true);
                                 }
                             } // end irhow705 loop
 
