@@ -1,16 +1,17 @@
 package org.esa.beam.meris.icol.utils;
 
-import com.nativelibs4java.opencl.CLBuildException;
-import com.nativelibs4java.opencl.CLContext;
-import com.nativelibs4java.opencl.CLDevice;
-import com.nativelibs4java.opencl.CLEvent;
+//import com.nativelibs4java.opencl.CLBuildException;
+//import com.nativelibs4java.opencl.CLContext;
+//import com.nativelibs4java.opencl.CLDevice;
+//import com.nativelibs4java.opencl.CLEvent;
 //import com.nativelibs4java.opencl.CLFloatBuffer;
-import com.nativelibs4java.opencl.CLKernel;
-import com.nativelibs4java.opencl.CLMem;
-import com.nativelibs4java.opencl.CLProgram;
-import com.nativelibs4java.opencl.CLQueue;
-import com.nativelibs4java.opencl.JavaCL;
-import com.nativelibs4java.util.IOUtils;
+//import com.nativelibs4java.opencl.CLKernel;
+//import com.nativelibs4java.opencl.CLMem;
+//import com.nativelibs4java.opencl.CLProgram;
+//import com.nativelibs4java.opencl.CLQueue;
+//import com.nativelibs4java.opencl.JavaCL;
+//import com.nativelibs4java.util.IOUtils;
+import org.esa.beam.framework.gpf.OperatorException;
 import org.esa.beam.meris.icol.ReshapedConvolutionOp;
 
 import javax.media.jai.KernelJAI;
@@ -25,16 +26,16 @@ import java.nio.FloatBuffer;
 import java.util.Map;
 
 /**
-* @author Olaf Danne
-* @version $Revision: $ $Date:  $
-*/
+ * @author Olaf Danne
+ * @version $Revision: $ $Date:  $
+ */
 
 public class Convoluter {
     private KernelJAI kernelJAI;
     private boolean openCL;
-    private CLContext context;
-    private CLProgram program;
-    private CLKernel kernel;
+//    private CLContext context;
+//    private CLProgram program;
+//    private CLKernel kernel;
 
     public Convoluter(KernelJAI kernelJAI, boolean openCL) {
         this.kernelJAI = kernelJAI;
@@ -43,39 +44,42 @@ public class Convoluter {
 
     public RenderedImage convolve(PlanarImage sourceImage) throws IOException {
         if (openCL) {
-            try {
-                if (context == null) {
-                    context = JavaCL.createBestContext();
-                    String src = IOUtils.readTextClose(Convoluter.class.getResourceAsStream("Convolution.cl"));
-                    program = context.createProgram(src).build();
-                    kernel = program.createKernel("Convolve");
-                }
-                return convolveOpenCL(sourceImage);
-            } catch (Exception e) {
-//                throw new IOException("OpenCL-Error: " + e.getMessage(), e);
-                final String msg = "Warning: OpenCl cannot be used for convolution - going back to standard mode.\n\n" +
-                                                 "Reason: " + e.getMessage();
-                JOptionPane.showOptionDialog(null, msg, "ICOL - Info Message", JOptionPane.DEFAULT_OPTION,
-                                             JOptionPane.INFORMATION_MESSAGE, null, null, null);
-                return ReshapedConvolutionOp.convolve(sourceImage, kernelJAI);
-            }
+            throw new OperatorException("Convoluter.convolve: Usage of openCL is currently not supported here!");
+//            try {
+//                if (context == null) {
+//                    context = JavaCL.createBestContext();
+//                    String src = IOUtils.readTextClose(Convoluter.class.getResourceAsStream("Convolution.cl"));
+//                    program = context.createProgram(src).build();
+//                    kernel = program.createKernel("Convolve");
+//                }
+//                return convolveOpenCL(sourceImage);
+//            } catch (Exception e) {
+////                throw new IOException("OpenCL-Error: " + e.getMessage(), e);
+//                final String msg = "Warning: OpenCl cannot be used for convolution - going back to standard mode.\n\n" +
+//                                                 "Reason: " + e.getMessage();
+//                JOptionPane.showOptionDialog(null, msg, "ICOL - Info Message", JOptionPane.DEFAULT_OPTION,
+//                                             JOptionPane.INFORMATION_MESSAGE, null, null, null);
+//                return ReshapedConvolutionOp.convolve(sourceImage, kernelJAI);
+//            }
         } else {
             return ReshapedConvolutionOp.convolve(sourceImage, kernelJAI);
         }
     }
 
     public void dispose() {
-        if (context != null) {
-            kernel.release();
-            kernel = null;
-            program.release();
-            program = null;
-            context.release();
-            context = null;
+        if (openCL) {
+//            if (context != null) {
+//                kernel.release();
+//                kernel = null;
+//                program.release();
+//                program = null;
+//                context.release();
+//                context = null;
+//            }
         }
     }
 
-    private BufferedImage convolveOpenCL(PlanarImage inputImage) throws IOException, CLBuildException {
+//    private BufferedImage convolveOpenCL(PlanarImage inputImage) throws IOException, CLBuildException {
 //                float[] filterData = kernelJAI.getKernelData();
 //        int filterSize = kernelJAI.getWidth();
 //
@@ -125,6 +129,6 @@ public class Convoluter {
 //        System.out.println("time = " + time / 1000 + " ms");
 //
 //        return outputImage;
-                return null;
-    }
+//        return null;
+//    }
 }
