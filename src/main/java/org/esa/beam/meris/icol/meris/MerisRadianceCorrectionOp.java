@@ -88,9 +88,12 @@ public class MerisRadianceCorrectionOp extends Operator {
             if (bandName.startsWith("radiance")) {
                 ProductUtils.copyBand(bandName, l1bProduct, targetProduct, false);
             } else if (bandName.equals(EnvisatConstants.MERIS_DETECTOR_INDEX_DS_NAME) ||
-                    bandName.endsWith(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME)) {
+                       bandName.endsWith(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME)) {
                 if (!targetProduct.containsRasterDataNode(bandName)) {
                     ProductUtils.copyBand(bandName, l1bProduct, targetProduct, true);
+                }
+                if (bandName.endsWith(EnvisatConstants.MERIS_L1B_FLAGS_DS_NAME)) {
+                    ProductUtils.copyMasks(l1bProduct, targetProduct);
                 }
             }
         }
@@ -161,8 +164,8 @@ public class MerisRadianceCorrectionOp extends Operator {
                     if (detectorIndex != -1) {
                         double rhoToa = rhoToaCorrTile.getSampleDouble(x, y);
                         double result = (rhoToa * Math.cos(sza.getSampleDouble(x, y) * MathUtils.DTOR) *
-                                auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
-                                (Math.PI * auxData.seasonal_factor);
+                                         auxData.detector_solar_irradiance[bandNumber - 1][detectorIndex]) /
+                                        (Math.PI * auxData.seasonal_factor);
                         final double radianceOrig = radianceR.getSampleDouble(x, y);
                         // final consistency check: if corrected values are negative, revert correction
                         if (result <= 0.0) {
