@@ -154,16 +154,15 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
             Tile rhoToa13 = null;
             if (rhoToaProduct != null) {
                 // see above code, only tiles of index 12 and 13 are used, so only they are loaded
-                rhoToa12 = getSourceTile(rhoToaProduct.getBand(Rad2ReflOp.RHO_TOA_BAND_PREFIX + "_" + (12 + 1)),
-                                         rectangle);
-                rhoToa13 = getSourceTile(rhoToaProduct.getBand(Rad2ReflOp.RHO_TOA_BAND_PREFIX + "_" + (13 + 1)),
-                                         rectangle);
+                String bandNameFormat = Rad2ReflOp.RHO_TOA_BAND_PREFIX + "_%d";
+                rhoToa12 = getSourceTile(rhoToaProduct.getBand(String.format(bandNameFormat, 12 + 1)), rectangle);
+                rhoToa13 = getSourceTile(rhoToaProduct.getBand(String.format(bandNameFormat, 13 + 1)), rectangle);
             }
 
             Tile[] rhoNg = new Tile[EnvisatConstants.MERIS_L1B_NUM_SPECTRAL_BANDS];
+            String rhoNgBandNameFormat = GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_%d";
             for (int i = 0; i < rhoNg.length; i++) {
-                rhoNg[i] = getSourceTile(gasCorProduct.getBand(GaseousCorrectionOp.RHO_NG_BAND_PREFIX + "_" + (i + 1)),
-                                         rectangle);
+                rhoNg[i] = getSourceTile(gasCorProduct.getBand(String.format(rhoNgBandNameFormat, (i + 1))), rectangle);
             }
             final Tile rhoNg_bb865_Tile = rhoNg[bb865];
 
@@ -246,11 +245,11 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                             boolean is_ice = false;
                             if (rhoToaProduct != null) {
                                 /* test if pixel is ice (mdsi criterion, RS 2010/04/01) */
-                                final double mdsi = (rhoToa12.getSampleDouble(x, y) - rhoToa13.getSampleDouble(x, y)) /
-                                                    (rhoToa12.getSampleDouble(x, y) + rhoToa13.getSampleDouble(x, y));
-                                final float latitude = latTile.getSampleFloat(ix, iy);
-                                is_ice = (Math.abs(latitude) > 60.0 && mdsi > 0.01 && l1Flags.getSampleBit(ix, iy,
-                                                                                                           L1_F_BRIGHT));
+                                double rhoToa12Sample = rhoToa12.getSampleDouble(x, y);
+                                double rhoToa13Sample = rhoToa13.getSampleDouble(x, y);
+                                double mdsi = (rhoToa12Sample - rhoToa13Sample) / (rhoToa12Sample + rhoToa13Sample);
+                                float absLat = Math.abs(latTile.getSampleFloat(ix, iy));
+                                is_ice = (absLat > 60.0 && mdsi > 0.01 && l1Flags.getSampleBit(ix, iy, L1_F_BRIGHT));
                             }
                             targetTile.setSample(ix, iy, F_ICE, is_ice);
 
@@ -274,7 +273,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
                                     byte waterMaskSample = strategy.getWatermaskSample(geoPos.lat, geoPos.lon);
                                     if (!(waterMaskSample == WatermaskClassifier.INVALID_VALUE)) {
                                         is_land = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
-                                        is_land_consolidated = (waterMaskSample == WatermaskClassifier.LAND_VALUE);
+                                        is_land_consolidated = is_land;
                                         final boolean isGlint = (is_glint && !is_land);
                                         final boolean isLoinld = (is_water && !is_land);
                                         targetTile.setSample(ix, iy, F_MEGLINT, isGlint);
@@ -318,8 +317,7 @@ public class MerisLandClassificationOp extends MerisBasisOp implements Constants
         Interp.interpCoord(delta, auxData.rog.getTab(2), rogIndex[2]);
         Interp.interpCoord(windm, auxData.rog.getTab(3), rogIndex[3]);
         Interp.interpCoord(thetas, auxData.rog.getTab(4), rogIndex[4]);
-        double rhoGlint = Interp.interpolate(auxData.rog.getJavaArray(), rogIndex);
-        return rhoGlint;
+        return Interp.interpolate(auxData.rog.getJavaArray(), rogIndex);
     }
 
     /**
