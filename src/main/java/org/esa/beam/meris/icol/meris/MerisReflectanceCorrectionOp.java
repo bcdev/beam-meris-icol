@@ -366,7 +366,7 @@ public class MerisReflectanceCorrectionOp extends Operator {
     }
 
     private void correctForRayleighAndAerosol(Tile targetTile, int bandNumber, ProgressMonitor pm) throws
-            OperatorException {
+                                                                                                   OperatorException {
         Rectangle rectangle = targetTile.getRectangle();
         pm.beginTask("Processing frame...", rectangle.height + 7);
         try {
@@ -384,32 +384,31 @@ public class MerisReflectanceCorrectionOp extends Operator {
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
-                    double rhoToa = 0;
                     double gasCorValue = gasCor.getSampleDouble(x, y);
+                    int aepRayleighSample = aepRayleigh.getSampleInt(x, y);
+                    int aepAerosolSample = aepAerosol.getSampleInt(x, y);
                     double corrected = 0.0;
-                    if (aepRayleigh.getSampleInt(x, y) == 1 && gasCorValue != -1) {
+                    if (aepRayleighSample == 1 && aepAerosolSample == 1 && gasCorValue != -1) {
                         if (aeRayleigh == null) {
                             aeRayleigh = getSourceTile(aeRayProduct.getBand("rho_aeRay_" + bandNumber), rectangle);
                         }
-                        double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
-                        corrected = gasCorValue - aeRayleighValue;
-                    }
-                    if (aepAerosol.getSampleInt(x, y) == 1) {
                         if (aeAerosol == null) {
                             aeAerosol = getSourceTile(aeAerosolProduct.getBand("rho_aeAer_" + bandNumber), rectangle);
                         }
+                        double aeRayleighValue = aeRayleigh.getSampleDouble(x, y);
                         double aeAerosolValue = aeAerosol.getSampleDouble(x, y);
+                        corrected = gasCorValue - aeRayleighValue;
                         corrected -= aeAerosolValue;
                     }
 
+                    double rhoToa = 0;
                     if (corrected != 0.0) {
                         rhoToa = corrected * tg.getSampleDouble(x, y);
-                    }
-
-
-                    if (rhoToa == 0) {
+                    } else {
                         rhoToa = rhoToaR.getSampleDouble(x, y);
                     }
+
+
                     targetTile.setSample(x, y, rhoToa);
                 }
                 checkForCancellation();
