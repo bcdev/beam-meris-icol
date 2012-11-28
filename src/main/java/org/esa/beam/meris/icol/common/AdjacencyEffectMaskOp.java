@@ -195,11 +195,11 @@ public class AdjacencyEffectMaskOp extends Operator {
                         // we do not correct AE for sun zeniths > 80 deg because of limitation in aerosol scattering
                         // functions (PM4, 2010/03/04)
                         aeMask.setSample(x, y, 0);
-                    } else if (detectorIndexTile != null && isAtCurruptEdge(x, y, relevantTragetRect,
+                    } else if (detectorIndexTile != null && isAtInvalidEdge(x, y, relevantTragetRect,
                                                                             detectorIndexTile)) {
-                        // In MERIS N1, we often see vertical stripes of invalid (currupt?) pixels with zero radiances
+                        // In MERIS N1, we often see vertical stripes of invalid (corrupt?) pixels with zero radiances
                         // at the left and right edges of the images leading to artifacts after AE correction.
-                        // To avoid this, we do not apply AE correction here 
+                        // To avoid this, we do not apply AE correction here
                         aeMask.setSample(x, y, 0);
                     } else {
                         // if 'correctOverLand',  compute for both ocean and land ...
@@ -227,7 +227,7 @@ public class AdjacencyEffectMaskOp extends Operator {
         }
     }
 
-    private boolean isAtCurruptEdge(int x, int y, Rectangle relevantTragetRect, Tile detectorIndexTile) {
+    private boolean isAtInvalidEdge(int x, int y, Rectangle relevantTragetRect, Tile detectorIndexTile) {
         final int firstValidIndex = getFirstValidIndex(y, relevantTragetRect, detectorIndexTile);
         boolean invalidLeftEdgePixel = (firstValidIndex != -1 && x < firstValidIndex + aeWidth);
 
