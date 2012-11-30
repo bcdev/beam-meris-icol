@@ -16,10 +16,13 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
+import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,11 +31,11 @@ import java.util.Map;
  * @author Olaf Danne
  */
 @OperatorMetadata(alias = "Zmax",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zühlke, Olaf Danne",
-        copyright = "(c) 2007-2010 by Brockmann Consult",
-        description = "Zmax computation for land or cloud contribution in AE correction.")
+                  version = "1.0",
+                  internal = true,
+                  authors = "Marco Zühlke, Olaf Danne",
+                  copyright = "(c) 2007-2010 by Brockmann Consult",
+                  description = "Zmax computation for land or cloud contribution in AE correction.")
 public class ZmaxOp extends Operator {
 
     public static final String ZMAX = "zmax";
@@ -58,20 +61,26 @@ public class ZmaxOp extends Operator {
     @Override
     public void initialize() throws OperatorException {
         targetProduct = OperatorUtils.createCompatibleProduct(sourceProduct, "zmax_" + sourceProduct.getName(), "ZMAX");
-        int numZmax = distanceProduct.getNumBands();
-        distanceBandMap = new HashMap<Band, Band>(numZmax);
-        for (int i = 0; i < numZmax; i++) {
-            Band zmaxBand = targetProduct.addBand(ZMAX + "_" + (i + 1), ProductData.TYPE_FLOAT32);
-            zmaxBand.setNoDataValue(NO_DATA_VALUE);
-            zmaxBand.setNoDataValueUsed(true);
 
+        // from the 'distance' product, we only want the 'distance' bands (i.e. not the additional bands in case of PixelGeoCoding!)
+        final int numZmax = distanceProduct.getNumBands();
+        distanceBandMap = new HashMap<Band, Band>();
+        for (int i = 0; i < numZmax; i++) {
             Band distBand;
-            if (numZmax == 1) {
+            if (distanceBandName.equals(CloudDistanceOp.CLOUD_DISTANCE)) {
+                // from 'cloud distance' we only get one distance band
                 distBand = distanceProduct.getBand(distanceBandName);
             } else {
+                // from 'coast distance' we have more than one distance band (currently two)
                 distBand = distanceProduct.getBand(distanceBandName + "_" + (i + 1));
             }
-            distanceBandMap.put(zmaxBand, distBand);
+
+            if (distBand != null) {
+                Band zmaxBand = targetProduct.addBand(ZMAX + "_" + (i + 1), ProductData.TYPE_FLOAT32);
+                zmaxBand.setNoDataValue(NO_DATA_VALUE);
+                zmaxBand.setNoDataValueUsed(true);
+                distanceBandMap.put(zmaxBand, distBand);
+            }
         }
 
         BandMathsOp bandArithmeticOp = BandMathsOp.createBooleanExpressionBand(aeMaskExpression, aeMaskProduct);
@@ -85,7 +94,7 @@ public class ZmaxOp extends Operator {
         pm.beginTask("Processing frame...", targetRect.height + 3);
         try {
             Tile sza = getSourceTile(sourceProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),
-                    targetRect);
+                                     targetRect);
             Tile aeMask = getSourceTile(aeMaskBand, targetRect);
 
             Band distanceBand = distanceBandMap.get(zmaxBand);
@@ -139,16 +148,14 @@ public class ZmaxOp extends Operator {
 
     public static Tile[] getSourceTiles(Operator op, Product zmaxProduct, Rectangle targetRect, ProgressMonitor pm) {
         pm.beginTask("Processing frame...", zmaxProduct.getNumBands());
-        try {
-            Tile[] tiles = new Tile[zmaxProduct.getNumBands()];
-            for (int i = 0; i < tiles.length; i++) {
-                final Band band = zmaxProduct.getBandAt(i);
-                tiles[i] = op.getSourceTile(band, targetRect);
+        List<Tile> tileList = new ArrayList<Tile>();
+        for (Band b : zmaxProduct.getBands()) {
+            // we only want the 'zmax_' bands !!!
+            if (b.getName().startsWith(ZMAX + "_")) {
+                tileList.add(op.getSourceTile(b, targetRect));
             }
-            return tiles;
-        } finally {
-            pm.done();
         }
+        return tileList.toArray(new Tile[tileList.size()]);
     }
 
     public static Tile getSourceTile(Operator op, Product zmaxProduct, Rectangle targetRect) {
