@@ -3,10 +3,7 @@ package org.esa.beam.meris.icol;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.gpf.GPF;
-import org.esa.beam.framework.gpf.Operator;
-import org.esa.beam.framework.gpf.OperatorSpi;
-import org.esa.beam.framework.gpf.Tile;
+import org.esa.beam.framework.gpf.*;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 
 import javax.media.jai.BorderExtender;
@@ -40,6 +37,18 @@ public class IcolConvolutionJaiConvolve implements IcolConvolutionAlgo {
             reshapedScalingFactor = 2.0 * (CoeffW.FR_KERNEL_SIZE) / (convolveKernel.getWidth() - 1);
         }
 
+        final int minimumProductSize = (int) (reshapedScalingFactor/2.0) + 1;
+        final int w = l1bProduct.getSceneRasterWidth();
+        final int h = l1bProduct.getSceneRasterHeight();
+        if (w < minimumProductSize || h < minimumProductSize) {
+            // This is somewhat experimental:
+            // For given kernels, JAI does not handle correctly FR products with 7 pixels or less in width or height:
+            // We get an empty image from ScaleDescriptor.create in ReshapedConvolutionOp.
+            // However, this problem will be very rare and is not observed at all for RR products.
+            throw new OperatorException
+                    ("Input product too small (" + w + "x" + h + " pixel) to apply ICOL algorithm - must have at least " +
+                             minimumProductSize + " pixels in width and height.");
+        }
 
         this.namePrefix = namePrefix;
         this.numBands = numBands;
