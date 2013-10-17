@@ -48,7 +48,7 @@ import java.util.List;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "Meris.IcolCorrectedReflectances",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Marco Zühlke",
                   copyright = "(c) 2007 by Brockmann Consult",

@@ -50,7 +50,7 @@ import java.io.IOException;
 
 
 @OperatorMetadata(alias = "Meris.Icol.LandClassification",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Marco Zühlke",
                   copyright = "(c) 2007 by Brockmann Consult",

@@ -46,11 +46,11 @@ import java.net.URL;
 
 
 @OperatorMetadata(alias = "Meris.IcolFresnelCoeff",
-        version = "1.0",
-        internal = true,
-        authors = "Marco Zühlke",
-        copyright = "(c) 2007 by Brockmann Consult",
-        description = "Fresnel Coefficient computation.")
+                  version = "2.9.5",
+                  internal = true,
+                  authors = "Marco Zühlke",
+                  copyright = "(c) 2007 by Brockmann Consult",
+                  description = "Fresnel Coefficient computation.")
 public class FresnelCoefficientOp extends MerisBasisOp {
 
     private FresnelReflectionCoefficient fresnelCoefficient;
@@ -115,15 +115,15 @@ public class FresnelCoefficientOp extends MerisBasisOp {
             final double noDataValue = band.getNoDataValue();
 
             Tile sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME), rectangle,
-                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME), rectangle,
-                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                                     BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             Tile isLand = getSourceTile(isLandBand, rectangle, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
             if (bandName.equals("cf")) {
                 bandName = sourceProduct.getBands()[0].getName();
             }
             Tile srcTile = getSourceTile(sourceProduct.getBand(bandName), rectangle,
-                    BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+                                         BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
             for (int y = rectangle.y; y < rectangle.y + rectangle.height; y++) {
                 for (int x = rectangle.x; x < rectangle.x + rectangle.width; x++) {
@@ -156,6 +156,7 @@ public class FresnelCoefficientOp extends MerisBasisOp {
 
 
     public static class Spi extends OperatorSpi {
+
         public Spi() {
             super(FresnelCoefficientOp.class);
         }

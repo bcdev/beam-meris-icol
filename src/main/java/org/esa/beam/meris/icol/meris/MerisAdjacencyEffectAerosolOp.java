@@ -33,8 +33,13 @@ import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.meris.MerisBasisOp;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.brr.CloudClassificationOp;
-import org.esa.beam.meris.icol.*;
+import org.esa.beam.meris.icol.AerosolScatteringFunctions;
 import org.esa.beam.meris.icol.AerosolScatteringFunctions.RV;
+import org.esa.beam.meris.icol.CoeffW;
+import org.esa.beam.meris.icol.FresnelReflectionCoefficient;
+import org.esa.beam.meris.icol.IcolConstants;
+import org.esa.beam.meris.icol.IcolConvolutionAlgo;
+import org.esa.beam.meris.icol.IcolConvolutionJaiConvolve;
 import org.esa.beam.meris.icol.IcolConvolutionKernellLoop;
 import org.esa.beam.meris.icol.common.AdjacencyEffectMaskOp;
 import org.esa.beam.meris.icol.common.ZmaxOp;
@@ -55,8 +60,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.Map;
 
-import static org.esa.beam.meris.l2auxdata.Constants.L1_F_GLINTRISK;
-import static org.esa.beam.meris.l2auxdata.Constants.L1_F_LAND;
+import static org.esa.beam.meris.l2auxdata.Constants.*;
 
 
 /**
@@ -67,7 +71,7 @@ import static org.esa.beam.meris.l2auxdata.Constants.L1_F_LAND;
  */
 @SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "Meris.AEAerosol",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Marco Zuehlke",
                   copyright = "(c) 2007 by Brockmann Consult",
@@ -260,7 +264,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
     @Override
     public void computeTileStack(Map<Band, Tile> targetTiles, Rectangle targetRect, ProgressMonitor pm) throws
-            OperatorException {
+                                                                                                        OperatorException {
         Rectangle sourceRect = icolConvolutionAlgo.mapTargetRect(targetRect);
 
         Tile aep = getSourceTile(aemaskProduct.getBand(AdjacencyEffectMaskOp.AE_MASK_AEROSOL), targetRect,
@@ -352,7 +356,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
 
                         if (isCloud) {
                             final double pressureCorrectionCloud = cloudTopPressure.getSampleDouble(x, y) /
-                                    surfacePressure.getSampleDouble(x, y);
+                                                                   surfacePressure.getSampleDouble(x, y);
                             // cloud height
                             double zCloud = 8.0 * Math.log(1.0 / pressureCorrectionCloud);
                             rhoCloudCorrFac = Math.exp(-zCloud / HA);
@@ -379,7 +383,7 @@ public class MerisAdjacencyEffectAerosolOp extends MerisBasisOp {
                     if (aep.getSampleInt(x, y) == 1 && rho_13 != -1 && rho_12 != -1) {
                         // attempt to optimise
                         if (vza == null || sza == null || vaa == null || saa == null || isLand == null || zmaxs == null ||
-                                zmaxCloud == null || convolver == null) {
+                            zmaxCloud == null || convolver == null) {
                             vza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_VIEW_ZENITH_DS_NAME),
                                                 targetRect, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
                             sza = getSourceTile(l1bProduct.getTiePointGrid(EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME),

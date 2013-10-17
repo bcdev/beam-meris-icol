@@ -16,7 +16,6 @@ import org.esa.beam.framework.gpf.annotations.SourceProduct;
 import org.esa.beam.framework.gpf.annotations.TargetProduct;
 import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
-import org.esa.beam.meris.l2auxdata.Constants;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.Rectangle;
@@ -31,7 +30,7 @@ import java.util.Map;
  * @author Olaf Danne
  */
 @OperatorMetadata(alias = "Zmax",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Marco Zühlke, Olaf Danne",
                   copyright = "(c) 2007-2010 by Brockmann Consult",

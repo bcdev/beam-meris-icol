@@ -23,7 +23,7 @@ import java.awt.Rectangle;
  * @version $Revision: $ $Date:  $
  */
 @OperatorMetadata(alias = "Meris.BrrCloud",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Olaf Danne",
                   copyright = "(c) 2009 by Brockmann Consult",

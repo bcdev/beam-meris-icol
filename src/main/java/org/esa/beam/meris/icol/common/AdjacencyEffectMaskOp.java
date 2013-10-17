@@ -49,7 +49,7 @@ import java.awt.geom.Area;
  * @version $Revision: 8078 $ $Date: 2010-01-22 17:24:28 +0100 (Fr, 22 Jan 2010) $
  */
 @OperatorMetadata(alias = "AEMask",
-                  version = "1.0",
+                  version = "2.9.5",
                   internal = true,
                   authors = "Marco Zühlke, Olaf Danne",
                   copyright = "(c) 2010 by Brockmann Consult",

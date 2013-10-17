@@ -17,8 +17,6 @@
 package org.esa.beam.meris.icol.meris;
 
 import org.esa.beam.framework.datamodel.FlagCoding;
-import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.gpf.GPF;
 import org.esa.beam.framework.gpf.Operator;
@@ -46,7 +44,6 @@ import org.esa.beam.meris.icol.utils.DebugUtils;
 import org.esa.beam.meris.icol.utils.IcolUtils;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
-import javax.media.jai.JAI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,7 +59,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"FieldCanBeLocal"})
 @OperatorMetadata(alias = "icol.Meris",
-                  version = "1.1",
+                  version = "2.9.5",
                   authors = "Marco Zuehlke, Olaf Danne",
                   copyright = "(c) 2007-2009 by Brockmann Consult",
                   description = "Performs a correction of the adjacency effect for MERIS L1b data.")
@@ -125,11 +122,11 @@ public class MerisOp extends Operator {
     private int productType = 0;
     //    @Parameter(defaultValue = "true")
     private boolean reshapedConvolution = true;  // currently no user option
-//    @Parameter(defaultValue = "false",
+    //    @Parameter(defaultValue = "false",
 //               description = "If set to 'true', the convolution shall be computed on GPU device if available.")
 // currently no user option
     private boolean openclConvolution = false;
-//    @Parameter(defaultValue = "64", description = "The tile size used.")
+    //    @Parameter(defaultValue = "64", description = "The tile size used.")
     // currently no user option
     private int tileSize = 64;
     @Parameter(defaultValue = "EVERYWHERE", valueSet = {"EVERYWHERE", "COASTAL_ZONE", "COASTAL_OCEAN", "OCEAN"},

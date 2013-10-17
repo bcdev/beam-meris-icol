@@ -16,7 +16,7 @@ import org.esa.beam.gpf.operators.standard.BandMathsOp;
 import org.esa.beam.meris.icol.utils.OperatorUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * Operator for extraction of a product with cloud/land masks given as 0.0/1.0,
@@ -26,7 +26,7 @@ import java.awt.*;
  */
 @OperatorMetadata(
         alias = "CLFlags",
-        version = "1.0",
+        version = "2.9.5",
         internal = true,
         authors = "Olaf Danne",
         copyright = "(c) 2010 by Brockmann Consult",
@@ -71,7 +71,7 @@ public class CloudLandMaskOp extends Operator {
 
     private void createTargetProduct() {
         targetProduct = OperatorUtils.createCompatibleProduct(cloudProduct, "ae_cloud_land_mask",
-                "MER_AE_CLMASK");
+                                                              "MER_AE_CLMASK");
 
         landFlagBand = targetProduct.addBand(LAND_MASK_NAME, ProductData.TYPE_FLOAT32);
         cloudFlagBand = targetProduct.addBand(CLOUD_MASK_NAME, ProductData.TYPE_FLOAT32);
