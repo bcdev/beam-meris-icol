@@ -1,0 +1,32 @@
+<bundleDescriptor>
+    <bundleName>${artifactId}</bundleName>
+    <bundleVersion>${version}</bundleVersion>
+
+    <processorDescriptors>
+        <processorDescriptor>
+            <executableName>icol.Meris</executableName>
+            <processorName>ICOL MERIS</processorName>
+            <processorVersion>${version}</processorVersion>
+            <defaultParameters>
+                <![CDATA[
+<parameters>
+    <icolAerosolCase2>true</icolAerosolCase2>
+    <productType>0</productType>
+    <aeArea>COASTAL_OCEAN</aeArea>
+    <useAdvancedLandWaterMask>true</useAdvancedLandWaterMask>
+</parameters>
+            ]]></defaultParameters>
+            <outputFormats>BEAM-DIMAP,NetCDF,GeoTIFF,ENVISAT</outputFormats>
+            <descriptionHtml>
+                <![CDATA[<p>Performs a correction of the adjacency effect for MERIS L1b data.</p>]]></descriptionHtml>
+            <inputProductTypes>MER_FR__1P,MER_RR__1P,MER_FRS_1P,MER_FSG_1P,MER_FRG_1P</inputProductTypes>
+            <outputProductType>MERIS_ICOL</outputProductType>
+            <validMaskExpression>!l1_flags.INVALID</validMaskExpression>
+            <outputVariables>
+                <outputVariable>
+                    <name>radiance_9</name>
+                </outputVariable>
+            </outputVariables>
+        </processorDescriptor>
+    </processorDescriptors>
+</bundleDescriptor>

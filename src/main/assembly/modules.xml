@@ -7,6 +7,14 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
+
+    <files>
+        <file>
+            <filtered>true</filtered>
+            <source>src/main/assembly/bundle-descriptor.xml</source>
+        </file>
+    </files>
+
     <dependencySets>
         <dependencySet>
             <unpack>false</unpack>
@@ -16,6 +24,7 @@
                 <include>*:beam-meris-sdr*</include>
                 <include>*:beam-meris-brr*</include>
                 <include>*:beam-meris-icol*</include>
+                <include>*:beam-watermask-operator*</include>
             </includes>
         </dependencySet>
     </dependencySets>
