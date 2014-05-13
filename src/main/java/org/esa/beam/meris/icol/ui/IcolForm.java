@@ -1,6 +1,10 @@
 package org.esa.beam.meris.icol.ui;
 
-import com.bc.ceres.binding.*;
+import com.bc.ceres.binding.ConversionException;
+import com.bc.ceres.binding.Property;
+import com.bc.ceres.binding.PropertyContainer;
+import com.bc.ceres.binding.PropertySet;
+import com.bc.ceres.binding.ValidationException;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.binding.Binding;
 import com.bc.ceres.swing.binding.BindingContext;
@@ -131,7 +135,7 @@ class IcolForm extends JTabbedPane {
             public void actionPerformed(ActionEvent e) {
                 updateProductTypeSettings();
                 if (isEnvisatSourceProduct(IcolForm.this.sourceProductSelector.getSelectedProduct()) &&
-                        radianceProductTypeButton.isSelected()) {
+                    radianceProductTypeButton.isSelected()) {
                     valueContainer.setValue("formatName", EnvisatConstants.ENVISAT_FORMAT_NAME);
                 }
             }
@@ -240,29 +244,29 @@ class IcolForm extends JTabbedPane {
         TableLayout layoutIO = new TableLayout(1);
         layoutIO.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         layoutIO.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layoutIO.setTableWeightX(1);
-        layoutIO.setCellWeightY(2, 0, 1);
+        layoutIO.setTableWeightX(1.0);
+        layoutIO.setCellWeightY(2, 0, 1.0);
         layoutIO.setTablePadding(2, 2);
 
         TableLayout processingParam = new TableLayout(1);
         processingParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         processingParam.setTableFill(TableLayout.Fill.HORIZONTAL);
-        processingParam.setTableWeightX(1);
-        processingParam.setCellWeightY(2, 0, 1);
+        processingParam.setTableWeightX(1.0);
+        processingParam.setCellWeightY(2, 0, 1.0);
         processingParam.setTablePadding(2, 2);
 
         TableLayout merisParam = new TableLayout(1);
         merisParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         merisParam.setTableFill(TableLayout.Fill.HORIZONTAL);
-        merisParam.setTableWeightX(1);
-        merisParam.setCellWeightY(4, 0, 1);
+        merisParam.setTableWeightX(1.0);
+        merisParam.setCellWeightY(4, 0, 1.0);
         merisParam.setTablePadding(2, 2);
 
         TableLayout landsatParam = new TableLayout(1);
         landsatParam.setTableAnchor(TableLayout.Anchor.NORTHWEST);
         landsatParam.setTableFill(TableLayout.Fill.HORIZONTAL);
-        landsatParam.setTableWeightX(1);
-        landsatParam.setCellWeightY(3, 0, 1);
+        landsatParam.setTableWeightX(1.0);
+        landsatParam.setCellWeightY(3, 0, 1.0);
         landsatParam.setTablePadding(2, 2);
 
         JPanel ioTab = new JPanel(layoutIO);
@@ -324,7 +328,7 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(1);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setTableWeightX(1);
+        layout.setTableWeightX(1.0);
         layout.setTablePadding(2, 2);
 
         rhoToaRayleigh = new JCheckBox("TOA reflectances corrected for AE rayleigh (rho_toa_AERC)");
@@ -352,7 +356,7 @@ class IcolForm extends JTabbedPane {
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(2, 1.0);
         layout.setCellColspan(0, 0, 3);
         layout.setCellColspan(1, 0, 3);
         layout.setTablePadding(2, 2);
@@ -464,7 +468,7 @@ class IcolForm extends JTabbedPane {
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(2, 1.0);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
@@ -502,7 +506,7 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setColumnWeightX(0, 1);
+        layout.setColumnWeightX(0, 1.0);
         layout.setColumnWeightX(1, 0.1);
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
@@ -531,7 +535,7 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setColumnWeightX(0, 1);
+        layout.setColumnWeightX(0, 1.0);
         layout.setColumnWeightX(1, 0.1);
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
@@ -564,7 +568,7 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(2);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setColumnWeightX(0, 1);
+        layout.setColumnWeightX(0, 1.0);
         layout.setColumnWeightX(1, 0.1);
         layout.setTablePadding(2, 2);
         layout.setCellColspan(0, 0, 2);
@@ -590,7 +594,7 @@ class IcolForm extends JTabbedPane {
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(2, 1.0);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 24, 0, 0));
@@ -623,14 +627,12 @@ class IcolForm extends JTabbedPane {
     }
 
     private JPanel createLandsatCloudFlagSettingPanel() {
-        // table layout with a third 'empty' column
-        // todo: this is not nice! use GridBagLayout for more complex panels
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(2, 1.0);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
@@ -697,14 +699,12 @@ class IcolForm extends JTabbedPane {
     }
 
     private JPanel createLandsatLandFlagSettingPanel() {
-        // table layout with a third 'empty' column
-        // todo: this is not nice! use GridBagLayout for more complex panels
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
         layout.setColumnWeightX(0, 0.1);
         layout.setColumnWeightX(1, 0.1);
-        layout.setColumnWeightX(2, 1);
+        layout.setColumnWeightX(2, 1.0);
         layout.setTablePadding(2, 2);
         layout.setCellPadding(0, 0, new Insets(0, 24, 0, 0));
         layout.setCellPadding(1, 0, new Insets(0, 48, 0, 0));
@@ -930,7 +930,7 @@ class IcolForm extends JTabbedPane {
         TableLayout layout = new TableLayout(1);
         layout.setTableAnchor(TableLayout.Anchor.WEST);
         layout.setTableFill(TableLayout.Fill.HORIZONTAL);
-        layout.setTableWeightX(1);
+        layout.setTableWeightX(1.0);
 
         JPanel panel = new JPanel(layout);
         panel.setBorder(BorderFactory.createTitledBorder("Product Type Selection"));
@@ -973,7 +973,7 @@ class IcolForm extends JTabbedPane {
             String sourceProductName = sourceProduct.getName();
             final String productType = sourceProduct.getProductType();
             if (productType.toUpperCase().startsWith(LandsatConstants.LANDSAT5_PRODUCT_TYPE_PREFIX) ||
-                    productType.toUpperCase().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX)) {
+                productType.toUpperCase().startsWith(LandsatConstants.LANDSAT7_PRODUCT_TYPE_PREFIX)) {
                 setProductDirChooserVisibility(false);
                 targetProductSelector.getProductDirTextField().setText(landsatOutputProductsDir.getText());
                 updateLandsatProductName(selectorModel, sourceProductName);

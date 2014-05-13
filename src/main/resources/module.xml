@@ -1,8 +1,8 @@
 <module>
     <manifestVersion>1.0.0</manifestVersion>
     <symbolicName>beam-meris-icol</symbolicName>
-    <version>2.9.5</version>
-    <name>MERIS ICOL Processor</name>
+    <version>2.9.6</version>
+    <name>MERIS/Landsat ICOL Processor</name>
 
     <description><![CDATA[
             <p>The purpose of the ICOL processor is to correct for the adjacency effect (increased radiance
@@ -36,10 +36,12 @@
 
     <changelog>
         <![CDATA[
+            <p>Changes in 2.9.3<br/>
+            Minor adaptation to BEAM 5, no algorithm changes.<br/>
             <p>Changes in 2.9.2<br/>
-            [ICOL-?] Revised processing scheme for Landsat 5 TM. ICOL now also supports Landsat 7 ETM+.
+            Revised processing scheme for Landsat 5 TM. ICOL now also supports Landsat 7 ETM+.<br/>
             <p>Changes in 2.9.1<br/>
-            [ICOL-?] Important bug fix for usage of ICOL together with N1 patcher.
+            Important bug fix for usage of ICOL together with N1 patcher.<br/>
             <p>Changes in 2.9<br/>
             [ICOL-?] This ICOL version uses an improved land-water database which is based on SRTM data.
             This is more precise than the MERIS L1b land-water and coastline flags.
@@ -90,11 +92,11 @@
     <extension point="beam-ui:actions">
         <action>
             <id>icolAction</id>
+            <parent>processing.preProcessing</parent>
             <class>org.esa.beam.meris.icol.ui.IcolAction</class>
-            <text>ICOL Processor...</text>
-            <shortDescr>Executes the ICOL processor</shortDescr>
+            <text>MERIS ICOL Adjacency Effect Correction...</text>
+            <shortDescr>Performs the MERIS ICOL adjacency effect correction</shortDescr>
             <mnemonic/>
-            <parent>tools</parent>
             <placeAfter/>
         </action>
     </extension>
